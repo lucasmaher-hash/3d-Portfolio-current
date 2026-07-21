@@ -412,6 +412,7 @@
     <span class="craft-dropdown-item" onclick="window.top.location.href='/portfolio2d.html'" data-nav="this-website">This Website</span>
     <span class="craft-dropdown-item" onclick="window.top.location.href='/kaffeemaschine2d.html'">Cybercoffee</span>
     <span class="craft-dropdown-item" onclick="window.top.location.href='/virtual_cooking2d.html'">Virtual Cooking</span>
+    <span class="craft-dropdown-item" onclick="window.top.location.href='/unify2d.html'">Unify</span>
   </div>
 
   <header class="top-row" role="banner">
@@ -457,7 +458,7 @@
     document.getElementById('logo-btn').addEventListener('click', e => {
       e.preventDefault();
       const parentPath = window.top.location.pathname;
-      const is2DView = parentPath.includes('2D') || parentPath.includes('about2d') || parentPath.includes('contact2d') || parentPath.includes('vaccine2d') || parentPath.includes('mac-lamp2d') || parentPath.includes('portfolio2d') || parentPath.includes('kaffeemaschine2d') || parentPath.includes('virtual_cooking2d');
+      const is2DView = parentPath.includes('2D') || parentPath.includes('about2d') || parentPath.includes('contact2d') || parentPath.includes('vaccine2d') || parentPath.includes('mac-lamp2d') || parentPath.includes('portfolio2d') || parentPath.includes('kaffeemaschine2d') || parentPath.includes('virtual_cooking2d') || parentPath.includes('unify2d');
       if (!is2DView && navigator.maxTouchPoints > 0) {
         document.querySelector('.nav-island').classList.toggle('is-open');
         return;
@@ -581,7 +582,7 @@
       const is2DView = parentPath.includes('2D') || parentPath.includes('about2d') ||
                        parentPath.includes('contact2d') || parentPath.includes('vaccine2d') ||
                        parentPath.includes('mac-lamp2d') || parentPath.includes('portfolio2d') ||
-                       parentPath.includes('kaffeemaschine2d') || parentPath.includes('virtual_cooking2d');
+                       parentPath.includes('kaffeemaschine2d') || parentPath.includes('virtual_cooking2d') || parentPath.includes('unify2d');
       if (is2DView) helpBtn.style.setProperty('display', 'none', 'important');
       helpBtn.addEventListener('click', () => {
         window.parent.postMessage({ type: 'openControls' }, '*');
@@ -624,7 +625,7 @@
     // ── Craft dropdown (2D mode only) ────────────────────────────
     (function () {
       const parentPath = window.top.location.pathname;
-      const is2DView = parentPath.includes('2D') || parentPath.includes('about2d') || parentPath.includes('contact2d') || parentPath.includes('vaccine2d') || parentPath.includes('mac-lamp2d') || parentPath.includes('portfolio2d') || parentPath.includes('kaffeemaschine2d') || parentPath.includes('virtual_cooking2d');
+      const is2DView = parentPath.includes('2D') || parentPath.includes('about2d') || parentPath.includes('contact2d') || parentPath.includes('vaccine2d') || parentPath.includes('mac-lamp2d') || parentPath.includes('portfolio2d') || parentPath.includes('kaffeemaschine2d') || parentPath.includes('virtual_cooking2d') || parentPath.includes('unify2d');
       if (!is2DView) return;
 
       const craftSeg = document.querySelector('[data-page="craft"]');
