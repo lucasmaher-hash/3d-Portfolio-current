@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/images/site/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>threejs-app</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-surface: #DCDCE3;
+      --text-primary: #1A1A1A;
+      --text-secondary: #8E8E93;
+      --shadow-raised: 8px 8px 18px rgba(174,174,192,0.65), -8px -8px 18px rgba(255,255,255,1);
+      --shadow-raised-sm: 5px 5px 12px rgba(174,174,192,0.65), -5px -5px 12px rgba(255,255,255,1);
+      --shadow-pressed: inset 5px 5px 10px rgba(174,174,192,0.6), inset -5px -5px 10px rgba(255,255,255,1);
+    }
+
+    .mobile-menu {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.35);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 250ms ease;
+      --m-shadow-d: rgba(120,120,140,0.95);
+      --m-shadow-l: rgba(255,255,255,0.85);
+      --m-btn-bg: rgba(220,220,227,0.45);
+    }
+    .mobile-menu.open { opacity: 1; pointer-events: auto; }
+
+    .mobile-menu-panel {
+      width: 75%;
+      background: rgba(220, 220, 227, 0.18);
+      backdrop-filter: blur(24px) saturate(1.4);
+      -webkit-backdrop-filter: blur(24px) saturate(1.4);
+      border-radius: 28px;
+      border: 1px solid rgba(255, 255, 255, 0.55);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.6),
+        inset 0 -1px 0 rgba(174,174,192,0.15);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      transform: translateY(10px);
+      transition: transform 250ms ease;
+    }
+    .mobile-menu.open .mobile-menu-panel { transform: translateY(0); }
+
+    .mobile-view-toggle {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5px;
+      background: rgba(220, 220, 227, 0.45);
+      border-radius: 9999px;
+      box-shadow: 5px 5px 16px var(--m-shadow-d), -5px -5px 16px var(--m-shadow-l);
+      padding: 5px;
+    }
+    .mobile-mode-btn {
+      border: none;
+      background: transparent;
+      border-radius: 9999px;
+      padding: 11px 0;
+      font-family: 'VT323', monospace;
+      font-size: 18px;
+      color: #555;
+      cursor: pointer;
+      text-align: center;
+      -webkit-tap-highlight-color: transparent;
+      transition: box-shadow 150ms ease, color 150ms ease, transform 150ms ease;
+    }
+    .mobile-mode-btn.is-active {
+      background: var(--m-btn-bg);
+      color: #000;
+      box-shadow: inset 5px 5px 14px var(--m-shadow-d), inset -5px -5px 14px var(--m-shadow-l);
+    }
+    .mobile-mode-btn:active:not(.is-active) {
+      box-shadow: inset 5px 5px 14px var(--m-shadow-d), inset -5px -5px 14px var(--m-shadow-l);
+      transform: scale(0.96);
+    }
+    .mobile-nav-btn {
+      display: block;
+      background: var(--m-btn-bg);
+      border-radius: 9999px;
+      box-shadow: 5px 5px 16px var(--m-shadow-d), -5px -5px 16px var(--m-shadow-l);
+      padding: 16px 24px;
+      font-family: 'VT323', monospace;
+      font-size: 22px;
+      color: #555;
+      text-transform: uppercase;
+      text-decoration: none;
+      text-align: center;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: box-shadow 150ms ease, transform 150ms ease;
+    }
+    .mobile-nav-btn.is-active { box-shadow: inset 5px 5px 14px var(--m-shadow-d), inset -5px -5px 14px var(--m-shadow-l); color: #000; }
+    .mobile-nav-btn:active { transform: scale(0.98); box-shadow: inset 5px 5px 14px var(--m-shadow-d), inset -5px -5px 14px var(--m-shadow-l); }
+
+    /* Virtual joystick — touch devices only */
+    #joystick-container {
+      position: fixed;
+      bottom: 48px;
+      left: 36px;
+      z-index: 8;
+      display: none;
+      touch-action: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    @media (pointer: coarse) {
+      #joystick-container { display: block; }
+    }
+    #joystick-base {
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      background: rgba(220, 220, 227, 0.10);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1.5px solid rgba(255, 255, 255, 0.20);
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #joystick-thumb {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: rgba(220, 220, 227, 0.50);
+      border: 1.5px solid rgba(255, 255, 255, 0.55);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+      position: absolute;
+      will-change: transform;
+    }
+  </style>
+  </head>
+  <body>
+    <div id="info-overlay">
+      <div id="info-panel">
+        <button id="info-close">&#x2715;</button>
+        <h2 id="info-title"></h2>
+        <img id="info-image" src="" alt="" />
+        <div id="info-text"></div>
+      </div>
+    </div>
+
+    <iframe id="top-bar" src="/top_row_permanent_V3.html" allowtransparency="true"></iframe>
+
+    <!-- Virtual joystick (touch only) -->
+    <div id="joystick-container">
+      <div id="joystick-base">
+        <div id="joystick-thumb"></div>
+      </div>
+    </div>
+
+    <!-- Mobile menu overlay -->
+    <div id="mobile-menu" class="mobile-menu">
+      <div class="mobile-menu-panel">
+        <div class="mobile-view-toggle">
+          <button class="mobile-mode-btn" data-mode="2d">2D</button>
+          <button class="mobile-mode-btn is-active" data-mode="3d">3D</button>
+        </div>
+        <a class="mobile-nav-btn" data-page="craft">Craft</a>
+        <a class="mobile-nav-btn" data-page="about">About</a>
+        <a class="mobile-nav-btn" data-page="contact">Contact</a>
+      </div>
+    </div>
+
+    <script>
+      // ── Page transitions ──────────────────────────────────────────
+      (function() {
+        var KF = '@keyframes _sR{from{transform:translateX(100%)}to{transform:translateX(0)}}@keyframes _sL{from{transform:translateX(-100%)}to{transform:translateX(0)}}';
+        var s = document.createElement('style'); s.textContent = KF; document.head.appendChild(s);
+        var DUR = 380, EASE = 'cubic-bezier(0.4,0,0.2,1)';
+        var d = document.documentElement;
+        var OPP = {_sR:'_sL',_sL:'_sR'};
+
+        var dir = sessionStorage.getItem('_sv');
+        if (dir) {
+          sessionStorage.removeItem('_sv');
+          // Keep 3D page off-screen while it loads; top-bar counter-animated to stay put
+          d.style.transform = dir === 'right' ? 'translateX(100%)' : 'translateX(-100%)';
+          d.style.overflow = 'hidden';
+          var tb = document.getElementById('top-bar');
+          if (tb) tb.style.transform = dir === 'right' ? 'translateX(-100%)' : 'translateX(100%)';
+          var done = false;
+          function reveal() {
+            if (done) return; done = true;
+            requestAnimationFrame(function() {
+              var anim = (dir === 'right' ? '_sR' : '_sL');
+              d.style.transform = ''; d.style.overflow = '';
+              if (tb) tb.style.transform = '';
+              d.style.animation = anim + ' ' + DUR + 'ms ' + EASE + ' both';
+              if (tb) tb.style.animation = OPP[anim] + ' ' + DUR + 'ms ' + EASE + ' both';
+              setTimeout(function() {
+                d.style.animation = ''; d.style.overflow = '';
+                if (tb) tb.style.animation = '';
+              }, DUR + 60);
+            });
+          }
+          if (document.readyState === 'complete') reveal();
+          else { window.addEventListener('load', reveal); setTimeout(reveal, 800); }
+        }
+
+        window._nav = function(url, into) {
+          if (into !== 'right') { location.href = url; return; }
+          sessionStorage.setItem('_sv', into);
+          var dim = document.createElement('div');
+          dim.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0);z-index:9999;transition:background 220ms ease;pointer-events:none;';
+          document.body.appendChild(dim);
+          requestAnimationFrame(function() { dim.style.background = 'rgba(0,0,0,0.28)'; });
+          setTimeout(function() { location.href = url; }, 220);
+        };
+
+        window.addEventListener('message', function(e) {
+          if (e.data && e.data.type === 'page-slide') window._nav(e.data.url, e.data.enterFrom);
+        });
+      })();
+
+      (function () {
+        const menu = document.getElementById('mobile-menu');
+
+        function setMenuTheme() {
+          const bg = getComputedStyle(document.body).backgroundColor;
+          const m = bg.match(/[\d.]+/g);
+          let lum = 1;
+          if (m && m.length >= 3) {
+            const a = m[3] !== undefined ? +m[3] : 1;
+            if (a > 0.4) lum = (0.299 * +m[0] + 0.587 * +m[1] + 0.114 * +m[2]) / 255;
+          }
+          if (document.querySelector('canvas')) lum = 0.1;
+          const dark = lum < 0.4;
+          menu.style.setProperty('--m-shadow-d', dark ? 'rgba(0,0,20,0.95)'     : 'rgba(120,120,140,0.95)');
+          menu.style.setProperty('--m-shadow-l', dark ? 'rgba(255,255,255,0.38)' : 'rgba(255,255,255,0.85)');
+          menu.style.setProperty('--m-btn-bg',   dark ? 'rgba(220,220,227,0.68)' : 'rgba(220,220,227,0.45)');
+        }
+
+        setMenuTheme();
+
+        function openMenu()  { menu.classList.add('open'); }
+        function closeMenu() { menu.classList.remove('open'); }
+
+        window.addEventListener('message', e => {
+          if (e.data.type === 'mobile-menu-toggle') {
+            menu.classList.contains('open') ? closeMenu() : openMenu();
+          }
+        });
+
+        menu.addEventListener('click', e => { if (e.target === menu) closeMenu(); });
+
+        menu.querySelectorAll('[data-mode]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            if (btn.dataset.mode === '2d') window._nav('/2D.html', 'left');
+            else closeMenu();
+          });
+        });
+
+        menu.querySelectorAll('[data-page]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            closeMenu();
+            if      (btn.dataset.page === 'craft'   && window.openCraftOverlay)   window.openCraftOverlay();
+            else if (btn.dataset.page === 'about'   && window.openAboutOverlay)   window.openAboutOverlay();
+            else if (btn.dataset.page === 'contact' && window.openContactOverlay) window.openContactOverlay();
+          });
+        });
+      })();
+
+      // Auto-fullscreen on landscape tilt (Android/Chrome; silently no-ops on iOS)
+      (function () {
+        function tryFullscreen() {
+          const el = document.documentElement;
+          const req = el.requestFullscreen || el.webkitRequestFullscreen;
+          if (req) req.call(el).catch(() => {});
+        }
+        function tryExitFullscreen() {
+          const isFs = document.fullscreenElement || document.webkitFullscreenElement;
+          if (!isFs) return;
+          const exit = document.exitFullscreen || document.webkitExitFullscreen;
+          if (exit) exit.call(document).catch(() => {});
+        }
+        function onOrientationChange() {
+          const landscape = screen.orientation
+            ? screen.orientation.type.includes('landscape')
+            : Math.abs(window.orientation || 0) === 90;
+          landscape ? tryFullscreen() : tryExitFullscreen();
+        }
+        if (screen.orientation) {
+          screen.orientation.addEventListener('change', onOrientationChange);
+        } else {
+          window.addEventListener('orientationchange', onOrientationChange);
+        }
+        // Handle case where page loads already in landscape
+        onOrientationChange();
+      })();
+    </script>
+    <iframe id="floating-button" src="/Questionmark_Button3d.html" allowtransparency="true"></iframe>
+
+    <div id="project-overlay">
+      <div id="project-wrapper">
+        <div class="overlay-topbar"><button class="overlay-back" id="project-back-btn">←</button><button class="overlay-close" id="project-close-btn">✕</button></div>
+        <iframe id="project-frame" data-src="/vaccine3d.html" loading="lazy"></iframe>
+      </div>
+    </div>
+    <div id="about-overlay">
+      <div id="about-wrapper">
+        <div class="overlay-topbar"><button class="overlay-back" id="about-back-btn">←</button><button class="overlay-close" id="about-close-btn">✕</button></div>
+        <iframe id="about-frame" data-src="/about3d.html" loading="lazy"></iframe>
+      </div>
+    </div>
+    <div id="contact-overlay">
+      <div id="contact-wrapper">
+        <div class="overlay-topbar"><button class="overlay-back" id="contact-back-btn">←</button><button class="overlay-close" id="contact-close-btn">✕</button></div>
+        <iframe id="contact-frame" data-src="/contact3d.html" loading="lazy"></iframe>
+      </div>
+    </div>
+    <div id="craft-overlay">
+      <div id="craft-wrapper">
+        <div class="overlay-topbar"><button class="overlay-back" id="craft-back-btn">←</button><button class="overlay-close" id="craft-close-btn">✕</button></div>
+        <iframe id="craft-frame" data-src="/craft3d.html" loading="lazy"></iframe>
+      </div>
+    </div>
+    <div id="controls-overlay">
+      <div id="controls-wrapper">
+        <div class="overlay-topbar"><button class="overlay-back" id="controls-back-btn">←</button><button class="overlay-close" id="controls-close-btn">✕</button></div>
+        <iframe id="controls-frame" data-src="/controls_open3d.html" loading="lazy"></iframe>
+      </div>
+    </div>
+    <div id="kaffeemaschine-overlay">
+      <div id="kaffeemaschine-wrapper">
+        <div class="overlay-topbar"><button class="overlay-back" id="kaffeemaschine-back-btn">←</button><button class="overlay-close" id="kaffeemaschine-close-btn">✕</button></div>
+        <iframe id="kaffeemaschine-frame" data-src="/kaffeemaschine/kaffeemaschine.html" loading="lazy"></iframe>
+      </div>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

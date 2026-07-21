@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Double Packaging — Lucas Maher</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=VT323&family=Roboto:wght@400;500&family=Roboto+Flex:wdth@100&display=swap" rel="stylesheet" />
+  <style>
+    @font-face {
+      font-family: 'OCR-A-BT';
+      src: url('/OCR-A-BT.ttf') format('truetype');
+      font-weight: normal;
+      font-style: normal;
+    }
+
+    :root {
+      --bg-surface: #DCDCE3;
+      --text-primary: #1A1A1A;
+      --text-secondary: #8E8E93;
+      --text-tertiary: #c7c7cc;
+      --accent-orange: #FF5C00;
+      --border-color: #6f6f6f;
+
+      --shadow-raised-sm: 5px 5px 12px rgba(174,174,192,0.65), -5px -5px 12px rgba(255,255,255,1);
+      --shadow-raised: 8px 8px 18px rgba(174,174,192,0.65), -8px -8px 18px rgba(255,255,255,1);
+      --shadow-pressed: inset 5px 5px 10px rgba(174,174,192,0.6), inset -5px -5px 10px rgba(255,255,255,1);
+      --shadow-hover: 16px 16px 36px rgba(174,174,192,0.85), -12px -12px 26px rgba(255,255,255,1);
+      --ease: cubic-bezier(.2,.7,.2,1);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100%;
+      overflow-x: hidden;
+      background: var(--bg-surface);
+      color: var(--text-primary);
+      font-family: 'Roboto Flex', sans-serif;
+      line-height: 1.6;
+      padding: 0 clamp(20px, 3.9vw, 55px);
+    }
+
+    #top-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 108px;
+      border: none;
+      z-index: 10;
+      pointer-events: auto;
+      background: transparent;
+      overflow: visible;
+      transition: transform 300ms ease;
+    }
+
+    #top-bar.hide {
+      transform: translateY(-220px);
+    }
+
+    .page-wrapper {
+      padding-top: 0;
+      padding-bottom: 12px;
+      border: 1px solid var(--border-color);
+      margin: 12px auto;
+      overflow: hidden;
+    }
+
+    /* ── Hero ─────────────────────────────────────────────────── */
+    .hero {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .hero video {
+      height: 88%;
+      width: auto;
+      max-width: 70%;
+      object-fit: contain;
+      display: block;
+    }
+
+    /* ── Sections ─────────────────────────────────────────────── */
+    .section {
+      border-bottom: 1px solid var(--border-color);
+      padding: clamp(40px, 6vw, 64px) clamp(40px, 8vw, 80px);
+    }
+
+    /* ── Header ───────────────────────────────────────────────── */
+    .project-header {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .breadcrumb {
+      font-family: 'VT323', monospace;
+      font-size: 14px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+    }
+
+    .title-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 12px;
+    }
+
+    .project-title {
+      font-family: 'OCR-A-BT', monospace;
+      font-size: clamp(40px, 6vw, 72px);
+      line-height: 1;
+      color: var(--text-primary);
+      text-transform: uppercase;
+    }
+
+    @keyframes blink {
+      0%, 49% { opacity: 1; }
+      50%, 100% { opacity: 0; }
+    }
+
+    .accent-dot {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--accent-orange);
+      margin-bottom: 10px;
+      flex-shrink: 0;
+      animation: blink 1.5s step-end infinite;
+    }
+
+    .dot-divider {
+      width: 100%;
+      height: 4px;
+      background-image: radial-gradient(circle, var(--text-primary) 1.5px, transparent 1.5px);
+      background-size: 10px 4px;
+      background-repeat: repeat-x;
+    }
+
+    /* ── Meta grid ────────────────────────────────────────────── */
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: clamp(16px, 3vw, 40px);
+    }
+
+    .meta-tile {
+      background: var(--bg-surface);
+      border-radius: 24px;
+      box-shadow: var(--shadow-raised-sm);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-height: 210px;
+      transition: transform 260ms var(--ease), box-shadow 260ms var(--ease);
+    }
+
+
+    .meta-label {
+      font-family: 'VT323', monospace;
+      font-size: 22px;
+      color: var(--accent-orange);
+      text-transform: uppercase;
+    }
+
+    .meta-inset {
+      flex: 1;
+      background: var(--bg-surface);
+      border-radius: 14px;
+      padding: 14px 18px;
+      box-shadow: var(--shadow-pressed);
+      font-size: 14px;
+      line-height: 1.55;
+      color: var(--text-primary);
+    }
+
+    /* ── Overview ─────────────────────────────────────────────── */
+    .overview {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .section-heading-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .section-title {
+      font-family: 'OCR-A-BT', monospace;
+      font-size: clamp(28px, 4vw, 40px);
+      line-height: 1;
+      color: var(--text-primary);
+      text-transform: uppercase;
+    }
+
+    .step-badge {
+      width: 36px;
+      height: 36px;
+      background: var(--accent-orange);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'VT323', monospace;
+      font-size: 20px;
+      color: var(--text-primary);
+      flex-shrink: 0;
+      transition: transform 260ms var(--ease), box-shadow 260ms var(--ease);
+    }
+
+
+    .overview-text {
+      background: var(--bg-surface);
+      border-radius: 16px;
+      padding: 24px 28px;
+      box-shadow: none;
+      font-size: 15px;
+      line-height: 1.7;
+      color: var(--text-secondary);
+    }
+
+    /* ── Static image ─────────────────────────────────────────── */
+    .static-image {
+      width: 100%;
+      border-radius: 16px;
+      box-shadow: var(--shadow-raised);
+      display: block;
+    }
+
+    /* ── Process header ───────────────────────────────────────── */
+    .process-header-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+    }
+
+    .process-sub {
+      font-family: 'VT323', monospace;
+      font-size: 14px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+    }
+
+    /* ── Process step layouts ─────────────────────────────────── */
+
+    /* Row 1: big left (672fr) + small right (492fr) */
+    .specs-row {
+      display: grid;
+      grid-template-columns: 672fr 492fr;
+      gap: clamp(20px, 3vw, 40px);
+      align-items: stretch;
+    }
+
+    /* Row 2: vertical left (619fr) + stacked right (545fr) */
+    .frame2 {
+      display: grid;
+      grid-template-columns: 619fr 545fr;
+      gap: clamp(20px, 3vw, 40px);
+      align-items: stretch;
+    }
+
+    .stack {
+      display: grid;
+      grid-template-rows: 1fr 1fr;
+      gap: clamp(20px, 3vw, 40px);
+    }
+
+    /* ── Step tile base ───────────────────────────────────────── */
+    .step-tile {
+      background: var(--bg-surface);
+      border-radius: 24px;
+      box-shadow: var(--shadow-raised);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      transition: transform 260ms var(--ease), box-shadow 260ms var(--ease);
+    }
+
+
+    /* Split: image + text side by side */
+    .step-tile.split {
+      display: grid;
+      grid-template-columns: 342fr 281fr;
+      gap: 16px;
+    }
+
+    .step-tile.split .img-cell {
+      aspect-ratio: 342 / 431;
+    }
+
+    /* Compact: image on top, caption below */
+    .step-tile.compact .img-cell {
+      aspect-ratio: 444 / 331;
+    }
+
+    /* Vertical: taller image, text below */
+    .step-tile.vertical .img-cell {
+      aspect-ratio: 587 / 820;
+    }
+
+    /* ── Image cell (inset-shadow frame) ──────────────────────── */
+    .img-cell {
+      background: var(--bg-surface);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: var(--shadow-pressed);
+    }
+
+    .img-cell img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    /* ── Text areas inside tiles ──────────────────────────────── */
+    .step-tile .text-inset {
+      background: var(--bg-surface);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: var(--shadow-pressed);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .caption {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .step-heading-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .step-heading {
+      font-family: 'VT323', monospace;
+      font-size: 32px;
+      color: var(--text-primary);
+      text-transform: uppercase;
+      line-height: 1;
+    }
+
+    .step-heading--sm {
+      font-size: 28px;
+    }
+
+    .step-tile p,
+    .caption p {
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--text-secondary);
+    }
+
+    /* ── Mid layout ────────────────────────────────────────── */
+    @media (max-width: 860px) {
+      .meta-grid { grid-template-columns: 1fr 1fr; }
+      .specs-row, .frame2 { grid-template-columns: 1fr; }
+      .stack { grid-template-rows: auto; gap: 16px; }
+      .step-tile.split { grid-template-columns: 1fr; }
+    }
+
+    /* ── Mobile layout ─────────────────────────────────────── */
+    @media (max-width: 640px) {
+      html, body { padding: 0; }
+      .page-wrapper { margin: 0; border-left: none; border-right: none; }
+      #top-bar { height: 108px; }
+      #top-bar.hide { transform: translateY(-90px); }
+      .section { padding: 24px 20px; }
+      .project-title { font-size: clamp(32px, 9vw, 56px); }
+      .meta-grid { grid-template-columns: 1fr 1fr; gap: 11px; }
+      .meta-tile { padding: 8px; gap: 8px; height: 155px; min-height: 0; }
+      .meta-inset { padding: 8px 10px; }
+      .specs-row, .frame2 { grid-template-columns: 1fr; }
+      .stack { grid-template-rows: auto; gap: 16px; }
+      .step-tile.split { grid-template-columns: 1fr; }
+    }
+
+    /* ── Project nav ──────────────────────────────────────── */
+    .project-nav {
+      display: flex;
+      border-top: 1px solid var(--border-color);
+      position: relative;
+      min-height: clamp(160px, 18vw, 220px);
+    }
+
+    .project-nav::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      bottom: -13px;
+      left: 50%;
+      width: 1px;
+      background: var(--border-color);
+      pointer-events: none;
+    }
+
+    .project-nav-item {
+      flex: 1;
+      padding: clamp(24px, 3vw, 40px) clamp(40px, 8vw, 80px);
+      display: flex;
+      flex-direction: column;
+      text-decoration: none;
+      color: var(--text-primary);
+      transition: transform 200ms ease;
+    }
+
+    .project-nav-item:hover {
+      transform: scale(1.04);
+    }
+
+    .project-nav-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .project-nav-number {
+      font-family: 'VT323', monospace;
+      font-size: clamp(14px, 1.5vw, 18px);
+      color: var(--text-secondary);
+      letter-spacing: 1px;
+    }
+
+    .project-nav-label {
+      font-family: 'VT323', monospace;
+      font-size: clamp(14px, 1.5vw, 18px);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-secondary);
+    }
+
+    .project-nav-title {
+      font-family: 'OCR-A-BT', monospace;
+      font-size: clamp(20px, 3vw, 36px);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-top: auto;
+    }
+
+    /* ── Mobile menu overlay ───────────────────────────────── */
+    .mobile-menu {
+      position: fixed; inset: 0; z-index: 200;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(0,0,0,0.35);
+      opacity: 0; pointer-events: none; transition: opacity 250ms ease;
+      --m-shadow-d: rgba(120,120,140,0.95);
+      --m-shadow-l: rgba(255,255,255,0.85);
+      --m-btn-bg: rgba(220,220,227,0.45);
+    }
+    .mobile-menu.open { opacity: 1; pointer-events: auto; }
+    .mobile-menu-panel {
+      width: 75%;
+      background: rgba(220,220,227,0.18);
+      backdrop-filter: blur(24px) saturate(1.4);
+      -webkit-backdrop-filter: blur(24px) saturate(1.4);
+      border-radius: 28px;
+      border: 1px solid rgba(255,255,255,0.55);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.6), inset 0 -1px 0 rgba(174,174,192,0.15);
+      padding: 20px; display: flex; flex-direction: column; gap: 24px;
+      transform: translateY(10px); transition: transform 250ms ease;
+    }
+    .mobile-menu.open .mobile-menu-panel { transform: translateY(0); }
+    .mobile-view-toggle {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 5px;
+      background: rgba(220,220,227,0.45); border-radius: 9999px;
+      box-shadow: 5px 5px 16px var(--m-shadow-d), -5px -5px 16px var(--m-shadow-l);
+      padding: 5px;
+    }
+    .mobile-mode-btn {
+      border: none; background: transparent; border-radius: 9999px;
+      padding: 11px 0; font-family: 'VT323', monospace; font-size: 18px;
+      color: #555; cursor: pointer; text-align: center;
+      -webkit-tap-highlight-color: transparent;
+      transition: box-shadow 150ms ease, color 150ms ease, transform 150ms ease;
+    }
+    .mobile-mode-btn.is-active {
+      background: var(--m-btn-bg); color: #000;
+      box-shadow: inset 5px 5px 14px var(--m-shadow-d), inset -5px -5px 14px var(--m-shadow-l);
+    }
+    .mobile-mode-btn:active:not(.is-active) {
+      box-shadow: inset 5px 5px 14px var(--m-shadow-d), inset -5px -5px 14px var(--m-shadow-l);
+      transform: scale(0.96);
+    }
+    .mobile-nav-btn {
+      display: block; background: var(--m-btn-bg); border-radius: 9999px;
+      box-shadow: 5px 5px 16px var(--m-shadow-d), -5px -5px 16px var(--m-shadow-l);
+      padding: 16px 24px; font-family: 'VT323', monospace; font-size: 22px;
+      color: #555; text-transform: uppercase; text-decoration: none;
+      text-align: center; cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: box-shadow 150ms ease, transform 150ms ease;
+    }
+    .mobile-nav-btn:active {
+      transform: scale(0.98);
+      box-shadow: inset 5px 5px 14px var(--m-shadow-d), inset -5px -5px 14px var(--m-shadow-l);
+    }
+
+    html { scrollbar-width: none; }
+    html::-webkit-scrollbar { display: none; }
+    #scroll-track {
+      position: fixed; right: 16px; top: 24px; bottom: 24px;
+      width: 6px; z-index: 999; pointer-events: none;
+      transform: translateZ(0); will-change: transform;
+    }
+    #scroll-thumb {
+      position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+      display: flex; flex-direction: column; gap: 5px;
+    }
+    .scroll-dot {
+      width: 5px; height: 5px; border-radius: 50%;
+      background: var(--accent-orange, #FF5C00); display: block; flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+  <iframe id="top-bar" src="/top_row_permanent_V3.html" allowtransparency="true" scrolling="no"></iframe>
+
+  <div id="mobile-menu" class="mobile-menu">
+    <div class="mobile-menu-panel">
+      <div class="mobile-view-toggle">
+        <button class="mobile-mode-btn is-active" data-mode="2d">2D</button>
+        <button class="mobile-mode-btn" data-mode="3d">3D</button>
+      </div>
+      <a class="mobile-nav-btn" data-page="craft">Craft</a>
+      <a class="mobile-nav-btn" data-page="about">About</a>
+      <a class="mobile-nav-btn" data-page="contact">Contact</a>
+    </div>
+  </div>
+
+  <div class="page-wrapper">
+
+    <!-- Hero video -->
+    <div class="hero">
+      <video autoplay muted loop playsinline>
+        <source src="/videos/vaccine/vaccine_render_V1.mov" type="video/quicktime" />
+        <source src="/videos/vaccine/vaccine_render_V1.mov" type="video/mp4" />
+      </video>
+    </div>
+
+    <!-- Header -->
+    <div class="section" style="border-bottom: none;">
+      <div class="project-header">
+        <p class="breadcrumb">Portfolio&nbsp;&nbsp;/&nbsp;&nbsp;Projects&nbsp;&nbsp;/&nbsp;&nbsp;Double Packaging</p>
+        <div class="title-row">
+          <h1 class="project-title">Double Packaging</h1>
+          <span class="accent-dot"></span>
+        </div>
+        <div class="dot-divider"></div>
+      </div>
+    </div>
+
+    <!-- Meta -->
+    <div class="section">
+      <div class="meta-grid">
+        <div class="meta-tile">
+          <div class="meta-label" data-i18n="label-timeline">Timeline</div>
+          <div class="meta-inset" data-i18n-html="val-timeline">Spring 2026<br/>4 weeks</div>
+        </div>
+        <div class="meta-tile">
+          <div class="meta-label" data-i18n="label-team">Team</div>
+          <div class="meta-inset" data-i18n="val-team">Just Me</div>
+        </div>
+        <div class="meta-tile">
+          <div class="meta-label" data-i18n="label-role">Role</div>
+          <div class="meta-inset" data-i18n="val-role">3D Designer</div>
+        </div>
+        <div class="meta-tile">
+          <div class="meta-label" data-i18n="label-skills">Skills</div>
+          <div class="meta-inset" data-i18n-html="val-skills">Blender · Cycles<br/>Cloth Simulation<br/>Material Shading</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Overview -->
+    <div class="section" style="border-bottom: none;">
+      <div class="overview">
+        <div class="section-heading-row">
+          <h2 class="section-title" data-i18n="section-overview">Overview / Concept</h2>
+          <span class="step-badge">0</span>
+        </div>
+        <div class="dot-divider"></div>
+        <div class="overview-text" data-i18n="overview-text">
+          Vacuum-sealed packaging is usually photographed flat — real-world gravity and suction don't leave many options. That constraint was part of why this felt worth building: in CGI the pack can stand upright, rotate freely, and be lit from any angle. The object itself was a deliberate choice too, inspired by intranetgirl's tutorial — I wanted something unconventional, a pairing you wouldn't normally see merchandised. A pharmaceutical vial sealed inside a zip bag ticks that box. It also made for a useful technical challenge: two materials with opposite physical behaviour, which pushed me into cloth simulation, Cycles rendering, and transparent shading for the first time.
+        </div>
+      </div>
+    </div>
+
+    <!-- Process header -->
+    <div class="section" style="border-bottom: none; margin-top: -60px;">
+      <div class="process-header-row">
+        <h2 class="section-title" data-i18n="section-process">Process</h2>
+        <span class="process-sub" data-i18n="process-sub">5 Steps &nbsp;·&nbsp; Modeling → Render</span>
+      </div>
+      <div class="dot-divider" style="margin-top: 20px;"></div>
+    </div>
+
+    <!-- Steps 1 & 2 -->
+    <div class="section" style="border-bottom: none; margin-top: -70px;">
+      <div class="specs-row">
+        <div class="step-tile split">
+          <div class="img-cell"><img src="/images/vaccine/step1_bottle.png" alt="Modeling — base bottle mesh" /></div>
+          <div class="text-inset">
+            <div class="step-heading-row">
+              <span class="step-heading" data-i18n="step1-heading">Modeling</span>
+              <span class="step-badge">1</span>
+            </div>
+            <p data-i18n="step1-text">The vial body modeled from a single profile, lathed and edge-loop-tightened around the cap. Cap separated as its own object so it could be UV-unwrapped cleanly for the label band. Subdivision surface kept on for the final render to round the silhouette without losing the printed-grade ribs at the base.</p>
+          </div>
+        </div>
+        <div class="step-tile compact">
+          <div class="img-cell"><img src="/images/vaccine/step2_wireframe.png" alt="Topology — vacuum bag wireframe" /></div>
+          <div class="caption">
+            <div class="step-heading-row">
+              <span class="step-heading step-heading--sm" data-i18n="step2-heading">Topology</span>
+              <span class="step-badge">2</span>
+            </div>
+            <p data-i18n="step2-text">Bag subdivided to ~250k tris — enough resolution for the cloth sim to resolve fine wrinkles where the plastic suctions onto the bottle without exploding into noise.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Steps 3, 4 & 5 -->
+    <div class="section" style="border-bottom: none; padding-top: 0;">
+      <div class="frame2">
+        <div class="step-tile vertical">
+          <div class="img-cell"><img src="/images/vaccine/step3_shaded_mesh.png" alt="Vacuum Sim — collapsed bag mesh" /></div>
+          <div class="text-inset">
+            <div class="step-heading-row">
+              <span class="step-heading" data-i18n="step3-heading">Vacuum Sim</span>
+              <span class="step-badge">3</span>
+            </div>
+            <p data-i18n="step3-text">Cloth simulation with negative pressure — the bag actively sucks down onto the rigid bottle. 192 baked frames, with frame 90 picked as the hero.</p>
+          </div>
+        </div>
+        <div class="stack">
+          <div class="step-tile compact">
+            <div class="img-cell"><img src="/images/vaccine/step4_shader_nodes.png" alt="Shading — Cycles node graph" /></div>
+            <div class="caption">
+              <div class="step-heading-row">
+                <span class="step-heading step-heading--sm" data-i18n="step4-heading">Shading</span>
+                <span class="step-badge">4</span>
+              </div>
+              <p data-i18n="step4-text">Bag mixes Transparent BSDF for clarity, Translucent BSDF for the milky scatter on the bunched areas, and Glossy with IOR-driven Fresnel for the wet plastic highlights.</p>
+            </div>
+          </div>
+          <div class="step-tile compact">
+            <div class="img-cell"><img src="/images/vaccine/step5_viewport.png" alt="Final Render — viewport preview" /></div>
+            <div class="caption">
+              <div class="step-heading-row">
+                <span class="step-heading step-heading--sm" data-i18n="step5-heading">Final Render</span>
+                <span class="step-badge">5</span>
+              </div>
+              <p data-i18n="step5-text">Cycles output at 1920×1400, single key light at 6500K, denoised in compositor. Two hero passes shipped — a cool blue clinical front-on, and a rose-tinted angle used as the portfolio cover.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="project-nav">
+      <div class="project-nav-item"></div>
+      <a href="/mac-lamp2d.html" class="project-nav-item">
+        <div class="project-nav-top">
+          <span class="project-nav-label" data-i18n="nav-next">NEXT >></span>
+          <span class="project-nav-number">02</span>
+        </div>
+        <span class="project-nav-title">Mac-Lamp</span>
+      </a>
+    </div>
+
+  </div>
+
+  <script>
+    // ── Page transitions ──────────────────────────────────────────
+    (function() {
+      var KF = '@keyframes _sR{from{transform:translateX(100%)}to{transform:translateX(0)}}@keyframes _sL{from{transform:translateX(-100%)}to{transform:translateX(0)}}';
+      var s = document.createElement('style'); s.textContent = KF; document.head.appendChild(s);
+      var DUR = 380, EASE = 'cubic-bezier(0.4,0,0.2,1)';
+
+      function _getWrap() {
+        var w = document.getElementById('_sw');
+        if (!w) {
+          w = document.createElement('div'); w.id = '_sw';
+          Array.from(document.body.children).forEach(function(c) {
+            if (c.id !== 'top-bar' && c.id !== '_sw') w.appendChild(c);
+          });
+          document.body.appendChild(w);
+        }
+        return w;
+      }
+
+      var dir = sessionStorage.getItem('_sv');
+      if (dir) {
+        sessionStorage.removeItem('_sv');
+        var wrap = _getWrap();
+        wrap.style.transform = dir === 'right' ? 'translateX(100%)' : 'translateX(-100%)';
+        var done = false;
+        function reveal() {
+          if (done) return; done = true;
+          requestAnimationFrame(function() {
+            wrap.style.transform = '';
+            wrap.style.animation = (dir === 'right' ? '_sR' : '_sL') + ' ' + DUR + 'ms ' + EASE + ' both';
+            setTimeout(function() { wrap.style.animation = ''; }, DUR + 60);
+          });
+        }
+        if (document.fonts && document.fonts.ready) { document.fonts.ready.then(reveal); } else { requestAnimationFrame(function() { requestAnimationFrame(reveal); }); }
+        setTimeout(reveal, 300);
+      }
+
+      window._nav = function(url, into) {
+        sessionStorage.setItem('_sv', into);
+        var dim = document.createElement('div');
+        dim.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0);z-index:9999;transition:background 220ms ease;pointer-events:none;';
+        document.body.appendChild(dim);
+        requestAnimationFrame(function() { dim.style.background = 'rgba(0,0,0,0.28)'; });
+        setTimeout(function() { location.href = url; }, 220);
+      };
+
+      window.addEventListener('message', function(e) {
+        if (e.data && e.data.type === 'page-slide') window._nav(e.data.url, e.data.enterFrom);
+      });
+    })();
+
+    (function () {
+      const menu = document.getElementById('mobile-menu');
+      function setMenuTheme() {
+        const bg = getComputedStyle(document.body).backgroundColor;
+        const m = bg.match(/[\d.]+/g);
+        let lum = 1;
+        if (m && m.length >= 3) {
+          const a = m[3] !== undefined ? +m[3] : 1;
+          if (a > 0.4) lum = (0.299 * +m[0] + 0.587 * +m[1] + 0.114 * +m[2]) / 255;
+        }
+        const dark = lum < 0.4;
+        menu.style.setProperty('--m-shadow-d', dark ? 'rgba(0,0,20,0.95)' : 'rgba(120,120,140,0.95)');
+        menu.style.setProperty('--m-shadow-l', dark ? 'rgba(255,255,255,0.38)' : 'rgba(255,255,255,0.85)');
+        menu.style.setProperty('--m-btn-bg',   dark ? 'rgba(220,220,227,0.68)' : 'rgba(220,220,227,0.45)');
+      }
+      setMenuTheme();
+      function openMenu()  { menu.classList.add('open'); }
+      function closeMenu() { menu.classList.remove('open'); }
+      window.addEventListener('message', e => {
+        if (e.data.type === 'mobile-menu-toggle')
+          menu.classList.contains('open') ? closeMenu() : openMenu();
+      });
+      menu.addEventListener('click', e => { if (e.target === menu) closeMenu(); });
+      menu.querySelectorAll('[data-mode]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (btn.dataset.mode === '3d') window._nav('/', 'right');
+          else window.location.href = '/2D.html';
+        });
+      });
+      menu.querySelectorAll('[data-page]').forEach(btn => {
+        btn.addEventListener('click', e => {
+          e.preventDefault(); closeMenu();
+          if      (btn.dataset.page === 'craft')   window.location.href = '/2D.html#craft-section';
+          else if (btn.dataset.page === 'about')   window.location.href = '/about2d.html';
+          else if (btn.dataset.page === 'contact') window.location.href = '/contact2d.html';
+        });
+      });
+    })();
+
+    let lastScrollY = 0;
+    let lastToggleY = 0;
+    const topBar = document.getElementById('top-bar');
+    const hideThreshold = 250;
+    const showThreshold = 180;
+
+    window.addEventListener('scroll', () => {
+      const currentScrollY = window.scrollY;
+      if (currentScrollY === 0) {
+        topBar.classList.remove('hide');
+        lastToggleY = 0;
+      } else if (currentScrollY > lastScrollY && Math.abs(currentScrollY - lastToggleY) > hideThreshold) {
+        topBar.classList.add('hide');
+        lastToggleY = currentScrollY;
+      } else if (currentScrollY < lastScrollY && Math.abs(currentScrollY - lastToggleY) > showThreshold) {
+        topBar.classList.remove('hide');
+        lastToggleY = currentScrollY;
+      }
+      lastScrollY = currentScrollY;
+    });
+
+    // ── i18n ─────────────────────────────────────────────────────
+    const TRANSLATIONS = {
+      en: {
+        'label-timeline': 'Timeline', 'val-timeline': 'Spring 2026<br/>4 weeks',
+        'label-team': 'Team', 'val-team': 'Just Me',
+        'label-role': 'Role', 'val-role': '3D Designer',
+        'label-skills': 'Skills', 'val-skills': 'Blender · Cycles<br/>Cloth Simulation<br/>Material Shading',
+        'section-overview': 'Overview / Concept',
+        'overview-text': 'Vacuum-sealed packaging is usually photographed flat — real-world gravity and suction don\'t leave many options. That constraint was part of why this felt worth building: in CGI the pack can stand upright, rotate freely, and be lit from any angle. The object itself was a deliberate choice too, inspired by intranetgirl\'s tutorial — I wanted something unconventional, a pairing you wouldn\'t normally see merchandised. A pharmaceutical vial sealed inside a zip bag ticks that box. It also made for a useful technical challenge: two materials with opposite physical behaviour, which pushed me into cloth simulation, Cycles rendering, and transparent shading for the first time.',
+        'section-process': 'Process', 'process-sub': '5 Steps · Modeling → Render',
+        'step1-heading': 'Modeling', 'step1-text': 'The vial body modeled from a single profile, lathed and edge-loop-tightened around the cap. Cap separated as its own object so it could be UV-unwrapped cleanly for the label band. Subdivision surface kept on for the final render to round the silhouette without losing the printed-grade ribs at the base.',
+        'step2-heading': 'Topology', 'step2-text': 'Bag subdivided to ~250k tris — enough resolution for the cloth sim to resolve fine wrinkles where the plastic suctions onto the bottle without exploding into noise.',
+        'step3-heading': 'Vacuum Sim', 'step3-text': 'Cloth simulation with negative pressure — the bag actively sucks down onto the rigid bottle. 192 baked frames, with frame 90 picked as the hero.',
+        'step4-heading': 'Shading', 'step4-text': 'Bag mixes Transparent BSDF for clarity, Translucent BSDF for the milky scatter on the bunched areas, and Glossy with IOR-driven Fresnel for the wet plastic highlights.',
+        'step5-heading': 'Final Render', 'step5-text': 'Cycles output at 1920×1400, single key light at 6500K, denoised in compositor. Two hero passes shipped — a cool blue clinical front-on, and a rose-tinted angle used as the portfolio cover.',
+        'nav-next': 'NEXT >>',
+      },
+      de: {
+        'label-timeline': 'Zeitraum', 'val-timeline': 'Frühling 2026<br/>4 Wochen',
+        'label-team': 'Team', 'val-team': 'Nur ich',
+        'label-role': 'Rolle', 'val-role': '3D-Designer',
+        'label-skills': 'Werkzeuge', 'val-skills': 'Blender · Cycles<br/>Tuchsimulation<br/>Material-Shading',
+        'section-overview': 'Überblick / Konzept',
+        'overview-text': 'Vakuumversiegelte Verpackungen werden normalerweise flach fotografiert — Schwerkraft und Unterdruck lassen in der echten Welt wenig Spielraum. Diese Einschränkung war Teil dessen, was dieses Projekt lohnenswert machte: In CGI kann die Verpackung aufrecht stehen, sich frei drehen und aus jedem Winkel beleuchtet werden. Das Objekt selbst war ebenfalls eine bewusste Wahl, inspiriert durch intranetgirls Tutorial — ich wollte etwas Unkonventionelles, eine Kombination, die man normalerweise nicht kommerziell sieht. Ein pharmazeutisches Fläschchen in einem Druckverschlussbeutel trifft genau das. Es war auch eine hilfreiche technische Herausforderung: zwei Materialien mit gegensätzlichem physikalischen Verhalten, was mich zum ersten Mal in die Tuchsimulation, Cycles-Rendering und transparentes Shading eingeführt hat.',
+        'section-process': 'Prozess', 'process-sub': '5 Schritte · Modellierung → Rendering',
+        'step1-heading': 'Modellierung', 'step1-text': 'Der Fläschchenkörper wurde aus einem einzelnen Profil modelliert, gedreht und mit Edge Loops um den Deckel gespannt. Der Deckel wurde als eigenes Objekt getrennt, um sauber für die Etikettenbahn UV-unwrapped werden zu können. Subdivision Surface blieb für das finale Rendering aktiv, um die Silhouette abzurunden, ohne die Rippen an der Basis zu verlieren.',
+        'step2-heading': 'Topologie', 'step2-text': 'Der Beutel wurde auf ~250k Tris unterteilt — ausreichend Auflösung, damit die Tuchsimulation feine Falten dort auflösen kann, wo sich der Kunststoff an die Flasche saugt, ohne in Rauschen zu eskalieren.',
+        'step3-heading': 'Vakuumsimulation', 'step3-text': 'Tuchsimulation mit Unterdruck — der Beutel saugt sich aktiv an der starren Flasche fest. 192 gebackene Frames, Frame 90 als Hero ausgewählt.',
+        'step4-heading': 'Shading', 'step4-text': 'Der Beutel kombiniert Transparent BSDF für Klarheit, Translucent BSDF für die milchige Streuung an den gewellten Bereichen und Glossy mit IOR-gesteuertem Fresnel für die glänzenden Kunststoffhöhepunkte.',
+        'step5-heading': 'Finales Rendering', 'step5-text': 'Cycles-Ausgabe bei 1920×1400, einzelnes Key-Licht bei 6500K, im Compositor entrauscht. Zwei Hero-Pässe exportiert — ein kühler blauer klinischer Frontalblick und ein rosafarbener Winkel als Portfolio-Cover.',
+        'nav-next': 'WEITER >>',
+      },
+      fr: {
+        'label-timeline': 'Calendrier', 'val-timeline': 'Printemps 2026<br/>4 semaines',
+        'label-team': 'Équipe', 'val-team': 'Juste moi',
+        'label-role': 'Rôle', 'val-role': 'Designer 3D',
+        'label-skills': 'Outils', 'val-skills': 'Blender · Cycles<br/>Simulation tissu<br/>Shading matériaux',
+        'section-overview': 'Aperçu / Concept',
+        'overview-text': 'Les emballages sous vide sont généralement photographiés à plat — la gravité et la succion dans le monde réel ne laissent pas beaucoup d\'options. Cette contrainte faisait partie de ce qui rendait ce projet intéressant : en CGI, l\'emballage peut se tenir debout, tourner librement et être éclairé sous n\'importe quel angle. L\'objet lui-même était aussi un choix délibéré, inspiré du tutoriel d\'intranetgirl — je voulais quelque chose d\'unconventionnel, un assemblage qu\'on ne verrait normalement pas commercialisé. Un flacon pharmaceutique scellé dans un sachet zippé remplit parfaitement ce critère. Cela constituait également un défi technique utile : deux matériaux au comportement physique opposé, ce qui m\'a poussé pour la première fois dans la simulation de tissu, le rendu Cycles et les shaders transparents.',
+        'section-process': 'Processus', 'process-sub': '5 Étapes · Modélisation → Rendu',
+        'step1-heading': 'Modélisation', 'step1-text': 'Le corps du flacon modélisé à partir d\'un seul profil, tourné et resserré avec des edge loops autour du bouchon. Le bouchon séparé en objet propre pour être UV-unwrappé proprement pour la bande d\'étiquette. La subdivision surface conservée pour le rendu final afin d\'arrondir la silhouette sans perdre les nervures à la base.',
+        'step2-heading': 'Topologie', 'step2-text': 'Le sachet subdivisé à ~250k triangles — assez de résolution pour que la sim tissu résolve les fines ridules là où le plastique se colle sur le flacon sans exploser en bruit.',
+        'step3-heading': 'Sim. sous vide', 'step3-text': 'Simulation de tissu avec pression négative — le sachet se colle activement sur la bouteille rigide. 192 frames simulées, la frame 90 choisie comme héro.',
+        'step4-heading': 'Shading', 'step4-text': 'Le sachet mélange le BSDF transparent pour la clarté, le BSDF translucide pour la diffusion laiteuse sur les zones froissées, et le Glossy avec Fresnel basé sur l\'IOR pour les reflets brillants du plastique.',
+        'step5-heading': 'Rendu final', 'step5-text': 'Sortie Cycles à 1920×1400, lumière principale unique à 6500K, débruitée dans le compositeur. Deux passes héro livrées — un frontal clinique bleu froid et un angle rosé utilisé comme couverture de portfolio.',
+        'nav-next': 'SUIVANT >>',
+      }
+    };
+    function applyLang(lang) {
+      const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
+      document.querySelectorAll('[data-i18n]').forEach(el => { if (t[el.dataset.i18n] !== undefined) el.textContent = t[el.dataset.i18n]; });
+      document.querySelectorAll('[data-i18n-html]').forEach(el => { if (t[el.dataset.i18nHtml] !== undefined) el.innerHTML = t[el.dataset.i18nHtml]; });
+    }
+    applyLang(localStorage.getItem('lang') || 'en');
+
+    window.addEventListener('message', function(e) {
+      if (!e.data || !e.data.type) return;
+      if (e.data.type === 'nav-expand') topBar.style.height = '280px';
+      if (e.data.type === 'nav-collapse') topBar.style.height = '90px';
+      if (e.data.type === 'lang-change') applyLang(e.data.lang);
+    });
+  </script>
+  <div id="scroll-track">
+    <div id="scroll-thumb">
+      <span class="scroll-dot"></span>
+      <span class="scroll-dot"></span>
+      <span class="scroll-dot"></span>
+      <span class="scroll-dot"></span>
+      <span class="scroll-dot"></span>
+    </div>
+  </div>
+  <script>
+    (function () {
+      var thumb = document.getElementById('scroll-thumb');
+      var track = document.getElementById('scroll-track');
+      var ticking = false;
+      function update() {
+        var scrolled  = window.scrollY;
+        var maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+        var progress  = maxScroll > 0 ? Math.max(0, Math.min(1, scrolled / maxScroll)) : 0;
+        thumb.style.top = (progress * (track.offsetHeight - thumb.offsetHeight)) + 'px';
+        ticking = false;
+      }
+      window.addEventListener('scroll', function () {
+        if (!ticking) { requestAnimationFrame(update); ticking = true; }
+      }, { passive: true });
+      update();
+    })();
+  </script>
+</body>
+</html>

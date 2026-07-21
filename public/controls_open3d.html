@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Controls</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet" />
+  <style>
+    @font-face {
+      font-family: 'OCR-A-BT';
+      src: url('/OCR-A-BT.ttf') format('truetype');
+      font-weight: normal;
+      font-style: normal;
+    }
+
+    :root {
+      --bg-base: #DCDCE3;
+      --bg-surface: #DCDCE3;
+      --text-primary: #1A1A1A;
+      --text-secondary: #8E8E93;
+      --shadow-raised-sm: 5px 5px 12px rgba(174,174,192,0.65), -5px -5px 12px rgba(255,255,255,1);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 100%; height: 100%; overflow: hidden; }
+    body { background: var(--bg-base); font-family: 'VT323', monospace; padding: 32px; display: flex; justify-content: center; }
+
+    .container {
+      width: min(100%, 804px);
+      max-width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      padding: clamp(32px, 5vw, 64px) clamp(32px, 8vw, 80px);
+      gap: 16px;
+      border: 1px solid #6f6f6f;
+    }
+
+    @media (max-width: 964px) {
+      .container {
+        padding: 64px;
+      }
+    }
+
+    .header {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .header-title {
+      font-family: 'OCR-A-BT', monospace;
+      font-size: clamp(36px, 5.6vw, 56px);
+      color: var(--text-primary);
+      letter-spacing: 6px;
+    }
+
+    .header-divider {
+      width: 100%;
+      height: 4px;
+      background-image: radial-gradient(circle, var(--text-primary) 1.5px, transparent 1.5px);
+      background-size: 10px 4px;
+      background-repeat: repeat-x;
+      border: none;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 109px 109px;
+      gap: 18px;
+      align-content: center;
+      flex: 1;
+    }
+
+    .card {
+      background: var(--bg-surface);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: inset 5px 5px 10px rgba(174,174,192,0.55), inset -5px -5px 10px rgba(255,255,255,0.95);
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .card-header {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex: 1;
+    }
+
+    .card-title {
+      font-size: 20px;
+      font-weight: 400;
+      color: var(--text-primary);
+      letter-spacing: 1px;
+    }
+
+    .card-description {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    .card-visual {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .card > div:first-child {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .key {
+      width: 38px;
+      height: 38px;
+      background: var(--bg-base);
+      border-radius: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+      box-shadow: 5px 5px 12px rgba(174,174,192,0.65), -5px -5px 12px rgba(255,255,255,1);
+    }
+
+    .icon-dot {
+      width: 9px;
+      height: 9px;
+      background: #4a4a4a;
+      border-radius: 50%;
+    }
+
+    .icon-square {
+      width: 30px;
+      height: 30px;
+      background: var(--bg-base);
+      border-radius: 5px;
+      box-shadow: inset 2px 2px 4px rgba(174,174,192,0.4), inset -2px -2px 4px rgba(255,255,255,0.8);
+    }
+
+    .mouse-icon {
+      display: flex;
+      gap: 3px;
+      align-items: flex-start;
+    }
+
+    .mouse-left {
+      width: 31px;
+      height: 48px;
+      background: var(--bg-base);
+      border-radius: 28px 2px 2px 2px;
+      box-shadow: -5px -5px 12px rgba(255,255,255,1), 5px 5px 12px rgba(174,174,192,0.65);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .mouse-right {
+      width: 31px;
+      height: 48px;
+      background: var(--bg-base);
+      border-radius: 2px 28px 2px 2px;
+      box-shadow: inset 4px 4px 10px rgba(174,174,192,0.6), inset -4px -4px 10px rgba(255,255,255,1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .mouse-left--pressed {
+      width: 31px;
+      height: 48px;
+      border-radius: 28px 2px 2px 2px;
+      box-shadow: inset 4px 4px 10px rgba(174,174,192,0.6), inset -4px -4px 10px rgba(255,255,255,1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .mouse-right--raised {
+      width: 31px;
+      height: 48px;
+      background: var(--bg-base);
+      border-radius: 2px 28px 2px 2px;
+      box-shadow: -5px -5px 12px rgba(255,255,255,1), 5px 5px 12px rgba(174,174,192,0.65);
+    }
+
+    .mouse-dot {
+      width: 8px;
+      height: 8px;
+      background: #4a4a4a;
+      border-radius: 50%;
+    }
+
+    .lm-button {
+      width: 56px;
+      height: 56px;
+      background: var(--bg-base);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 23px;
+      font-weight: 400;
+      color: var(--text-primary);
+      box-shadow: inset -6px -6px 15px rgba(255,255,255,1), inset 6px 6px 15px rgba(174,174,192,0.65);
+      html, body { height: auto; overflow-y: auto; }
+      body { padding: 0; justify-content: flex-start; }
+      .container {
+        width: 100%;
+        border: none;
+        padding: 80px clamp(20px, 6vw, 40px) 64px;
+        gap: 24px;
+      }
+      .header-title {
+        font-size: clamp(28px, 8vw, 56px);
+        white-space: normal;
+        letter-spacing: 2px;
+      }
+      .grid {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto;
+        gap: 16px;
+      }
+    }
+
+    @media (max-width: 700px) {
+      html, body { overflow-y: auto; }
+
+      .container {
+        height: auto;
+        overflow-y: auto;
+        padding: clamp(16px, 2.5vw, 32px) clamp(16px, 4vw, 40px);
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto;
+        gap: 16px;
+      }
+
+      .card {
+        height: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1 class="header-title">CONTROLS</h1>
+      <hr class="header-divider" />
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div>
+          <div class="card-title">MOVE</div>
+          <div class="card-description">W, A, S, D or arrow keys to walk the scene</div>
+        </div>
+        <div class="card-visual">
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;">
+            <div class="key">W</div>
+            <div style="display: flex; gap: 6px;">
+              <div class="key">A</div>
+              <div class="key">S</div>
+              <div class="key">D</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div>
+          <div class="card-title">CAMERA</div>
+          <div class="card-description">Rightclick or trackpad to move camera</div>
+        </div>
+        <div class="card-visual">
+          <div class="mouse-icon">
+            <div class="mouse-left"></div>
+            <div class="mouse-right">
+              <div class="mouse-dot"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div>
+          <div class="card-title">INSPECT</div>
+          <div class="card-description">Leftclick to select item</div>
+        </div>
+        <div class="card-visual">
+          <div class="mouse-icon">
+            <div class="mouse-left mouse-left--pressed">
+              <div class="mouse-dot"></div>
+            </div>
+            <div class="mouse-right mouse-right--raised"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div>
+          <div class="card-title">RESET</div>
+          <div class="card-description">Tap icon (top left) to reset to center</div>
+        </div>
+        <div class="card-visual">
+          <div class="lm-button">LM</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

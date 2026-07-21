@@ -1,0 +1,399 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: #0d0d14;
+  overflow: hidden;
+  cursor: default;
+}
+
+body.looking {
+  cursor: grabbing;
+}
+
+canvas {
+  display: block;
+}
+
+#info-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 20;
+  align-items: center;
+  justify-content: center;
+}
+
+#info-overlay.open {
+  display: flex;
+}
+
+#info-panel {
+  position: relative;
+  background: rgba(18, 18, 28, 0.97);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  padding: 32px;
+  width: min(520px, 90vw);
+  max-height: 80vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+#info-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 18px;
+  cursor: pointer;
+  line-height: 1;
+}
+
+#info-close:hover {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+#info-title {
+  font-family: ui-monospace, monospace;
+  font-size: 16px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0;
+  padding-right: 24px;
+}
+
+#info-image {
+  width: 100%;
+  border-radius: 6px;
+  object-fit: cover;
+  max-height: 220px;
+}
+
+#info-image.hidden {
+  display: none;
+}
+
+#info-text {
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  line-height: 1.8;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+#top-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100px;
+  border: none;
+  z-index: 10;
+  pointer-events: auto;
+  background: transparent;
+}
+
+
+
+#floating-button {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  width: 100px;
+  height: 100px;
+  border: none;
+  z-index: 10;
+  pointer-events: auto;
+  background: transparent;
+}
+
+@media (pointer: coarse) {
+  #floating-button { display: none; }
+}
+
+#project-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 15;
+  align-items: center;
+  justify-content: center;
+}
+
+#project-overlay.open {
+  display: flex;
+}
+
+#project-wrapper {
+  width: 66.66vw;
+  height: 66.66vh;
+  border-radius: 16px;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+  position: relative;
+}
+
+#project-frame {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border: none;
+  transform-origin: top left;
+}
+
+#hud {
+  position: fixed;
+  bottom: 16px;
+  left: 16px;
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.45);
+  pointer-events: none;
+  z-index: 5;
+  line-height: 1.6;
+}
+
+/* ── About overlay ───────────────────────────────────────────────── */
+#about-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 15;
+  align-items: center;
+  justify-content: center;
+}
+
+#about-overlay.open {
+  display: flex;
+}
+
+#about-wrapper {
+  width: 66.66vw;
+  height: 66.66vh;
+  border-radius: 16px;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+}
+
+#about-frame {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+/* ── Contact overlay ─────────────────────────────────────────────── */
+#contact-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 15;
+  align-items: center;
+  justify-content: center;
+}
+
+#contact-overlay.open {
+  display: flex;
+}
+
+#contact-wrapper {
+  width: 66.66vw;
+  height: 66.66vh;
+  border-radius: 16px;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+}
+
+#contact-frame {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+/* ── Craft overlay ───────────────────────────────────────────────── */
+#craft-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 15;
+  align-items: center;
+  justify-content: center;
+}
+
+#craft-overlay.open {
+  display: flex;
+}
+
+#craft-wrapper {
+  width: 66.66vw;
+  height: 66.66vh;
+  border-radius: 16px;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+}
+
+#craft-frame {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+/* ── Controls overlay ────────────────────────────────────────────── */
+#controls-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 15;
+  align-items: center;
+  justify-content: center;
+}
+
+#controls-overlay.open {
+  display: flex;
+}
+
+#controls-wrapper {
+  width: 66.66vw;
+  height: 66.66vh;
+  border-radius: 16px;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+}
+
+#controls-frame {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+/* ── Kaffeemaschine overlay ──────────────────────────────────────── */
+#kaffeemaschine-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 15;
+  align-items: center;
+  justify-content: center;
+}
+
+#kaffeemaschine-overlay.open {
+  display: flex;
+}
+
+#kaffeemaschine-wrapper {
+  width: 66.66vw;
+  height: 66.66vh;
+  border-radius: 16px;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+  position: relative;
+}
+
+#kaffeemaschine-frame {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+/* ── Overlay mobile top bar ──────────────────────────────────────── */
+.overlay-topbar {
+  display: none;
+  height: 57px;
+  flex-shrink: 0;
+  background: #DCDCE3;
+  border-bottom: 1px solid rgba(111, 111, 111, 0.18);
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 14px;
+}
+
+.overlay-close {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: #DCDCE3;
+  box-shadow: 3px 3px 8px rgba(174,174,192,0.65), -3px -3px 8px rgba(255,255,255,1);
+  cursor: pointer;
+  font-size: 17px;
+  color: #1A1A1A;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+  transition: box-shadow 150ms ease, transform 150ms ease;
+}
+
+.overlay-close:active,
+.overlay-back:active {
+  box-shadow: inset 3px 3px 7px rgba(174,174,192,0.6), inset -3px -3px 7px rgba(255,255,255,1);
+  transform: scale(0.95);
+}
+
+.overlay-back {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: #DCDCE3;
+  box-shadow: 3px 3px 8px rgba(174,174,192,0.65), -3px -3px 8px rgba(255,255,255,1);
+  cursor: pointer;
+  font-size: 18px;
+  color: #1A1A1A;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+  transition: box-shadow 150ms ease, transform 150ms ease;
+}
+
+@media (pointer: coarse) {
+  .overlay-topbar {
+    display: flex;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 2;
+    background: rgba(220, 220, 227, 0.55);
+    backdrop-filter: blur(20px) saturate(1.4);
+    -webkit-backdrop-filter: blur(20px) saturate(1.4);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+  }
+
+  #about-wrapper,
+  #contact-wrapper,
+  #craft-wrapper,
+  #controls-wrapper,
+  #project-wrapper {
+    position: relative;
+    width: 85vw;
+    height: 85vh;
+  }
+
+  #about-frame,
+  #contact-frame,
+  #craft-frame,
+  #controls-frame {
+    width: 100%;
+    height: 100%;
+  }
+
+  #project-frame {
+    top: 57px;
+  }
+}
+

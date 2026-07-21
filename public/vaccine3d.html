@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=1512" />
+  <title>S4AD — Vaccine Pack · Lucas Maher</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=VT323&family=Major+Mono+Display&display=swap" rel="stylesheet" />
+  <style>
+    /* Local OCR-A BT — same file used in the Figma source.
+       local() lets a system-installed copy take priority if present. */
+    @font-face {
+      font-family: 'OCR-A BT';
+      font-style: normal;
+      font-weight: 400;
+      font-display: swap;
+      src: local('OCR-A BT'), local('OCR A Std'), url('OCR-A-BT.ttf') format('truetype');
+    }
+  </style>
+  <style>
+    /* ── Nothing-design tokens ─────────────────────────────────── */
+    :root {
+      --bg-surface:    #DCDCE3;
+      --bg-white:      #FFFFFF;
+      --bg-black:      #1A1A1A;
+      --text-primary:  #1A1A1A;
+      --text-secondary:#8E8E93;
+      --text-tertiary: #C7C7CC;
+      --accent-orange: #FF5C00;
+
+      --radius-md: 16px;
+      --radius-lg: 24px;
+      --radius-xl: 32px;
+
+      --shadow-raised-sm:
+         5px  5px 12px rgba(174,174,192,0.65),
+        -5px -5px 12px rgba(255,255,255,1);
+      --shadow-raised:
+         8px  8px 18px rgba(174,174,192,0.65),
+        -8px -8px 18px rgba(255,255,255,1);
+      --shadow-raised-lg:
+        10px 10px 24px rgba(174,174,192,0.65),
+       -10px -10px 24px rgba(255,255,255,1);
+      --shadow-hover:
+        16px 16px 36px rgba(174,174,192,0.85),
+       -12px -12px 26px rgba(255,255,255,1);
+      --shadow-pressed:
+        inset  5px  5px 10px rgba(174,174,192,0.6),
+        inset -5px -5px 10px rgba(255,255,255,1);
+
+      --ease: cubic-bezier(.2,.7,.2,1);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { background: var(--bg-surface); }
+    body {
+      font-family: 'Roboto', system-ui, sans-serif;
+      color: var(--text-primary);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      min-width: 1512px;
+    }
+
+    .page {
+      width: 1512px;
+      margin: 0 auto;
+      padding: 0 211px 96px;   /* side padding +30% (162 → 211) */
+      display: flex;
+      flex-direction: column;
+      gap: 48px;
+    }
+
+    /* ── Typography ────────────────────────────────────────────── */
+    .label-md {
+      font-family: 'VT323', monospace;
+      font-size: 14px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+    }
+    .display-lg {
+      font-family: 'OCR-A BT', 'Major Mono Display', 'Courier New', monospace;
+      font-weight: 400;
+      font-size: 78px;
+      line-height: 1;
+      letter-spacing: -0.02em;
+      color: var(--text-primary);
+    }
+    .display-md {
+      font-family: 'OCR-A BT', 'Major Mono Display', 'Courier New', monospace;
+      font-weight: 400;
+      font-size: 36px;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      color: var(--text-primary);
+    }
+
+    /* ── HERO (video, 16:9 stage with pillarbox bars) ──────────── */
+    .hero {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      border-radius: 0;
+      overflow: hidden;
+      background: #000;          /* the black bars are this background */
+      margin-top: -1px;          /* sit flush with top */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .hero video,
+    .hero img.fallback {
+      height: 88%;               /* shrink so pillarbox bars widen */
+      width: auto;               /* keep video's native aspect */
+      max-width: 70%;            /* hard cap → thicker side bars */
+      object-fit: contain;       /* never crop, never zoom */
+      display: block;
+      background: #000;
+    }
+    .hero-meta {
+      position: absolute;
+      top: 28px; left: 32px;
+      display: flex; align-items: center; gap: 10px;
+      font-family: 'VT323', monospace;
+      font-size: 14px;
+      letter-spacing: 0.08em;
+      color: rgba(255,255,255,0.85);
+      text-transform: uppercase;
+    }
+    .rec-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--accent-orange);
+      box-shadow: 0 0 8px var(--accent-orange);
+    }
+
+    /* ── HEADER ──────────────────────────────────────────────── */
+    .header { display: flex; flex-direction: column; gap: 24px; padding: 0 162px 0 0; margin-left: 162px; }
+    .breadcrumb {
+      font-family: 'VT323', monospace;
+      font-size: 14px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+    }
+    .title-row { display: flex; align-items: flex-end; gap: 16px; }
+    .accent-dot { width: 18px; height: 18px; border-radius: 50%; background: var(--accent-orange); margin-bottom: 12px; }
+    .dotted-divider {
+      height: 4px;
+      background-image: radial-gradient(circle, var(--text-primary) 2px, transparent 2px);
+      background-size: 16px 4px;
+      background-repeat: repeat-x;
+      background-position: left center;
+    }
+
+    /* In-page sections share the inner-1188 column */
+    .inner {
+      max-width: 1188px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    /* ── Meta row (4 tiles) ────────────────────────────────────── */
+    .meta-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 48px;
+      /* bigger breathing room down to Overview/Concept (Figma uses ~220px) */
+      margin-bottom: 144px;
+    }
+
+    /* ── Reusable surface ──────────────────────────────────────── */
+    .tile {
+      background: var(--bg-surface);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      box-shadow: var(--shadow-raised-sm);
+      transition: transform 260ms var(--ease), box-shadow 260ms var(--ease);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      /* fixed-height tile so all four read as identical segments,
+         matching the Figma metadata row */
+      min-height: 238px;
+    }
+    .tile:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-hover);
+    }
+    .tile-label {
+      font-family: 'VT323', monospace;
+      font-size: 24px;
+      line-height: 1;
+      letter-spacing: 0.02em;
+      color: var(--accent-orange);
+      padding: 8px 10px 0;
+    }
+    .inset {
+      background: var(--bg-surface);
+      border-radius: 14px;
+      padding: 16px 24px;
+      box-shadow: var(--shadow-pressed);
+    }
+    /* In meta tiles, inset fills remaining height so the two segments
+       (label + inset) split the tile consistently across all 4 cards. */
+    .meta-row .tile .inset { flex: 1; display: flex; align-items: flex-start; }
+    .inset--lg { padding: 24px 28px; border-radius: 16px; }
+    .inset p { font-size: 14px; line-height: 1.55; }
+    .inset .lines { display: flex; flex-direction: column; gap: 2px; font-size: 14px; }
+
+    /* ── Overview ──────────────────────────────────────────────── */
+    .overview { display: flex; flex-direction: column; gap: 22px; }
+    .step-badge {
+      width: 38px; height: 38px;
+      background: var(--accent-orange);
+      border-radius: 50%;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-family: 'VT323', monospace;
+      font-size: 22px;
+      color: var(--text-primary);
+      flex-shrink: 0;
+      transition: transform 260ms var(--ease), box-shadow 260ms var(--ease);
+    }
+    .step-badge--sm { width: 26px; height: 26px; font-size: 16px; }
+    .step-badge:hover {
+      transform: translateY(-2px);
+      box-shadow:
+         4px  4px 10px rgba(174,174,192,0.55),
+        -3px -3px  8px rgba(255,255,255,0.9);
+    }
+    .heading-row {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    }
+    .thin-divider { height: 1px; background: var(--text-primary); width: 100%; }
+    /* Dotted variant — matches the Figma Line 6 under Overview/Concept
+       (stroke 3px, dashPattern [1,14]). */
+    .dotted-divider-thick {
+      height: 4px;
+      background-image: radial-gradient(circle, var(--text-primary) 1.5px, transparent 1.6px);
+      background-size: 15px 4px;
+      background-repeat: repeat-x;
+      background-position: left center;
+    }
+
+    /* ── Process header ────────────────────────────────────────── */
+    .process-header {
+      display: flex; align-items: baseline; justify-content: space-between;
+      padding: 0 4px; margin-top: 8px;
+    }
+    .process-header h3 {
+      font-family: 'OCR-A BT','Major Mono Display','Courier New',monospace;
+      font-weight: 400;
+      font-size: 40px;
+      letter-spacing: -0.02em;
+    }
+    .process-header .sub {
+      font-family: 'VT323', monospace;
+      font-size: 14px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+    }
+
+    /* ── Image cell (dark inset frame around image) ────────────── */
+    .img-cell {
+      background: var(--bg-surface);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: var(--shadow-pressed);
+      padding: 0;
+    }
+    .img-cell img,
+    .img-cell video {
+      width: 100%; height: 100%;
+      object-fit: cover; display: block;
+    }
+
+    /* ── Step tile (the raised outer holder per process step) ──── */
+    .step-tile {
+      padding: 16px;
+      border-radius: var(--radius-xl);
+      background: var(--bg-surface);
+      box-shadow: var(--shadow-raised);
+      transition: transform 260ms var(--ease), box-shadow 260ms var(--ease);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .step-tile:hover { transform: translateY(-4px); box-shadow: var(--shadow-hover); }
+
+    /* Big intro: full-width image card */
+    .big-image-tile .img-cell {
+      aspect-ratio: 1156 / 872;
+    }
+
+    /* Row 1: SpecsRow = 672fr | 492fr */
+    .specs-row {
+      display: grid;
+      grid-template-columns: 672fr 492fr;
+      gap: 24px;
+      align-items: stretch;
+    }
+    .step-tile.split {
+      display: grid;
+      grid-template-columns: 342fr 281fr;
+      gap: 16px;
+    }
+    .step-tile.split .img-cell {
+      aspect-ratio: 342 / 431;
+      min-height: 431px;
+    }
+    .step-tile.split .text-inset {
+      background: var(--bg-surface);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: var(--shadow-pressed);
+      display: flex; flex-direction: column; gap: 14px;
+    }
+    .text-inset p {
+      font-size: 14px;
+      line-height: 1.55;
+      color: var(--text-primary);
+    }
+
+    .step-tile.compact { padding: 24px; gap: 16px; }
+    .step-tile.compact .img-cell { aspect-ratio: 444 / 331; }
+    .step-tile.compact .caption { display: flex; flex-direction: column; gap: 6px; }
+    .step-tile.compact .caption p { font-size: 13px; line-height: 1.55; }
+
+    /* Row 2: Frame 2 = 619fr | 545fr */
+    .frame2 {
+      display: grid;
+      grid-template-columns: 619fr 545fr;
+      gap: 24px;
+      align-items: stretch;
+    }
+    .frame2 .step-tile.vertical .img-cell { aspect-ratio: 587 / 616; }
+    .frame2 .step-tile.vertical .text-inset {
+      background: var(--bg-surface);
+      border-radius: 16px;
+      padding: 28px;
+      box-shadow: var(--shadow-pressed);
+      display: flex; flex-direction: column; gap: 14px;
+    }
+    .frame2 .stack {
+      display: grid;
+      grid-template-rows: 508fr 530fr;
+      gap: 25px;
+    }
+    .frame2 .stack .step-tile.compact .img-cell { aspect-ratio: 497 / 378; }
+    .frame2 .stack .step-tile.compact:nth-child(2) .img-cell { aspect-ratio: 497 / 400; }
+
+    .step-heading {
+      font-family: 'VT323', monospace;
+      font-weight: 400;
+      font-size: 32px;
+      line-height: 1;
+      letter-spacing: 0.02em;
+      color: var(--text-primary);
+    }
+    .step-heading--sm { font-size: 28px; }
+  </style>
+</head>
+<body>
+
+<!-- ── HERO (full-bleed video) ─────────────────────────────────── -->
+<section class="hero">
+  <video autoplay muted loop playsinline poster="/images/vaccine/render_static0090.jpeg">
+    <source src="/videos/vaccine/vaccine_render_V1.mov" type="video/quicktime" />
+    <source src="/videos/vaccine/vaccine_render_V1.mov" type="video/mp4" />
+    <img class="fallback" src="/images/vaccine/render_static0090.jpeg" alt="S4AD vaccine pack — hero render" />
+  </video>
+  <div class="hero-meta"><span class="rec-dot"></span>REC&nbsp;&nbsp;00:00&nbsp;·&nbsp;CYCLES&nbsp;/&nbsp;1920×1400</div>
+</section>
+
+<main class="page">
+
+  <!-- ── HEADER ────────────────────────────────────────────────── -->
+  <header class="header" style="margin-left:0; padding:48px 0 0 0;">
+    <div class="breadcrumb">PORTFOLIO&nbsp;&nbsp;/&nbsp;&nbsp;PROJECTS&nbsp;&nbsp;/&nbsp;&nbsp;S4AD&nbsp;VACCINE&nbsp;PACK</div>
+    <div class="title-row">
+      <h1 class="display-lg">S4AD&nbsp;Vaccine Pack</h1>
+      <span class="accent-dot"></span>
+    </div>
+    <div class="dotted-divider"></div>
+  </header>
+
+  <!-- ── METADATA ROW ──────────────────────────────────────────── -->
+  <section class="meta-row">
+    <article class="tile">
+      <div class="tile-label">TIMELINE</div>
+      <div class="inset"><p>Spring 2026<br/>4 weeks</p></div>
+    </article>
+    <article class="tile">
+      <div class="tile-label">TEAM</div>
+      <div class="inset"><p>Just Me</p></div>
+    </article>
+    <article class="tile">
+      <div class="tile-label">ROLE</div>
+      <div class="inset"><p>3D Designer</p></div>
+    </article>
+    <article class="tile">
+      <div class="tile-label">SKILLS</div>
+      <div class="inset">
+        <div class="lines">
+          <span>Blender · Cycles</span>
+          <span>Cloth Simulation</span>
+          <span>Material Shading</span>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <!-- ── OVERVIEW / CONCEPT (Step 00) ──────────────────────────── -->
+  <section class="overview">
+    <div class="heading-row">
+      <h2 class="display-md">Overview&nbsp;/&nbsp;Concept</h2>
+      <span class="step-badge">0</span>
+    </div>
+    <div class="dotted-divider-thick"></div>
+    <div class="inset inset--lg">
+      <p>
+        A vacuum-sealed pharmaceutical pack rendered for the fictional brand
+        <strong>S4AD&nbsp;—&nbsp;Software for Artists Day</strong>, a satirical
+        capsule positioned at the intersection of technologists and artists.
+        The study explores realistic plastic deformation, glass dispersion,
+        and printed label artwork — aiming for product-photo plausibility,
+        not the "obviously a render" look.
+      </p>
+    </div>
+  </section>
+
+  <!-- ── BIG INTRO IMAGE (after concept, before process) ───────── -->
+  <section class="step-tile big-image-tile">
+    <div class="img-cell">
+      <img src="/images/vaccine/render_static0090.jpeg" alt="Vacuum pack — front render" />
+    </div>
+  </section>
+
+  <!-- ── PROCESS HEADER ────────────────────────────────────────── -->
+  <section class="process-header">
+    <h3>Process</h3>
+    <div class="sub">5 STEPS &nbsp;·&nbsp; MODELING → RENDER</div>
+  </section>
+
+  <!-- ── PROCESS ROW 1: Modeling (left big) + Topology (right small) -->
+  <section class="specs-row">
+    <article class="step-tile split">
+      <div class="img-cell">
+        <img src="/images/vaccine/step1_bottle.png" alt="Modeling — base bottle mesh" />
+      </div>
+      <div class="text-inset">
+        <div class="heading-row">
+          <h4 class="step-heading">Modeling</h4>
+          <span class="step-badge step-badge--sm">1</span>
+        </div>
+        <p>
+          The vial body modeled from a single profile, lathed and
+          edge-loop-tightened around the cap. Cap separated as its own
+          object so it could be UV-unwrapped cleanly for the label band.
+          Subdivision surface kept on for the final render to round the
+          silhouette without losing the printed-grade ribs at the base.
+        </p>
+      </div>
+    </article>
+
+    <article class="step-tile compact">
+      <div class="img-cell">
+        <img src="/images/vaccine/step2_wireframe.png" alt="Topology — vacuum bag wireframe" />
+      </div>
+      <div class="caption">
+        <div class="heading-row">
+          <h4 class="step-heading step-heading--sm">Topology</h4>
+          <span class="step-badge step-badge--sm">2</span>
+        </div>
+        <p>
+          Bag subdivided to ~250k tris — enough resolution for the cloth
+          sim to resolve fine wrinkles where the plastic suctions onto the
+          bottle without exploding into noise.
+        </p>
+      </div>
+    </article>
+  </section>
+
+  <!-- ── PROCESS ROW 2: Vacuum Sim (left big vertical) + Stack (Shading + Render) -->
+  <section class="frame2">
+    <article class="step-tile vertical">
+      <div class="img-cell">
+        <img src="/images/vaccine/step3_shaded_mesh.png" alt="Vacuum Sim — collapsed bag mesh" />
+      </div>
+      <div class="text-inset">
+        <div class="heading-row">
+          <h4 class="step-heading">Vacuum Sim</h4>
+          <span class="step-badge step-badge--sm">3</span>
+        </div>
+        <p>
+          Cloth simulation with negative pressure — the bag actively sucks
+          down onto the rigid bottle. 192 baked frames, with frame&nbsp;90
+          picked as the hero. The hang-tab punch is masked out of the sim
+          so the top stays flat and printable, while the body collapses
+          into those tight star-shaped wrinkles around the vial.
+        </p>
+      </div>
+    </article>
+
+    <div class="stack">
+      <article class="step-tile compact">
+        <div class="img-cell">
+          <img src="/images/vaccine/step4_shader_nodes.png" alt="Shading — Cycles node graph" />
+        </div>
+        <div class="caption">
+          <div class="heading-row">
+            <h4 class="step-heading step-heading--sm">Shading</h4>
+            <span class="step-badge step-badge--sm">4</span>
+          </div>
+          <p>
+            Bag mixes Transparent BSDF for clarity, Translucent BSDF for the
+            milky scatter on the bunched areas, and Glossy with IOR-driven
+            Fresnel for the wet plastic highlights. Blue tint baked into the
+            zip seam reads as printed PVC.
+          </p>
+        </div>
+      </article>
+
+      <article class="step-tile compact">
+        <div class="img-cell">
+          <img src="/images/vaccine/step5_viewport.png" alt="Final Render — viewport preview" />
+        </div>
+        <div class="caption">
+          <div class="heading-row">
+            <h4 class="step-heading step-heading--sm">Final Render</h4>
+            <span class="step-badge step-badge--sm">5</span>
+          </div>
+          <p>
+            Cycles output at 1920×1400, single key light at 6500K, denoised
+            in compositor. Two hero passes shipped — a cool blue clinical
+            front-on, and a rose-tinted angle used as the portfolio cover.
+          </p>
+        </div>
+      </article>
+    </div>
+  </section>
+
+</main>
+</body>
+</html>

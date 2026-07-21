@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mac-Lamp — Lucas Maher</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=VT323&family=Roboto:wght@400;500&family=Roboto+Flex:wdth@100&display=swap" rel="stylesheet" />
+  <style>
+    @font-face {
+      font-family: 'OCR-A-BT';
+      src: url('/OCR-A-BT.ttf') format('truetype');
+      font-weight: normal;
+      font-style: normal;
+    }
+
+    :root {
+      --bg-surface: #DCDCE3;
+      --text-primary: #1A1A1A;
+      --text-secondary: #8E8E93;
+      --text-tertiary: #c7c7cc;
+      --accent-orange: #FF5C00;
+      --border-color: #6f6f6f;
+
+      --shadow-raised-sm: 5px 5px 12px rgba(174,174,192,0.65), -5px -5px 12px rgba(255,255,255,1);
+      --shadow-raised: 8px 8px 18px rgba(174,174,192,0.65), -8px -8px 18px rgba(255,255,255,1);
+      --shadow-pressed: inset 5px 5px 10px rgba(174,174,192,0.6), inset -5px -5px 10px rgba(255,255,255,1);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100%;
+      overflow-x: hidden;
+      background: var(--bg-surface);
+      color: var(--text-primary);
+      font-family: 'Roboto Flex', sans-serif;
+      line-height: 1.6;
+      padding: 0 clamp(20px, 3.9vw, 55px);
+    }
+
+    #top-bar {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%;
+      height: 108px;
+      border: none;
+      z-index: 10;
+      pointer-events: auto;
+      background: transparent;
+      overflow: visible;
+      transition: transform 300ms ease;
+    }
+
+    #top-bar.hide { transform: translateY(-220px); }
+
+    .page-wrapper {
+      padding-top: 0;
+      padding-bottom: 12px;
+      border: 1px solid var(--border-color);
+      margin: 12px auto;
+      overflow: hidden;
+    }
+
+    /* ── Hero ── */
+    .hero {
+      width: 100%;
+      aspect-ratio: 16 / 10;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .hero img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center center;
+      display: block;
+    }
+
+    /* ── Shared section padding ── */
+    .section {
+      border-bottom: 1px solid var(--border-color);
+      padding: clamp(32px, 5vw, 56px) clamp(40px, 8vw, 80px);
+    }
+
+    /* ── Header ── */
+    .project-header { display: flex; flex-direction: column; gap: 16px; }
+
+    .breadcrumb {
+      font-family: 'VT323', monospace;
+      font-size: 14px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+    }
+
+    .title-row { display: flex; align-items: flex-end; gap: 12px; }
+
+    .project-title {
+      font-family: 'OCR-A-BT', monospace;
+      font-size: clamp(40px, 7vw, 96px);
+      line-height: 1.05;
+      color: var(--text-primary);
+      letter-spacing: -0.04em;
+    }
+
+    @keyframes blink {
+      0%, 49% { opacity: 1; }
+      50%, 100% { opacity: 0; }
+    }
+
+    .accent-dot {
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      background: var(--accent-orange);
+      margin-bottom: 12px;
+      flex-shrink: 0;
+      animation: blink 1.5s step-end infinite;
+    }
+
+    .dot-divider {
+      width: 100%; height: 4px;
+      background-image: radial-gradient(circle, var(--text-primary) 1.5px, transparent 1.5px);
+      background-size: 10px 4px;
+      background-repeat: repeat-x;
+    }
+
+    /* ── Meta grid ── */
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: clamp(16px, 3vw, 48px);
+    }
+
+    .meta-tile {
+      background: var(--bg-surface);
+      border-radius: 24px;
+      box-shadow: var(--shadow-raised);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-height: 180px;
+    }
+
+    .meta-label {
+      font-family: 'VT323', monospace;
+      font-size: 24px;
+      color: var(--accent-orange);
+      text-transform: uppercase;
+    }
+
+    .meta-inset {
+      flex: 1;
+      background: var(--bg-surface);
+      border-radius: 14px;
+      padding: 14px 18px;
+      box-shadow: var(--shadow-pressed);
+      font-size: 13px;
+      line-height: 1.55;
+      color: var(--text-secondary);
+    }
+
+    /* ── Section heading ── */
+    .section-heading-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .section-title {
+      font-family: 'OCR-A-BT', monospace;
+      font-size: clamp(28px, 4vw, 44px);
+      line-height: 1.05;
+      color: var(--text-primary);
+      letter-spacing: -0.04em;
+    }
+
+    .step-badge {
+      width: 38px; height: 38px;
+      background: var(--accent-orange);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'VT323', monospace;
+      font-size: 22px;
+      color: var(--text-primary);
+      flex-shrink: 0;
+    }
+
+    .step-badge--sm {
+      width: 26px; height: 26px;
+      font-size: 16px;
+      border-radius: 50%;
+    }
+
+    /* ── Overview rows ── */
+    .overview-row {
+      display: grid;
+      grid-template-columns: 58fr 42fr;
+      gap: clamp(16px, 2vw, 24px);
+      align-items: stretch;
+    }
+
+    .overview-row.reverse {
+      grid-template-columns: 42fr 58fr;
+    }
+
+    .overview-img {
+      width: 100%;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: var(--shadow-pressed);
+    }
+
+    .overview-img img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .overview {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .overview-text {
+      background: var(--bg-surface);
+      border-radius: 16px;
+      padding: 24px 28px;
+      box-shadow: var(--shadow-pressed);
+      font-size: 14.4px;
+      line-height: 1.7;
+      color: var(--text-secondary);
+      align-self: start;
+      margin-top: 27px;
+      height: calc(clamp(288px, 41.6vw, 416px) + clamp(12px, 2vw, 20px) + clamp(37px, 4.9vw, 52px));
+    }
+
+    .text-inset {
+      background: var(--bg-surface);
+      border-radius: 16px;
+      padding: 20px 20px 20px 24px;
+      box-shadow: var(--shadow-pressed);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .step-heading-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .step-title {
+      font-family: 'VT323', monospace;
+      font-size: 28px;
+      color: var(--text-primary);
+      text-transform: uppercase;
+      line-height: 1.2;
+    }
+
+    .text-inset p {
+      font-size: 13px;
+      line-height: 1.55;
+      color: var(--text-secondary);
+    }
+
+    /* ── Process header ── */
+    .process-header-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+    }
+
+    .process-sub {
+      font-family: 'VT323', monospace;
+      font-size: 14px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+    }
+
+    /* ── Step tile (raised card) ── */
+    .step-tile {
+      background: var(--bg-surface);
+      border-radius: 24px;
+      box-shadow: var(--shadow-raised);
+      padding: 16px;
+      display: flex;
+      gap: 16px;
+    }
+
+    .step-tile.vertical { flex-direction: column; }
+
+    .step-img {
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: var(--shadow-pressed);
+      flex-shrink: 0;
+    }
+
+    .step-img img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    /* ── Process row layouts ── */
+    .process-row {
+      display: grid;
+      gap: clamp(16px, 2vw, 24px);
+      align-items: stretch;
+    }
+
+    .process-row.cols-65-35 { grid-template-columns: 65fr 35fr; }
+    .process-row.cols-50-50 { grid-template-columns: 1fr 1fr; }
+
+    .stack {
+      display: flex;
+      flex-direction: column;
+      gap: clamp(16px, 2vw, 24px);
+    }
+
+    /* Process step 1: horizontal image+text inside tile */
+    .step-tile.horizontal {
+      flex-direction: row;
+      align-items: stretch;
+    }
+
+    .step-tile.horizontal .step-img {
+      width: 55%;
+      aspect-ratio: unset;
+    }
+
+    .step-tile.compact { flex-direction: column; padding: 20px; gap: 14px; }
+    .step-tile.compact .step-img { aspect-ratio: 4/3; }
+
+    /* ── Mobile layout ─────────────────────────────────────── */
+    /* ── Mid layout ────────────────────────────────────────── */
+    @media (max-width: 860px) {
+      .meta-grid { grid-template-columns: 1fr 1fr; }
+      .overview-row,
+      .overview-row.reverse { grid-template-columns: 1fr; }
+      .process-row,
+      .process-row.cols-65-35,
+      .process-row.cols-50-50 { grid-template-columns: 1fr; }
+      .step-tile.horizontal { flex-direction: column; }
+      .step-tile.horizontal .step-img { width: 100%; aspect-ratio: 4/3; }
+    }
+
+    @media (max-width: 640px) {
+      html, body { padding: 0; }
+      .page-wrapper { margin: 0; border-left: none; border-right: none; }
+      #top-bar { height: 108px; }
+      #top-bar.hide { transform: translateY(-90px); }
+      .section { padding: 24px 20px; }
+      .project-title { font-size: clamp(32px, 9vw, 56px); }
+      .meta-grid { grid-template-columns: 1fr 1fr; gap: 11px; }
+      .meta-tile { padding: 8px; gap: 8px; height: 155px; min-height: 0; }
+      .meta-inset { padding: 8px 10px; }
+      .overview-row,
+      .overview-row.reverse { grid-template-columns: 1fr; }
+      .process-row,
+      .process-row.cols-65-35,
+      .process-row.cols-50-50 { grid-template-columns: 1fr; }
+      .step-tile.horizontal { flex-direction: column; }
+      .step-tile.horizontal .step-img { width: 100%; aspect-ratio: 4/3; }
+    }
+
+    /* ── Project nav ──────────────────────────────────────── */
+    .project-nav {
+      display: flex;
+      border-top: 1px solid var(--border-color);
+      position: relative;
+      min-height: clamp(160px, 18vw, 220px);
+    }
+
+    .project-nav::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      bottom: -13px;
+      left: 50%;
+      width: 1px;
+      background: var(--border-color);
+      pointer-events: none;
+    }
+
+    .project-nav-item {
+      flex: 1;
+      padding: clamp(24px, 3vw, 40px) clamp(40px, 8vw, 80px);
+      display: flex;
+      flex-direction: column;
+      text-decoration: none;
+      color: var(--text-primary);
+      transition: transform 200ms ease;
+    }
+
+    .project-nav-item:hover {
+      transform: scale(1.04);
+    }
+
+    .project-nav-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .project-nav-number {
+      font-family: 'VT323', monospace;
+      font-size: clamp(14px, 1.5vw, 18px);
+      color: var(--text-secondary);
+      letter-spacing: 1px;
+    }
+
+    .project-nav-label {
+      font-family: 'VT323', monospace;
+      font-size: clamp(14px, 1.5vw, 18px);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-secondary);
+    }
+
+    .project-nav-title {
+      font-family: 'OCR-A-BT', monospace;
+      font-size: clamp(20px, 3vw, 36px);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-top: auto;
+    }
+
+    /* ── Mobile menu overlay ───────────────────────────────── */
+    .mobile-menu {
+      position: fixed; inset: 0; z-index: 200;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(0,0,0,0.35);
+      opacity: 0; pointer-events: none; transition: opacity 250ms ease;
+      --m-shadow-d: rgba(120,120,140,0.95);
+      --m-shadow-l: rgba(255,255,255,0.85);
+      --m-btn-bg: rgba(220,220,227,0.45);
+    }
+    .mobile-menu.open { opacity: 1; pointer-events: auto; }
+    .mobile-menu-panel {
+      width: 75%;
+      background: rgba(220,220,227,0.18);
+      backdrop-filter: blur(24px) saturate(1.4);
+      -webkit-backdrop-filter: blur(24px) saturate(1.4);
+      border-radius: 28px;
+      border: 1px solid rgba(255,255,255,0.55);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.6), inset 0 -1px 0 rgba(174,174,192,0.15);
+      padding: 20px; display: flex; flex-direction: column; gap: 24px;
+      transform: translateY(10px); transition: transform 250ms ease;
+    }
+    .mobile-menu.open .mobile-menu-panel { transform: translateY(0); }
+    .mobile-view-toggle {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 5px;
+      background: rgba(220,220,227,0.45); border-radius: 9999px;
+      box-shadow: 5px 5px 16px var(--m-shadow-d), -5px -5px 16px var(--m-shadow-l);
+      padding: 5px;
+    }
+    .mobile-mode-btn {
+      border: none; background: transparent; border-radius: 9999px;
+      padding: 11px 0; font-family: 'VT323', monospace; font-size: 18px;
+      color: #555; cursor: pointer; text-align: center;
+      -webkit-tap-highlight-color: transparent;
+      transition: box-shadow 150ms ease, color 150ms ease, transform 150ms ease;
+    }
+    .mobile-mode-btn.is-active {
+      background: var(--m-btn-bg); color: #000;
+      box-shadow: inset 5px 5px 14px var(--m-shadow-d), inset -5px -5px 14px var(--m-shadow-l);
+    }
+    .mobile-mode-btn:active:not(.is-active) {
+      box-shadow: inset 5px 5px 14px var(--m-shadow-d), inset -5px -5px 14px var(--m-shadow-l);
+      transform: scale(0.96);
+    }
+    .mobile-nav-btn {
+      display: block; background: var(--m-btn-bg); border-radius: 9999px;
+      box-shadow: 5px 5px 16px var(--m-shadow-d), -5px -5px 16px var(--m-shadow-l);
+      padding: 16px 24px; font-family: 'VT323', monospace; font-size: 22px;
+      color: #555; text-transform: uppercase; text-decoration: none;
+      text-align: center; cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: box-shadow 150ms ease, transform 150ms ease;
+    }
+    .mobile-nav-btn:active {
+      transform: scale(0.98);
+      box-shadow: inset 5px 5px 14px var(--m-shadow-d), inset -5px -5px 14px var(--m-shadow-l);
+    }
+
+    /* ── Gallery / Diashow ─────────────────────────────────── */
+    .gallery-with-text {
+      display: grid;
+      grid-template-columns: 65fr 35fr;
+      gap: clamp(20px, 3vw, 40px);
+      align-items: start;
+    }
+
+    .gallery-layout {
+      display: flex;
+      flex-direction: column;
+      gap: clamp(12px, 2vw, 20px);
+      margin-top: 27px;
+    }
+
+    .gallery-main-wrap {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .gallery-main {
+      background: var(--bg-surface);
+      border-radius: 0;
+      box-shadow: none;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 180ms ease;
+    }
+    .gallery-main.fading { opacity: 0; }
+    .gallery-main img,
+    .gallery-main video {
+      width: 100%;
+      height: clamp(288px, 41.6vw, 416px);
+      object-fit: contain;
+      display: block;
+    }
+
+    .gallery-thumbs {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      overflow: visible;
+      padding: 4px 2px;
+    }
+
+    .gallery-thumb {
+      width: clamp(37px, 4.9vw, 52px);
+      aspect-ratio: 1;
+      border-radius: 8px;
+      overflow: hidden;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: transform 150ms ease, opacity 150ms ease;
+      background: var(--bg-surface);
+      opacity: 0.3;
+    }
+    .gallery-thumb img,
+    .gallery-thumb video {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .gallery-thumb.active {
+      opacity: 1;
+      transform: scale(1.12);
+    }
+    .gallery-thumb:hover:not(.active) {
+      opacity: 0.55;
+      transform: scale(1.04);
+    }
+    .gallery-thumb.is-video { position: relative; }
+
+    @media (max-width: 640px) {
+      .gallery-with-text { grid-template-columns: 1fr; }
+      .gallery-main img, .gallery-main video { height: clamp(260px, 68vw, 380px); }
+      .gallery-thumb { width: clamp(32px, 9vw, 41px); }
+    }
+
+    html { scrollbar-width: none; }
+    html::-webkit-scrollbar { display: none; }
+    #scroll-track {
+      position: fixed; right: 16px; top: 24px; bottom: 24px;
+      width: 6px; z-index: 999; pointer-events: none;
+      transform: translateZ(0); will-change: transform;
+    }
+    #scroll-thumb {
+      position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+      display: flex; flex-direction: column; gap: 5px;
+    }
+    .scroll-dot {
+      width: 5px; height: 5px; border-radius: 50%;
+      background: var(--accent-orange, #FF5C00); display: block; flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+  <iframe id="top-bar" src="/top_row_permanent_V3.html" allowtransparency="true" scrolling="no"></iframe>
+
+  <div id="mobile-menu" class="mobile-menu">
+    <div class="mobile-menu-panel">
+      <div class="mobile-view-toggle">
+        <button class="mobile-mode-btn is-active" data-mode="2d">2D</button>
+        <button class="mobile-mode-btn" data-mode="3d">3D</button>
+      </div>
+      <a class="mobile-nav-btn" data-page="craft">Craft</a>
+      <a class="mobile-nav-btn" data-page="about">About</a>
+      <a class="mobile-nav-btn" data-page="contact">Contact</a>
+    </div>
+  </div>
+
+  <div class="page-wrapper">
+
+    <!-- Hero -->
+    <div class="hero">
+      <img src="/images/mac-lamp/IMG_3729_SnapseedCopy.jpeg" alt="Mac-Lamp hero" />
+    </div>
+
+    <!-- Header -->
+    <div class="section" style="border-bottom: none;">
+      <div class="project-header">
+        <p class="breadcrumb">Portfolio&nbsp;&nbsp;/&nbsp;&nbsp;Projects&nbsp;&nbsp;/&nbsp;&nbsp;Mac-Lamp</p>
+        <div class="title-row">
+          <h1 class="project-title">Mac-Lamp</h1>
+          <span class="accent-dot"></span>
+        </div>
+        <div class="dot-divider"></div>
+      </div>
+    </div>
+
+    <!-- Meta -->
+    <div class="section">
+      <div class="meta-grid">
+        <div class="meta-tile">
+          <div class="meta-label" data-i18n="label-timeline">Timeline</div>
+          <div class="meta-inset" data-i18n-html="val-timeline">Jan 2026 —<br>Apr 2026</div>
+        </div>
+        <div class="meta-tile">
+          <div class="meta-label" data-i18n="label-team">Team</div>
+          <div class="meta-inset" data-i18n="val-team">Just Me</div>
+        </div>
+        <div class="meta-tile">
+          <div class="meta-label" data-i18n="label-role">Role</div>
+          <div class="meta-inset" data-i18n="val-role">Designer &amp; Maker</div>
+        </div>
+        <div class="meta-tile">
+          <div class="meta-label" data-i18n="label-tools">Tools</div>
+          <div class="meta-inset" data-i18n-html="val-tools">CAD Modeling<br>3D Printing<br>Metal Tooling</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gallery + Overview -->
+    <div class="section">
+      <div class="section-heading-row">
+        <h2 class="section-title" data-i18n="section-overview">Overview / Concept</h2>
+        <span class="step-badge">0</span>
+      </div>
+      <div class="dot-divider" style="margin-bottom: clamp(20px, 3vw, 32px);"></div>
+      <div class="gallery-with-text">
+        <div class="gallery-layout">
+          <div class="gallery-main-wrap">
+            <div class="gallery-main" id="gallery-main">
+              <img id="gallery-active-img" src="" alt="Mac-Lamp" />
+              <video id="gallery-active-video" autoplay loop muted playsinline style="display:none;"></video>
+            </div>
+          </div>
+          <div class="gallery-thumbs" id="gallery-thumbs"></div>
+        </div>
+        <div class="overview-text" data-i18n-html="overview-text">
+          Apple's early-2000s design language — translucent coloured plastic, playful forms, hardware you wanted to look at — has mostly disappeared from the company's lineup. This project brought some of that energy back, using a broken 2012 MacBook heading for a drawer.<br>The MacBook was deconstructed and its shell combined with a 3D-printed housing in translucent orange PLA — chosen to echo the colourful, see-through aesthetic of that era.<br>It was also a first exercise in precision CAD work — modeling to real measurements so that printed parts would fit salvaged hardware without play or gap.
+        </div>
+      </div>
+    </div>
+
+    <div class="project-nav">
+      <a href="/vaccine2d.html" class="project-nav-item">
+        <div class="project-nav-top">
+          <span class="project-nav-number">01</span>
+          <span class="project-nav-label" data-i18n="nav-prev"><< PREVIOUS</span>
+        </div>
+        <span class="project-nav-title" data-i18n="nav-double-packaging">Double Packaging</span>
+      </a>
+      <a href="/portfolio2d.html" class="project-nav-item">
+        <div class="project-nav-top">
+          <span class="project-nav-label" data-i18n="nav-next">NEXT >></span>
+          <span class="project-nav-number">03</span>
+        </div>
+        <span class="project-nav-title" data-i18n="nav-this-website">This Website</span>
+      </a>
+    </div>
+
+  </div>
+
+  <script>
+    // ── Page transitions ──────────────────────────────────────────
+    (function() {
+      var KF = '@keyframes _sR{from{transform:translateX(100%)}to{transform:translateX(0)}}@keyframes _sL{from{transform:translateX(-100%)}to{transform:translateX(0)}}';
+      var s = document.createElement('style'); s.textContent = KF; document.head.appendChild(s);
+      var DUR = 380, EASE = 'cubic-bezier(0.4,0,0.2,1)';
+
+      function _getWrap() {
+        var w = document.getElementById('_sw');
+        if (!w) {
+          w = document.createElement('div'); w.id = '_sw';
+          Array.from(document.body.children).forEach(function(c) {
+            if (c.id !== 'top-bar' && c.id !== '_sw') w.appendChild(c);
+          });
+          document.body.appendChild(w);
+        }
+        return w;
+      }
+
+      var dir = sessionStorage.getItem('_sv');
+      if (dir) {
+        sessionStorage.removeItem('_sv');
+        var wrap = _getWrap();
+        wrap.style.transform = dir === 'right' ? 'translateX(100%)' : 'translateX(-100%)';
+        var done = false;
+        function reveal() {
+          if (done) return; done = true;
+          requestAnimationFrame(function() {
+            wrap.style.transform = '';
+            wrap.style.animation = (dir === 'right' ? '_sR' : '_sL') + ' ' + DUR + 'ms ' + EASE + ' both';
+            setTimeout(function() { wrap.style.animation = ''; }, DUR + 60);
+          });
+        }
+        if (document.fonts && document.fonts.ready) { document.fonts.ready.then(reveal); } else { requestAnimationFrame(function() { requestAnimationFrame(reveal); }); }
+        setTimeout(reveal, 300);
+      }
+
+      window._nav = function(url, into) {
+        sessionStorage.setItem('_sv', into);
+        var dim = document.createElement('div');
+        dim.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0);z-index:9999;transition:background 220ms ease;pointer-events:none;';
+        document.body.appendChild(dim);
+        requestAnimationFrame(function() { dim.style.background = 'rgba(0,0,0,0.28)'; });
+        setTimeout(function() { location.href = url; }, 220);
+      };
+
+      window.addEventListener('message', function(e) {
+        if (e.data && e.data.type === 'page-slide') window._nav(e.data.url, e.data.enterFrom);
+      });
+    })();
+
+    (function () {
+      const menu = document.getElementById('mobile-menu');
+      function setMenuTheme() {
+        const bg = getComputedStyle(document.body).backgroundColor;
+        const m = bg.match(/[\d.]+/g);
+        let lum = 1;
+        if (m && m.length >= 3) {
+          const a = m[3] !== undefined ? +m[3] : 1;
+          if (a > 0.4) lum = (0.299 * +m[0] + 0.587 * +m[1] + 0.114 * +m[2]) / 255;
+        }
+        const dark = lum < 0.4;
+        menu.style.setProperty('--m-shadow-d', dark ? 'rgba(0,0,20,0.95)' : 'rgba(120,120,140,0.95)');
+        menu.style.setProperty('--m-shadow-l', dark ? 'rgba(255,255,255,0.38)' : 'rgba(255,255,255,0.85)');
+        menu.style.setProperty('--m-btn-bg',   dark ? 'rgba(220,220,227,0.68)' : 'rgba(220,220,227,0.45)');
+      }
+      setMenuTheme();
+      function openMenu()  { menu.classList.add('open'); }
+      function closeMenu() { menu.classList.remove('open'); }
+      window.addEventListener('message', e => {
+        if (e.data.type === 'mobile-menu-toggle')
+          menu.classList.contains('open') ? closeMenu() : openMenu();
+      });
+      menu.addEventListener('click', e => { if (e.target === menu) closeMenu(); });
+      menu.querySelectorAll('[data-mode]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (btn.dataset.mode === '3d') window._nav('/', 'right');
+          else window.location.href = '/2D.html';
+        });
+      });
+      menu.querySelectorAll('[data-page]').forEach(btn => {
+        btn.addEventListener('click', e => {
+          e.preventDefault(); closeMenu();
+          if      (btn.dataset.page === 'craft')   window.location.href = '/2D.html#craft-section';
+          else if (btn.dataset.page === 'about')   window.location.href = '/about2d.html';
+          else if (btn.dataset.page === 'contact') window.location.href = '/contact2d.html';
+        });
+      });
+    })();
+
+    let lastScrollY = 0;
+    let lastToggleY = 0;
+    const topBar = document.getElementById('top-bar');
+    const hideThreshold = 250;
+    const showThreshold = 180;
+
+    window.addEventListener('scroll', () => {
+      const currentScrollY = window.scrollY;
+      if (currentScrollY === 0) {
+        topBar.classList.remove('hide');
+        lastToggleY = 0;
+      } else if (currentScrollY > lastScrollY && Math.abs(currentScrollY - lastToggleY) > hideThreshold) {
+        topBar.classList.add('hide');
+        lastToggleY = currentScrollY;
+      } else if (currentScrollY < lastScrollY && Math.abs(currentScrollY - lastToggleY) > showThreshold) {
+        topBar.classList.remove('hide');
+        lastToggleY = currentScrollY;
+      }
+      lastScrollY = currentScrollY;
+    });
+
+    // ── i18n ─────────────────────────────────────────────────────
+    const TRANSLATIONS = {
+      en: {
+        'label-timeline': 'Timeline', 'val-timeline': 'Jan 2026 —<br>Apr 2026',
+        'label-team': 'Team', 'val-team': 'Just Me',
+        'label-role': 'Role', 'val-role': 'Designer & Maker',
+        'label-tools': 'Tools', 'val-tools': 'CAD Modeling<br>3D Printing<br>Metal Tooling',
+        'section-overview': 'Overview / Concept',
+        'overview-text': 'Apple\'s early-2000s design language — translucent coloured plastic, playful forms, hardware you wanted to look at — has mostly disappeared from the company\'s lineup. This project brought some of that energy back, using a broken 2012 MacBook heading for a drawer.<br>The MacBook was deconstructed and its shell combined with a 3D-printed housing in translucent orange PLA — chosen to echo the colourful, see-through aesthetic of that era.<br>It was also a first exercise in precision CAD work — modeling to real measurements so that printed parts would fit salvaged hardware without play or gap.',
+        'section-process': 'Process', 'process-sub': '6 Steps · Concept → Render',
+        'section-gallery': 'Gallery', 'gallery-meta': '3 Videos · 6 Photos',
+        'nav-prev': '<< PREVIOUS', 'nav-next': 'NEXT >>',
+        'nav-double-packaging': 'Double Packaging', 'nav-this-website': 'This Website',
+      },
+      de: {
+        'label-timeline': 'Zeitraum', 'val-timeline': 'Jan. 2026 —<br>Apr. 2026',
+        'label-team': 'Team', 'val-team': 'Nur ich',
+        'label-role': 'Rolle', 'val-role': 'Designer & Hersteller',
+        'label-tools': 'Werkzeuge', 'val-tools': 'CAD-Modellierung<br>3D-Druck<br>Metallbearbeitung',
+        'section-overview': 'Überblick / Konzept',
+        'overview-text': 'Apples Designsprache der frühen 2000er — durchsichtiger, farbiger Kunststoff, verspielte Formen, Hardware, die man ansehen wollte — ist weitgehend verschwunden. Dieses Projekt brachte etwas von dieser Energie zurück, mit einem kaputten MacBook von 2012, das in einer Schublade gelandet wäre.<br>Das MacBook wurde zerlegt und sein Gehäuse mit einem 3D-gedruckten Gehäuse aus transparentem orangem PLA kombiniert — um die bunte, durchsichtige Ästhetik jener Zeit widerzuspiegeln.<br>Es war auch eine erste Übung in präziser CAD-Arbeit — Modellierung nach realen Maßen, damit gedruckte Teile ohne Spiel oder Lücke passen.',
+        'section-process': 'Prozess', 'process-sub': '6 Schritte · Konzept → Rendering',
+        'section-gallery': 'Galerie', 'gallery-meta': '3 Videos · 6 Fotos',
+        'nav-prev': '<< ZURÜCK', 'nav-next': 'WEITER >>',
+        'nav-double-packaging': 'Double Packaging', 'nav-this-website': 'Diese Website',
+      },
+      fr: {
+        'label-timeline': 'Calendrier', 'val-timeline': 'Janv. 2026 —<br>Avr. 2026',
+        'label-team': 'Équipe', 'val-team': 'Juste moi',
+        'label-role': 'Rôle', 'val-role': 'Designer & Fabricant',
+        'label-tools': 'Outils', 'val-tools': 'Modélisation CAO<br>Impression 3D<br>Travail du métal',
+        'section-overview': 'Aperçu / Concept',
+        'overview-text': 'Le langage design d\'Apple du début des années 2000 — plastique coloré translucide, formes ludiques, matériel qu\'on voulait regarder — a largement disparu du catalogue. Ce projet ramenait cette énergie, à partir d\'un MacBook 2012 cassé qui finissait dans un tiroir.<br>Le MacBook a été démonté et sa coque combinée avec un boîtier en PLA orange translucide — pour rappeler l\'esthétique colorée et transparente de cette époque.<br>C\'était aussi un premier exercice en CAO de précision — modéliser aux mesures réelles pour que les pièces imprimées s\'adaptent sans jeu ni écart.',
+        'section-process': 'Processus', 'process-sub': '6 Étapes · Concept → Rendu',
+        'section-gallery': 'Galerie', 'gallery-meta': '3 Vidéos · 6 Photos',
+        'nav-prev': '<< PRÉCÉDENT', 'nav-next': 'SUIVANT >>',
+        'nav-double-packaging': 'Double Packaging', 'nav-this-website': 'Ce site',
+      }
+    };
+    function applyLang(lang) {
+      const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
+      document.querySelectorAll('[data-i18n]').forEach(el => { if (t[el.dataset.i18n] !== undefined) el.textContent = t[el.dataset.i18n]; });
+      document.querySelectorAll('[data-i18n-html]').forEach(el => { if (t[el.dataset.i18nHtml] !== undefined) el.innerHTML = t[el.dataset.i18nHtml]; });
+    }
+    applyLang(localStorage.getItem('lang') || 'en');
+
+    window.addEventListener('message', function(e) {
+      if (!e.data || !e.data.type) return;
+      if (e.data.type === 'nav-expand') topBar.style.height = '280px';
+      if (e.data.type === 'nav-collapse') topBar.style.height = '90px';
+      if (e.data.type === 'lang-change') applyLang(e.data.lang);
+    });
+
+    // ── Gallery ──────────────────────────────────────────────
+    (function() {
+      const ITEMS = [
+        { type: 'img',   src: '/images/mac-lamp/1.png',  contain: false, pos: 'center bottom' },
+        { type: 'video', src: '/videos/mac-lamp/2.MOV',  contain: false },
+        { type: 'video', src: '/videos/mac-lamp/3.MOV',  contain: true  },
+        { type: 'video', src: '/videos/mac-lamp/4.MOV',  contain: true  },
+        { type: 'img',   src: '/images/mac-lamp/5.HEIC', contain: false },
+        { type: 'img',   src: '/images/mac-lamp/6.HEIC', contain: false },
+        { type: 'img',   src: '/images/mac-lamp/7.HEIC', contain: false },
+        { type: 'img',   src: '/images/mac-lamp/8.HEIC', contain: false },
+        { type: 'img',   src: '/images/mac-lamp/9.jpg',  contain: false },
+      ];
+
+      const thumbsEl    = document.getElementById('gallery-thumbs');
+      const mainEl      = document.getElementById('gallery-main');
+      const activeImg   = document.getElementById('gallery-active-img');
+      const activeVideo = document.getElementById('gallery-active-video');
+      let current = 0;
+
+      function goTo(idx) {
+        current = (idx + ITEMS.length) % ITEMS.length;
+        const item = ITEMS[current];
+
+        const fit = item.contain ? 'contain' : 'cover';
+        const pos = item.pos || 'center center';
+        mainEl.classList.add('fading');
+        setTimeout(() => {
+          if (item.type === 'video') {
+            activeImg.style.display = 'none';
+            activeVideo.style.display = 'block';
+            activeVideo.style.objectFit = fit;
+            activeVideo.style.objectPosition = pos;
+            activeVideo.src = item.src;
+            activeVideo.load();
+            activeVideo.play().catch(() => {});
+          } else {
+            activeVideo.pause();
+            activeVideo.style.display = 'none';
+            activeImg.style.display = 'block';
+            activeImg.style.objectFit = fit;
+            activeImg.style.objectPosition = pos;
+            activeImg.src = item.src;
+          }
+          mainEl.classList.remove('fading');
+        }, 180);
+
+        thumbsEl.querySelectorAll('.gallery-thumb').forEach((t, i) => {
+          t.classList.toggle('active', i === current);
+        });
+        thumbsEl.children[current]?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
+      }
+
+      ITEMS.forEach((item, i) => {
+        const wrap = document.createElement('div');
+        wrap.className = 'gallery-thumb' + (i === 0 ? ' active' : '');
+        if (item.type === 'video') {
+          wrap.classList.add('is-video');
+          const vid = document.createElement('video');
+          vid.src = item.src;
+          vid.preload = 'metadata';
+          vid.muted = true;
+          vid.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;';
+          vid.addEventListener('loadedmetadata', () => { vid.currentTime = 0.001; });
+          wrap.appendChild(vid);
+        } else {
+          const img = document.createElement('img');
+          img.src = item.src;
+          img.alt = 'Mac-Lamp ' + (i + 1);
+          img.loading = 'lazy';
+          wrap.appendChild(img);
+        }
+        wrap.addEventListener('click', () => goTo(i));
+        thumbsEl.appendChild(wrap);
+      });
+
+      document.addEventListener('keydown', e => {
+        if (e.key === 'ArrowLeft')  goTo(current - 1);
+        if (e.key === 'ArrowRight') goTo(current + 1);
+      });
+
+      goTo(0);
+    })();
+  </script>
+  <div id="scroll-track">
+    <div id="scroll-thumb">
+      <span class="scroll-dot"></span>
+      <span class="scroll-dot"></span>
+      <span class="scroll-dot"></span>
+      <span class="scroll-dot"></span>
+      <span class="scroll-dot"></span>
+    </div>
+  </div>
+  <script>
+    (function () {
+      var thumb = document.getElementById('scroll-thumb');
+      var track = document.getElementById('scroll-track');
+      var ticking = false;
+      function update() {
+        var scrolled  = window.scrollY;
+        var maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+        var progress  = maxScroll > 0 ? Math.max(0, Math.min(1, scrolled / maxScroll)) : 0;
+        thumb.style.top = (progress * (track.offsetHeight - thumb.offsetHeight)) + 'px';
+        ticking = false;
+      }
+      window.addEventListener('scroll', function () {
+        if (!ticking) { requestAnimationFrame(update); ticking = true; }
+      }, { passive: true });
+      update();
+    })();
+  </script>
+</body>
+</html>

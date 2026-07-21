@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>About</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet" />
+  <style>
+    @font-face {
+      font-family: 'OCR-A-BT';
+      src: url('/OCR-A-BT.ttf') format('truetype');
+      font-weight: normal;
+      font-style: normal;
+    }
+
+    :root {
+      --bg-base: #DCDCE3;
+      --bg-surface: #DCDCE3;
+      --text-primary: #1A1A1A;
+      --text-secondary: #8E8E93;
+      --accent-orange: #FF5C00;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 100%; }
+    body { background: var(--bg-base); font-family: 'VT323', monospace; padding: 32px; display: flex; justify-content: center; }
+
+    .container {
+      width: min(100%, 804px);
+      max-width: 100%;
+      display: flex;
+      flex-direction: column;
+      padding: clamp(32px, 5vw, 64px) clamp(32px, 8vw, 80px);
+      gap: 16px;
+      border: 1px solid #6f6f6f;
+    }
+
+    .header {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .header-title {
+      font-family: 'OCR-A-BT', monospace;
+      font-size: clamp(36px, 5.6vw, 56px);
+      color: var(--text-primary);
+      letter-spacing: 6px;
+    }
+
+    .header-divider {
+      width: 100%;
+      height: 4px;
+      background-image: radial-gradient(circle, var(--text-primary) 1.5px, transparent 1.5px);
+      background-size: 10px 4px;
+      background-repeat: repeat-x;
+      border: none;
+    }
+
+    .accordion {
+      display: flex;
+      flex-direction: column;
+      gap: clamp(16px, 3vw, 40px);
+      margin-top: clamp(32px, 6vh, 60px);
+    }
+
+    .item {
+      background: var(--bg-surface);
+      border-radius: 999px;
+      box-shadow: -5px -5px 12px 0 rgba(255,255,255,1), 5px 5px 12px 0 rgba(174,174,192,0.65);
+      cursor: pointer;
+      overflow: hidden;
+      transition: box-shadow 300ms ease-out, transform 300ms ease-out;
+    }
+
+    .item.open,
+    .item.closing {
+      border-radius: 24px;
+      box-shadow: -8px -8px 24px 0 rgba(255,255,255,1), 8px 8px 24px 0 rgba(174,174,192,0.85);
+      cursor: default;
+    }
+
+    .item:hover:not(.open):not(.closing) {
+      box-shadow: -6px -6px 18px 0 rgba(255,255,255,1), 6px 6px 18px 0 rgba(174,174,192,0.8);
+      transform: translateY(-2px) scale(1.03);
+      transition: box-shadow 150ms ease, transform 150ms ease;
+    }
+
+    .item-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 8px 16px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .item-label {
+      flex: 1;
+      font-family: 'VT323', monospace;
+      font-size: clamp(16px, 2vw, 20px);
+      line-height: 1.1;
+      color: var(--text-primary);
+      text-transform: uppercase;
+    }
+
+    .btn {
+      width: 38px;
+      height: 37px;
+      background: var(--accent-orange);
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-family: 'VT323', monospace;
+      font-size: 22px;
+      color: #f0f0f2;
+      pointer-events: none;
+    }
+
+    .item-body {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.35s ease, padding 0.35s ease;
+      padding: 0 16px;
+    }
+
+    .item.closing .item-body {
+      transition: max-height 0.2s ease, padding 0.2s ease;
+    }
+
+    .item.open .item-body {
+      max-height: 700px;
+      padding: 0 16px 16px;
+    }
+
+    .item.closing .item-body {
+      max-height: 0;
+      padding: 0 16px;
+    }
+
+    .text-inset {
+      border-radius: 16px;
+      padding: 16px 16px 16px 24px;
+      background: var(--bg-surface);
+      box-shadow: inset -5px -5px 10px 0 rgba(255,255,255,1), inset 5px 5px 10px 0 rgba(174,174,192,0.6);
+    }
+
+    .text-inset p {
+      font-family: Georgia, 'Times New Roman', serif;
+      font-style: italic;
+      font-size: clamp(12px, 1.4vw, 15px);
+      line-height: 1.7;
+      color: var(--text-secondary);
+    }
+
+    .photo {
+      width: 100%;
+      aspect-ratio: 3/2;
+      object-fit: cover;
+      object-position: left center;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1 class="header-title">ABOUT</h1>
+      <hr class="header-divider" />
+    </div>
+
+    <div class="accordion">
+
+      <div class="item" data-key="background">
+        <div class="item-header">
+          <span class="item-label">Background</span>
+          <div class="btn">+</div>
+        </div>
+        <div class="item-body">
+          <div class="text-inset">
+            <p>Hi, I'm Lucas Maher, a 21 yo designer based in Munich.</p>
+            <p style="margin-top: 12px;">I've always created with my hands. Long before I discovered design, I was drawing, sculpting clay, cutting glass, welding metal, sewing fabric, and painting in oil and acrylic — constantly switching materials, constantly asking: what can this become?</p>
+            <p style="margin-top: 12px;">That restlessness led me to Industrial Design, where three-dimensional thinking meets real-world problems. Now, studying at Hochschule München, I'm channeling that same energy into the digital space — where 2D and 3D collide, and where screens are becoming the new material to shape.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="item" data-key="things-i-love">
+        <div class="item-header">
+          <span class="item-label">Things I Love</span>
+          <div class="btn">+</div>
+        </div>
+        <div class="item-body">
+          <div class="text-inset">
+            <p>What excites me most right now is spatial computing — VR & AR. The idea that digital experiences can exist in three-dimensional space, that you can step inside a design rather than just look at it through a screen, feels like the most radical shift in how humans interact with technology. I want to be at the forefront of that.</p>
+            <p style="margin-top: 12px;">Outside of that, I find a lot of inspiration in film — the way directors use composition, light, and pacing to guide attention and evoke emotion isn't so different from what we do as designers. And sport keeps me grounded: the discipline, the consistency, the reminder that good results come from showing up every day.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="item" data-key="design-philosophy">
+        <div class="item-header">
+          <span class="item-label">Design Philosophy</span>
+          <div class="btn">+</div>
+        </div>
+        <div class="item-body">
+          <div class="text-inset">
+            <p>Design that only looks good has already failed. I came to this field from fine art and craft — and that background taught me one thing above all: beauty without purpose is decoration, not design.</p>
+            <p style="margin-top: 12px;">I work at the intersection of bold aesthetics and real problem-solving. I'm not afraid to experiment, to try what hasn't been done, or to borrow from unexpected places. The best ideas often live at the edges — between physical and digital, between 2D and 3D, between what exists and what could.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <img src="/images/about/57FBA5B1-E3B8-45B1-BC19-9A45E0AA39C4.JPEG" class="photo" alt="Lucas Maher" />
+
+  </div>
+
+  <script>
+    function closeItem(item) {
+      item.classList.add('closing');
+      item.querySelector('.btn').textContent = '+';
+      const body = item.querySelector('.item-body');
+      body.addEventListener('transitionend', function handler(e) {
+        if (e.propertyName === 'max-height') {
+          item.classList.remove('open', 'closing');
+          body.removeEventListener('transitionend', handler);
+        }
+      });
+    }
+
+    document.querySelectorAll('.item-header').forEach(header => {
+      header.addEventListener('click', () => {
+        const item = header.closest('.item');
+        const isOpen = item.classList.contains('open');
+        document.querySelectorAll('.item.open').forEach(i => {
+          if (!i.classList.contains('closing')) closeItem(i);
+        });
+        if (!isOpen) {
+          item.classList.add('open');
+          item.querySelector('.btn').textContent = '-';
+        }
+      });
+    });
+  </script>
+</body>
+</html>

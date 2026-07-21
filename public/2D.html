@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>2D — Lucas Maher</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=VT323&family=Roboto:wght@400;500&family=Roboto+Flex:wdth@100&display=swap" rel="stylesheet" />
+  <style>
+    @font-face {
+      font-family: 'OCR-A-BT';
+      src: url('/OCR-A-BT.ttf') format('truetype');
+    }
+
+    :root {
+      --bg-surface: #DCDCE3;
+      --text-primary: #1A1A1A;
+      --text-secondary: #8E8E93;
+      --text-tertiary: #c7c7cc;
+      --accent-orange: #FF5C00;
+      --border-color: #6f6f6f;
+
+      --shadow-raised-sm: 5px 5px 12px rgba(174,174,192,0.65), -5px -5px 12px rgba(255,255,255,1);
+      --shadow-raised: 8px 8px 18px rgba(174,174,192,0.65), -8px -8px 18px rgba(255,255,255,1);
+      --shadow-pressed: inset 5px 5px 10px rgba(174,174,192,0.6), inset -5px -5px 10px rgba(255,255,255,1);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100%;
+      background: var(--bg-surface);
+      color: var(--text-primary);
+      font-family: 'Roboto', system-ui, sans-serif;
+      line-height: 1.6;
+      padding: 0 clamp(20px, 3.9vw, 55px);
+    }
+
+    #top-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 108px;
+      border: none;
+      z-index: 10;
+      pointer-events: auto;
+      background: transparent;
+      overflow: visible;
+      transition: transform 300ms ease;
+    }
+
+    #top-bar.hide {
+      transform: translateY(-220px);
+    }
+
+    .page-wrapper {
+      padding-top: 90px;
+      padding-bottom: 12px;
+      border: 1px solid var(--border-color);
+      margin: 12px auto;
+      overflow: hidden;
+    }
+
+
+    /* Hero Section */
+    .hero-section {
+      border-bottom: 1px solid var(--border-color);
+      padding: clamp(30px, 6vw, 60px) clamp(40px, 8vw, 80px);
+      min-height: clamp(400px, 45vw, 580px);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .hero-blob {
+      position: absolute;
+      width: clamp(590px, 76.5vw, 900px);
+      height: clamp(590px, 76.5vw, 900px);
+      top: clamp(20px, 5vw, 50px);
+      left: 50%;
+      transform: translateX(-50%) translateY(-210px);
+      border: none;
+      overflow: visible;
+      background: transparent;
+    }
+
+    .hero-subtitle {
+      font-family: 'VT323', monospace;
+      font-size: clamp(19px, 2.2vw, 31px);
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      position: relative;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .typewriter-cursor {
+      display: inline-block;
+      animation: blink 1s step-end infinite;
+      margin-left: 1px;
+    }
+
+    .hero-title-block {
+      display: flex;
+      gap: 24px;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .hero-title {
+      font-family: 'OCR-A-BT', monospace;
+      font-size: clamp(32px, 8vw, 83px);
+      line-height: 1;
+      color: var(--text-primary);
+      text-transform: uppercase;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    @keyframes blink {
+      0%, 49% { opacity: 1; }
+      50%, 100% { opacity: 0; }
+    }
+
+    .hero-accent {
+      position: absolute;
+      right: clamp(-30px, -4vw, -58px);
+      top: 50%;
+      width: clamp(12px, 1.8vw, 20px);
+      height: clamp(12px, 1.8vw, 20px);
+      border-radius: 50%;
+      background: #FF5C00;
+      transform: translateY(calc(-50% + 24px));
+      animation: blink 1.5s step-end infinite;
+    }
+
+    .tagline-block {
+      position: absolute;
+      bottom: clamp(24px, 5vw, 80px);
+      right: clamp(24px, 5vw, 80px);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-family: 'Roboto Flex', sans-serif;
+      font-size: clamp(13px, 1.2vw, 15px);
+      pointer-events: none;
+    }
+
+    .tagline-block p:first-child {
+      color: var(--text-primary);
+    }
+
+    .tagline-block p:last-child {
+      color: var(--text-secondary);
+      text-decoration: underline;
+      pointer-events: auto;
+      cursor: pointer;
+      display: inline-block;
+      transition: color 150ms ease, transform 150ms ease;
+      transform-origin: left center;
+    }
+
+    .tagline-block p:last-child:hover {
+      color: var(--text-primary);
+      transform: scale(1.1);
+    }
+
+
+    /* Craft Section */
+    .craft-header {
+      border-bottom: 1px solid var(--border-color);
+      padding: clamp(24px, 5vw, 64px) clamp(24px, 5vw, 80px);
+      min-height: clamp(80px, 12vw, 162px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .craft-title {
+      font-family: 'VT323', monospace;
+      font-size: clamp(28px, 3.5vw, 48px);
+      color: var(--text-primary);
+      text-transform: uppercase;
+    }
+
+    /* Project Sections */
+    .project-section {
+      border-bottom: 1px solid var(--border-color);
+      padding: clamp(24px, 5vw, 64px) clamp(24px, 5vw, 80px);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: clamp(24px, 5vw, 80px);
+      align-items: start;
+      clip-path: inset(0);
+    }
+
+    .project-section.reverse {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .project-section.reverse .project-tile {
+      grid-column: 1;
+    }
+
+    .project-section.reverse .project-content {
+      grid-column: 2;
+    }
+
+    .project-tile {
+      width: 100%;
+      min-width: 0;
+      aspect-ratio: 680 / 560;
+      background: var(--bg-surface);
+      border-radius: 16px;
+      box-shadow: var(--shadow-raised);
+    }
+
+    .project-content {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: clamp(12px, 2.5vw, 40px);
+    }
+
+    .project-title-block {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .project-label {
+      font-family: 'OCR-A-BT', monospace;
+      font-size: 40px;
+      line-height: 1;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+    }
+
+    .project-title {
+      font-family: 'OCR-A-BT', monospace;
+      font-size: clamp(22px, 3.8vw, 64px);
+      line-height: 1;
+      color: var(--text-primary);
+      text-transform: uppercase;
+      max-width: min(403px, 100%);
+    }
+
+    .project-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: clamp(6px, 1vw, 12px);
+    }
+
+    .tag {
+      background: var(--bg-surface);
+      border-radius: 999px;
+      box-shadow: var(--shadow-pressed);
+      padding: clamp(3px, 0.5vw, 5px) clamp(8px, 1.2vw, 12px);
+      font-family: 'VT323', monospace;
+      font-size: clamp(12px, 1.4vw, 16px);
+      color: var(--text-primary);
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .btn-view-work {
+      background: var(--accent-orange);
+      border-radius: 999px;
+      padding: clamp(10px, 1.3vw, 17px) clamp(24px, 3.5vw, 48px);
+      border: none;
+      cursor: pointer;
+      font-family: 'VT323', monospace;
+      font-size: clamp(15px, 1.6vw, 19px);
+      color: #f0f0f2;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      text-decoration: none;
+      display: inline-block;
+      transition: box-shadow 300ms ease-out, transform 300ms ease-out;
+      white-space: nowrap;
+    }
+
+    .btn-view-work:hover {
+      transform: translateY(-3px) scale(1.04);
+      transition: transform 150ms ease;
+    }
+
+    @media (max-width: 640px) {
+      html, body { padding: 0; }
+      .page-wrapper {
+        margin: 0;
+        border-left: none;
+        border-right: none;
+      }
+      /* Shrink the nav bar iframe to just its content height so it only blocks
+         the tiny strip where the nav island lives, not the top third of the blob */
+      #top-bar {
+        height: 108px;
+      }
+      #top-bar.hide {
+        transform: translateY(-90px);
+      }
+    }
+
+    @media (max-width: 1100px) {
+      /* Give the tile column ~30% more share than the content column */
+      .project-section { grid-template-columns: 7fr 13fr; }
+      .project-section.reverse { grid-template-columns: 13fr 7fr; }
+
+      /* Scale down project info text */
+      .project-title { font-size: clamp(19px, 3.2vw, 52px); }
+      .project-label { font-size: clamp(14px, 1.6vw, 18px) !important; }
+      .tag { font-size: clamp(11px, 1.3vw, 15px); padding: clamp(3px, 0.45vw, 5px) clamp(7px, 1vw, 11px); }
+      .btn-view-work { font-size: clamp(14px, 1.5vw, 18px); padding: clamp(9px, 1.1vw, 15px) clamp(20px, 3vw, 40px); }
+    }
+
+    @media (max-width: 640px) {
+      /* Stack project sections: title → tags → image → button */
+      .project-section,
+      .project-section.reverse {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        padding: 24px 20px;
+        align-items: stretch;
+      }
+
+      /* Dissolve content wrapper so children join the flex flow */
+      .project-content {
+        display: contents;
+      }
+
+      .project-title-block { order: 1; }
+      .project-tags        { order: 2; gap: 5px; }
+      .project-tile        { order: 3; width: 100%; aspect-ratio: 16/10; }
+      .btn-view-work       { order: 4; align-self: flex-start; margin-top: 0 !important; }
+
+      .tag { flex: 1; text-align: center; font-size: 14px; padding: 6px 4px; }
+      .project-title { font-size: 29px; }
+      .project-label { font-size: 26px !important; }
+
+      #scroll-top-btn { display: none !important; }
+      .footer-column { display: none !important; }
+      .footer-section { padding: 24px 20px; }
+    }
+
+    /* Mobile menu overlay */
+    .mobile-menu {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.35);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 250ms ease;
+      --m-shadow-d: rgba(120,120,140,0.95);
+      --m-shadow-l: rgba(255,255,255,0.85);
+      --m-btn-bg: rgba(220,220,227,0.45);
+    }
+
+    .mobile-menu.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .mobile-menu-panel {
+      width: 75%;
+      background: rgba(220, 220, 227, 0.18);
+      backdrop-filter: blur(24px) saturate(1.4);
+      -webkit-backdrop-filter: blur(24px) saturate(1.4);
+      border-radius: 28px;
+      border: 1px solid rgba(255, 255, 255, 0.55);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.6),
+        inset 0 -1px 0 rgba(174,174,192,0.15);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      transform: translateY(10px);
+      transition: transform 250ms ease;
+    }
+
+    .mobile-menu.open .mobile-menu-panel {
+      transform: translateY(0);
+    }
+
+    .mobile-view-toggle {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5px;
+      background: rgba(220, 220, 227, 0.45);
+      border-radius: 9999px;
+      box-shadow: 5px 5px 16px var(--m-shadow-d), -5px -5px 16px var(--m-shadow-l);
+      padding: 5px;
+    }
+
+    .mobile-mode-btn {
+      border: none;
+      background: transparent;
+      border-radius: 9999px;
+      padding: 11px 0;
+      font-family: 'VT323', monospace;
+      font-size: 18px;
+      color: #555;
+      cursor: pointer;
+      text-align: center;
+      -webkit-tap-highlight-color: transparent;
+      transition: box-shadow 150ms ease, color 150ms ease, transform 150ms ease;
+    }
+
+    .mobile-mode-btn.is-active {
+      background: var(--m-btn-bg);
+      color: #000;
+      box-shadow: inset 5px 5px 14px var(--m-shadow-d), inset -5px -5px 14px var(--m-shadow-l);
+    }
+
+    .mobile-mode-btn:active:not(.is-active) {
+      box-shadow: inset 5px 5px 14px var(--m-shadow-d), inset -5px -5px 14px var(--m-shadow-l);
+      transform: scale(0.96);
+    }
+
+    .mobile-nav-btn {
+      display: block;
+      background: var(--m-btn-bg);
+      border-radius: 9999px;
+      box-shadow: 5px 5px 16px var(--m-shadow-d), -5px -5px 16px var(--m-shadow-l);
+      padding: 16px 24px;
+      font-family: 'VT323', monospace;
+      font-size: 22px;
+      color: #555;
+      text-transform: uppercase;
+      text-decoration: none;
+      text-align: center;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: box-shadow 150ms ease, transform 150ms ease;
+    }
+
+    .mobile-nav-btn.is-active {
+      box-shadow: inset 5px 5px 14px var(--m-shadow-d), inset -5px -5px 14px var(--m-shadow-l);
+      color: #000;
+    }
+
+    .mobile-nav-btn:active {
+      transform: scale(0.98);
+      box-shadow: inset 5px 5px 14px var(--m-shadow-d), inset -5px -5px 14px var(--m-shadow-l);
+    }
+
+    /* Footer */
+    .footer-section {
+      padding: clamp(40px, 8vw, 80px);
+      display: flex;
+      flex-direction: row;
+      gap: 20px;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .footer-logo {
+      width: 44px;
+      height: 44px;
+      background: var(--bg-surface);
+      border-radius: 22px;
+      box-shadow: var(--shadow-raised-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'VT323', monospace;
+      font-size: 18px;
+      color: var(--text-primary);
+      flex-shrink: 0;
+      position: relative;
+      transform: translate(-30px, -18px);
+    }
+
+    .footer-column {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      white-space: nowrap;
+    }
+
+    .footer-label {
+      font-family: 'VT323', monospace;
+      font-size: 14px;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+    }
+
+    .footer-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      font-family: 'Roboto Flex', sans-serif;
+      font-size: 15px;
+      color: var(--text-primary);
+    }
+
+    .footer-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .theme-toggle {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      font-family: 'VT323', monospace;
+      font-size: 22px;
+      color: var(--text-primary);
+    }
+
+    .theme-toggle .dark {
+      color: var(--text-tertiary);
+    }
+
+    .copyright {
+      font-family: 'Roboto Flex', sans-serif;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    .footer-note {
+      font-family: 'Roboto Flex', sans-serif;
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+
+    html { scrollbar-width: none; }
+    html::-webkit-scrollbar { display: none; }
+    #scroll-track {
+      position: fixed; right: 16px; top: 24px; bottom: 24px;
+      width: 6px; z-index: 999; pointer-events: none;
+      transform: translateZ(0); will-change: transform;
+    }
+    #scroll-thumb {
+      position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+      display: flex; flex-direction: column; gap: 5px;
+    }
+    .scroll-dot {
+      width: 5px; height: 5px; border-radius: 50%;
+      background: var(--accent-orange, #FF5C00); display: block; flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+  <iframe id="top-bar" src="/top_row_permanent_V3.html" allowtransparency="true" scrolling="no"></iframe>
+
+  <!-- Mobile menu overlay (lives here so it covers the full viewport) -->
+  <div id="mobile-menu" class="mobile-menu">
+    <div class="mobile-menu-panel">
+      <div class="mobile-view-toggle">
+        <button class="mobile-mode-btn is-active" data-mode="2d">2D</button>
+        <button class="mobile-mode-btn" data-mode="3d">3D</button>
+      </div>
+      <a class="mobile-nav-btn is-active" data-page="craft" href="#craft-section">Craft</a>
+      <a class="mobile-nav-btn" data-page="about" href="/about2d.html">About</a>
+      <a class="mobile-nav-btn" data-page="contact" href="/contact2d.html">Contact</a>
+    </div>
+  </div>
+
+  <div class="page-wrapper">
+    <!-- Hero -->
+    <div class="hero-section">
+      <iframe class="hero-blob" src="/blob_morph_bouncy.html" allowtransparency="true" scrolling="no" aria-hidden="true"></iframe>
+      <p class="hero-subtitle"><span id="typewriter"></span><span class="typewriter-cursor">|</span></p>
+      <div class="hero-title-block">
+        <h1 class="hero-title">Lucas Maher</h1>
+        <div class="hero-accent"></div>
+      </div>
+      <div class="tagline-block">
+        <p data-i18n="tagline1">From material to pixel.</p>
+        <p data-i18n="tagline2" onclick="window.location.href='/about2d.html'">More about me →</p>
+      </div>
+    </div>
+
+    <!-- Craft Header -->
+    <div class="craft-header" id="craft-section">
+      <p class="craft-title" data-i18n="craft-title">Craft</p>
+    </div>
+
+    <!-- Project 01 -->
+    <div class="project-section" style="align-items: stretch;">
+      <div class="project-content">
+        <div class="project-title-block">
+          <p class="project-label" style="font-family: 'VT323', monospace; font-size: 20px;">Project 01</p>
+          <h2 class="project-title">Double Packaging</h2>
+        </div>
+        <div class="project-tags">
+          <div class="tag">2025</div>
+          <div class="tag">Blender</div>
+          <div class="tag">Lighting</div>
+          <div class="tag">Texturing</div>
+        </div>
+        <a href="/vaccine2d.html" class="btn-view-work" data-i18n="btn-view-work" style="margin-top: auto; align-self: flex-start;">View Work</a>
+      </div>
+      <div class="project-tile" style="position: relative;">
+        <a href="/vaccine2d.html" style="position: absolute; inset: 0; overflow: hidden; border-radius: 16px; background: #000; text-decoration: none;">
+          <video autoplay muted loop playsinline style="width: 100%; height: 100%; object-fit: cover; display: block; transform: translateY(-15px);">
+            <source src="/videos/vaccine/vaccine_render_V1.mov" type="video/quicktime" />
+            <source src="/videos/vaccine/vaccine_render_V1.mov" type="video/mp4" />
+          </video>
+        </a>
+      </div>
+    </div>
+
+    <!-- Project 02 -->
+    <div class="project-section reverse" style="align-items: stretch;">
+      <div class="project-tile" style="position: relative;">
+        <a href="/mac-lamp2d.html" style="position: absolute; inset: 0; overflow: hidden; border-radius: 16px; text-decoration: none; display: block;">
+          <img src="/images/mac-lamp/IMG_3729_SnapseedCopy.jpeg" alt="Mac-Lamp" style="width: 100%; height: 100%; object-fit: cover; display: block;" />
+        </a>
+      </div>
+      <div class="project-content">
+        <div class="project-title-block">
+          <p class="project-label" style="font-family: 'VT323', monospace; font-size: 20px;">Project 02</p>
+          <h2 class="project-title">Mac-Lamp</h2>
+        </div>
+        <div class="project-tags">
+          <div class="tag">2024</div>
+          <div class="tag">Industrial</div>
+          <div class="tag">Fabrication</div>
+          <div class="tag">Studio</div>
+        </div>
+        <a href="/mac-lamp2d.html" class="btn-view-work" data-i18n="btn-view-work" style="margin-top: auto; align-self: flex-start;">View Work</a>
+      </div>
+    </div>
+
+    <!-- Project 03 -->
+    <div class="project-section" style="align-items: stretch;">
+      <div class="project-content">
+        <div class="project-title-block">
+          <p class="project-label" style="font-family: 'VT323', monospace; font-size: 20px;">Project 03</p>
+          <h2 class="project-title">This Website</h2>
+        </div>
+        <div class="project-tags">
+          <div class="tag">2025</div>
+          <div class="tag">Three.js</div>
+          <div class="tag">Blender</div>
+          <div class="tag">HTML/CSS</div>
+        </div>
+        <a href="/portfolio2d.html" class="btn-view-work" data-i18n="btn-view-work" style="margin-top: auto; align-self: flex-start;">View Work</a>
+      </div>
+      <div class="project-tile" style="position: relative;">
+        <a href="/portfolio2d.html" style="position: absolute; inset: 0; overflow: hidden; border-radius: 16px; text-decoration: none; display: block;">
+          <img src="/images/portfolio/Screenshot 2026-06-06 at 18.42.49.png" alt="This Website — Blender scene" style="width: 100%; height: 100%; object-fit: cover; display: block;" />
+        </a>
+      </div>
+    </div>
+
+    <!-- Project 04 -->
+    <div class="project-section reverse" style="align-items: stretch;">
+      <a href="/kaffeemaschine2d.html" style="display:block;">
+        <div class="project-tile" style="box-shadow: none; overflow: hidden; cursor: pointer;">
+          <video autoplay loop muted playsinline style="width: 100%; height: 100%; object-fit: contain; display: block;">
+            <source src="/videos/kaffeemaschine/coffeemachine_interface_video.mov" type="video/mp4">
+          </video>
+        </div>
+      </a>
+      <div class="project-content">
+        <div class="project-title-block">
+          <p class="project-label" style="font-family: 'VT323', monospace; font-size: 20px;">Project 04</p>
+          <h2 class="project-title">Cybercoffee</h2>
+        </div>
+        <div class="project-tags">
+          <div class="tag">2026</div>
+          <div class="tag">UI/UX</div>
+          <div class="tag">Figma</div>
+          <div class="tag">Prototyping</div>
+        </div>
+        <a href="/kaffeemaschine2d.html" class="btn-view-work" data-i18n="btn-view-work" style="margin-top: auto; align-self: flex-start;">View Work</a>
+      </div>
+    </div>
+
+    <!-- Project 05 -->
+    <div class="project-section" style="align-items: stretch;">
+      <div class="project-content">
+        <div class="project-title-block">
+          <p class="project-label" style="font-family: 'VT323', monospace; font-size: 20px;">Project 05</p>
+          <h2 class="project-title">Virtual Cooking</h2>
+        </div>
+        <div class="project-tags">
+          <div class="tag">2026</div>
+          <div class="tag">3D</div>
+          <div class="tag">Blender</div>
+          <div class="tag">Three.js</div>
+        </div>
+        <a href="/virtual_cooking2d.html" class="btn-view-work" data-i18n="btn-view-work" style="margin-top: auto; align-self: flex-start;">View Work</a>
+      </div>
+      <a href="/virtual_cooking2d.html" style="display:block;">
+        <div class="project-tile" style="box-shadow: none; overflow: hidden; cursor: pointer;">
+          <img src="/images/vr-cookbook/back_final_V2.jpg" alt="Virtual Cooking" style="width: 100%; height: 100%; object-fit: cover; display: block;" />
+        </div>
+      </a>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer-section">
+      <div class="footer-logo" id="scroll-top-btn" style="cursor: pointer;">top</div>
+
+<div class="footer-meta">
+        <p class="copyright" data-i18n="footer-copyright">© 2025 Lucas Maher. All Rights Reserved.</p>
+        <p class="footer-note" data-i18n-html="footer-note">Built with care<br>and way too much coffee.</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const TITLES_BY_LANG = {
+      en: ['Interface Designer...','Product Designer...','Detail Obsessed Designer...','3D & UI Hybrid...','Motion & Interface Designer...','Interaction Designer...'],
+      de: ['Interface Designer...','Produktdesigner...','Detailbesessener Designer...','3D & UI Designer...','Motion & Interface Designer...','Interaktionsdesigner...'],
+      fr: ['Designer d\'Interface...','Designer Produit...','Designer obsédé par les détails...','Hybride 3D & UI...','Designer Motion & Interface...','Designer d\'Interaction...'],
+    };
+    let currentTitles = TITLES_BY_LANG[localStorage.getItem('lang') || 'en'];
+    const typeEl = document.getElementById('typewriter');
+    let titleIdx = 0, charIdx = 0, deleting = false, typeTimer = null;
+
+    function tick() {
+      const current = currentTitles[titleIdx];
+      if (!deleting) {
+        charIdx++;
+        typeEl.textContent = current.slice(0, charIdx);
+        if (charIdx === current.length) {
+          typeTimer = setTimeout(() => { deleting = true; tick(); }, 3000);
+          return;
+        }
+        typeTimer = setTimeout(tick, 80);
+      } else {
+        charIdx--;
+        typeEl.textContent = current.slice(0, charIdx);
+        if (charIdx === 0) {
+          deleting = false;
+          titleIdx = (titleIdx + 1) % currentTitles.length;
+          typeTimer = setTimeout(tick, 350);
+          return;
+        }
+        typeTimer = setTimeout(tick, 45);
+      }
+    }
+    typeTimer = setTimeout(tick, 600);
+
+    function restartTypewriter(lang) {
+      currentTitles = TITLES_BY_LANG[lang] || TITLES_BY_LANG.en;
+      if (typeTimer) clearTimeout(typeTimer);
+      titleIdx = 0; charIdx = 0; deleting = false;
+      typeEl.textContent = '';
+      typeTimer = setTimeout(tick, 400);
+    }
+
+    document.getElementById('scroll-top-btn').addEventListener('click', () => {
+      const start = window.scrollY;
+      const duration = 700;
+      const startTime = performance.now();
+      function ease(t) { return t < 0.5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3) / 2; }
+      function step(now) {
+        const elapsed = now - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        window.scrollTo(0, start * (1 - ease(progress)));
+        if (progress < 1) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    });
+
+    // ── Page slide transitions ────────────────────────────────────
+    // ── Page transitions ──────────────────────────────────────────
+    (function() {
+      var KF = '@keyframes _sR{from{transform:translateX(100%)}to{transform:translateX(0)}}@keyframes _sL{from{transform:translateX(-100%)}to{transform:translateX(0)}}';
+      var s = document.createElement('style'); s.textContent = KF; document.head.appendChild(s);
+      var DUR = 380, EASE = 'cubic-bezier(0.4,0,0.2,1)';
+
+      function _getWrap() {
+        var w = document.getElementById('_sw');
+        if (!w) {
+          w = document.createElement('div'); w.id = '_sw';
+          Array.from(document.body.children).forEach(function(c) {
+            if (c.id !== 'top-bar' && c.id !== '_sw') w.appendChild(c);
+          });
+          document.body.appendChild(w);
+        }
+        return w;
+      }
+
+      var dir = sessionStorage.getItem('_sv');
+      if (dir) {
+        sessionStorage.removeItem('_sv');
+        var wrap = _getWrap();
+        wrap.style.transform = dir === 'right' ? 'translateX(100%)' : 'translateX(-100%)';
+        var done = false;
+        function reveal() {
+          if (done) return; done = true;
+          requestAnimationFrame(function() {
+            wrap.style.transform = '';
+            wrap.style.animation = (dir === 'right' ? '_sR' : '_sL') + ' ' + DUR + 'ms ' + EASE + ' both';
+            setTimeout(function() { wrap.style.animation = ''; }, DUR + 60);
+          });
+        }
+        if (document.fonts && document.fonts.ready) { document.fonts.ready.then(reveal); } else { requestAnimationFrame(function() { requestAnimationFrame(reveal); }); }
+        setTimeout(reveal, 300);
+      }
+
+      window._nav = function(url, into) {
+        sessionStorage.setItem('_sv', into);
+        var dim = document.createElement('div');
+        dim.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0);z-index:9999;transition:background 220ms ease;pointer-events:none;';
+        document.body.appendChild(dim);
+        requestAnimationFrame(function() { dim.style.background = 'rgba(0,0,0,0.28)'; });
+        setTimeout(function() { location.href = url; }, 220);
+      };
+
+      window.addEventListener('message', function(e) {
+        if (e.data && e.data.type === 'page-slide') window._nav(e.data.url, e.data.enterFrom);
+      });
+    })();
+
+    // Mobile menu — toggled via postMessage from the nav iframe
+    (function () {
+      const menu = document.getElementById('mobile-menu');
+
+      function setMenuTheme() {
+        const bg = getComputedStyle(document.body).backgroundColor;
+        const m = bg.match(/[\d.]+/g);
+        let lum = 1;
+        if (m && m.length >= 3) {
+          const a = m[3] !== undefined ? +m[3] : 1;
+          if (a > 0.4) lum = (0.299 * +m[0] + 0.587 * +m[1] + 0.114 * +m[2]) / 255;
+        }
+        if (document.querySelector('canvas')) lum = 0.1;
+        const dark = lum < 0.4;
+        menu.style.setProperty('--m-shadow-d', dark ? 'rgba(0,0,20,0.95)'     : 'rgba(120,120,140,0.95)');
+        menu.style.setProperty('--m-shadow-l', dark ? 'rgba(255,255,255,0.38)' : 'rgba(255,255,255,0.85)');
+        menu.style.setProperty('--m-btn-bg',   dark ? 'rgba(220,220,227,0.68)' : 'rgba(220,220,227,0.45)');
+      }
+
+      setMenuTheme();
+
+      function openMenu()  { menu.classList.add('open'); }
+      function closeMenu() { menu.classList.remove('open'); }
+
+      window.addEventListener('message', e => {
+        if (e.data.type === 'mobile-menu-toggle') {
+          menu.classList.contains('open') ? closeMenu() : openMenu();
+        }
+      });
+
+      // Close on backdrop tap
+      menu.addEventListener('click', e => { if (e.target === menu) closeMenu(); });
+
+      // Mode buttons
+      menu.querySelectorAll('[data-mode]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (btn.dataset.mode === '3d') window._nav('/', 'right');
+          else window.location.href = '/2D.html';
+        });
+      });
+
+      // Nav buttons
+      menu.querySelectorAll('[data-page]').forEach(btn => {
+        btn.addEventListener('click', e => {
+          e.preventDefault();
+          closeMenu();
+          if      (btn.dataset.page === 'craft')   window.location.href = '/2D.html#craft-section';
+          else if (btn.dataset.page === 'about')   window.location.href = '/about2d.html';
+          else if (btn.dataset.page === 'contact') window.location.href = '/contact2d.html';
+        });
+      });
+    })();
+
+    let lastScrollY = 0;
+    let lastToggleY = 0;
+    const topBar = document.getElementById('top-bar');
+    const hideThreshold = 250;
+    const showThreshold = 180;
+
+    window.addEventListener('scroll', () => {
+      const currentScrollY = window.scrollY;
+
+      // Always show nav bar at the top
+      if (currentScrollY === 0) {
+        topBar.classList.remove('hide');
+        lastToggleY = 0;
+      } else if (currentScrollY > lastScrollY && Math.abs(currentScrollY - lastToggleY) > hideThreshold) {
+        // Scrolling down - use higher threshold
+        topBar.classList.add('hide');
+        lastToggleY = currentScrollY;
+      } else if (currentScrollY < lastScrollY && Math.abs(currentScrollY - lastToggleY) > showThreshold) {
+        // Scrolling up - use lower threshold
+        topBar.classList.remove('hide');
+        lastToggleY = currentScrollY;
+      }
+
+      lastScrollY = currentScrollY;
+    });
+
+    // ── i18n ─────────────────────────────────────────────────────
+    const TRANSLATIONS = {
+      en: {
+        'tagline1': 'From material to pixel.',
+        'tagline2': 'More about me →',
+        'craft-title': 'Craft',
+        'btn-view-work': 'View Work',
+        'footer-copyright': '© 2025 Lucas Maher. All Rights Reserved.',
+        'footer-note': 'Built with care<br>and way too much coffee.',
+      },
+      de: {
+        'tagline1': 'Von Material zu Pixel.',
+        'tagline2': 'Mehr über mich →',
+        'craft-title': 'Projekte',
+        'btn-view-work': 'Ansehen',
+        'footer-copyright': '© 2025 Lucas Maher. Alle Rechte vorbehalten.',
+        'footer-note': 'Mit Sorgfalt gebaut<br>und viel zu viel Kaffee.',
+      },
+      fr: {
+        'tagline1': 'Du matériau au pixel.',
+        'tagline2': 'En savoir plus →',
+        'craft-title': 'Projets',
+        'btn-view-work': 'Voir',
+        'footer-copyright': '© 2025 Lucas Maher. Tous droits réservés.',
+        'footer-note': 'Construit avec soin<br>et beaucoup trop de café.',
+      }
+    };
+    function applyLang(lang) {
+      const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
+      document.querySelectorAll('[data-i18n]').forEach(el => { if (t[el.dataset.i18n] !== undefined) el.textContent = t[el.dataset.i18n]; });
+      document.querySelectorAll('[data-i18n-html]').forEach(el => { if (t[el.dataset.i18nHtml] !== undefined) el.innerHTML = t[el.dataset.i18nHtml]; });
+      restartTypewriter(lang);
+    }
+    applyLang(localStorage.getItem('lang') || 'en');
+
+    window.addEventListener('message', function(e) {
+      if (!e.data || !e.data.type) return;
+      if (e.data.type === 'nav-expand') topBar.style.height = '280px';
+      if (e.data.type === 'nav-collapse') topBar.style.height = '90px';
+      if (e.data.type === 'lang-change') applyLang(e.data.lang);
+    });
+  </script>
+  <div id="scroll-track">
+    <div id="scroll-thumb">
+      <span class="scroll-dot"></span>
+      <span class="scroll-dot"></span>
+      <span class="scroll-dot"></span>
+      <span class="scroll-dot"></span>
+      <span class="scroll-dot"></span>
+    </div>
+  </div>
+  <script>
+    (function () {
+      var thumb = document.getElementById('scroll-thumb');
+      var track = document.getElementById('scroll-track');
+      var ticking = false;
+      function update() {
+        var scrolled  = window.scrollY;
+        var maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+        var progress  = maxScroll > 0 ? Math.max(0, Math.min(1, scrolled / maxScroll)) : 0;
+        thumb.style.top = (progress * (track.offsetHeight - thumb.offsetHeight)) + 'px';
+        ticking = false;
+      }
+      window.addEventListener('scroll', function () {
+        if (!ticking) { requestAnimationFrame(update); ticking = true; }
+      }, { passive: true });
+      update();
+    })();
+  </script>
+</body>
+</html>

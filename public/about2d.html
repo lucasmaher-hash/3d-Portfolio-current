@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>About — Lucas Maher</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=VT323&family=Roboto:wght@400;500&family=Roboto+Flex:wdth@100&display=swap" rel="stylesheet" />
+  <style>
+    @font-face {
+      font-family: 'OCR-A-BT';
+      src: url('/OCR-A-BT.ttf') format('truetype');
+      font-weight: normal;
+      font-style: normal;
+    }
+
+    :root {
+      --bg-surface: #DCDCE3;
+      --text-primary: #1A1A1A;
+      --text-secondary: #8E8E93;
+      --text-tertiary: #c7c7cc;
+      --accent-orange: #FF5C00;
+      --border-color: #6f6f6f;
+
+      --shadow-raised-sm: 5px 5px 12px rgba(174,174,192,0.65), -5px -5px 12px rgba(255,255,255,1);
+      --shadow-raised: 8px 8px 18px rgba(174,174,192,0.65), -8px -8px 18px rgba(255,255,255,1);
+      --shadow-pressed: inset 5px 5px 10px rgba(174,174,192,0.6), inset -5px -5px 10px rgba(255,255,255,1);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100%;
+      background: var(--bg-surface);
+      color: var(--text-primary);
+      font-family: 'Roboto Flex', sans-serif;
+      line-height: 1.6;
+      padding: 0 clamp(20px, 3.9vw, 55px);
+    }
+
+    #top-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 108px;
+      border: none;
+      z-index: 10;
+      pointer-events: auto;
+      background: transparent;
+      overflow: visible;
+      transition: transform 300ms ease;
+    }
+
+    #top-bar.hide {
+      transform: translateY(-220px);
+    }
+
+    .page-wrapper {
+      padding-top: 90px;
+      padding-bottom: 12px;
+      border: 1px solid var(--border-color);
+      margin: 12px auto;
+      overflow: hidden;
+    }
+
+    /* About Section */
+    .about-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 32px clamp(20px, 6vw, 80px) 96px;
+    }
+
+    .content {
+      width: min(644px, 100%);
+      display: flex;
+      flex-direction: column;
+      gap: 40px;
+    }
+
+    .title-block {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .about-title {
+      font-family: 'OCR-A-BT', monospace;
+      font-size: clamp(32px, 5vw, 56px);
+      line-height: 1;
+      color: var(--text-primary);
+      text-transform: uppercase;
+    }
+
+    .dot-divider {
+      width: 100%;
+      height: 4px;
+      background-image: radial-gradient(circle, var(--text-primary) 1.5px, transparent 1.5px);
+      background-size: 10px 4px;
+      background-repeat: repeat-x;
+    }
+
+    .accordion {
+      display: flex;
+      flex-direction: column;
+      gap: 40px;
+    }
+
+    .item {
+      background: var(--bg-surface);
+      border-radius: 999px;
+      box-shadow: -5px -5px 12px 0 rgba(255,255,255,1), 5px 5px 12px 0 rgba(174,174,192,0.65);
+      cursor: pointer;
+      overflow: hidden;
+      transition: box-shadow 300ms ease-out, transform 300ms ease-out;
+    }
+
+    .item.open,
+    .item.closing {
+      border-radius: 24px;
+      box-shadow: -8px -8px 24px 0 rgba(255,255,255,1), 8px 8px 24px 0 rgba(174,174,192,0.85);
+      cursor: default;
+    }
+
+    .item:hover:not(.open):not(.closing) {
+      box-shadow: -6px -6px 18px 0 rgba(255,255,255,1), 6px 6px 18px 0 rgba(174,174,192,0.8);
+      transform: translateY(-2px) scale(1.03);
+      transition: box-shadow 150ms ease, transform 150ms ease;
+    }
+
+    .item-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 8px 16px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .item-label {
+      flex: 1;
+      font-family: 'VT323', monospace;
+      font-size: 20px;
+      line-height: 1.1;
+      color: var(--text-primary);
+      text-transform: uppercase;
+    }
+
+    .btn {
+      width: 38px;
+      height: 37px;
+      background: var(--accent-orange);
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-family: 'VT323', monospace;
+      font-size: 22px;
+      color: #f0f0f2;
+      pointer-events: none;
+    }
+
+    .item-body {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.35s ease, padding 0.35s ease;
+      padding: 0 16px;
+    }
+
+    .item.closing .item-body {
+      transition: max-height 0.2s ease, padding 0.2s ease;
+    }
+
+    .item.open .item-body {
+      max-height: 700px;
+      padding: 0 16px 16px;
+    }
+
+    .item.closing .item-body {
+      max-height: 0;
+      padding: 0 16px;
+    }
+
+    .text-inset {
+      border-radius: 16px;
+      padding: 16px 16px 16px 24px;
+      background: var(--bg-surface);
+      box-shadow: inset -5px -5px 10px 0 rgba(255,255,255,1), inset 5px 5px 10px 0 rgba(174,174,192,0.6);
+      min-height: 200px;
+    }
+
+    .text-inset p {
+      font-family: Georgia, 'Times New Roman', serif;
+      font-style: italic;
+      font-size: 15px;
+      line-height: 1.7;
+      color: var(--text-secondary);
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .anim {
+      opacity: 0;
+      animation: fadeUp 350ms ease forwards;
+    }
+
+    .anim-1 { animation-delay: 0ms; }
+    .anim-2 { animation-delay: 150ms; }
+    .anim-3 { animation-delay: 300ms; }
+    .anim-4 { animation-delay: 450ms; }
+    .anim-5 { animation-delay: 600ms; }
+
+    /* ── Mobile layout ───────────────────────────────────────── */
+    @media (max-width: 640px) {
+      html, body { padding: 0; }
+      .page-wrapper {
+        margin: 0;
+        border-left: none;
+        border-right: none;
+        padding-top: 90px;
+      }
+      #top-bar { height: 108px; }
+      #top-bar.hide { transform: translateY(-90px); }
+    }
+
+    /* ── Mobile menu overlay ─────────────────────────────────── */
+    .mobile-menu {
+      position: fixed; inset: 0; z-index: 200;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(0,0,0,0.35);
+      opacity: 0; pointer-events: none; transition: opacity 250ms ease;
+      --m-shadow-d: rgba(120,120,140,0.95);
+      --m-shadow-l: rgba(255,255,255,0.85);
+      --m-btn-bg: rgba(220,220,227,0.45);
+    }
+    .mobile-menu.open { opacity: 1; pointer-events: auto; }
+    .mobile-menu-panel {
+      width: 75%;
+      background: rgba(220,220,227,0.18);
+      backdrop-filter: blur(24px) saturate(1.4);
+      -webkit-backdrop-filter: blur(24px) saturate(1.4);
+      border-radius: 28px;
+      border: 1px solid rgba(255,255,255,0.55);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.6), inset 0 -1px 0 rgba(174,174,192,0.15);
+      padding: 20px; display: flex; flex-direction: column; gap: 24px;
+      transform: translateY(10px); transition: transform 250ms ease;
+    }
+    .mobile-menu.open .mobile-menu-panel { transform: translateY(0); }
+    .mobile-view-toggle {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 5px;
+      background: rgba(220,220,227,0.45); border-radius: 9999px;
+      box-shadow: 5px 5px 16px var(--m-shadow-d), -5px -5px 16px var(--m-shadow-l);
+      padding: 5px;
+    }
+    .mobile-mode-btn {
+      border: none; background: transparent; border-radius: 9999px;
+      padding: 11px 0; font-family: 'VT323', monospace; font-size: 18px;
+      color: #555; cursor: pointer; text-align: center;
+      -webkit-tap-highlight-color: transparent;
+      transition: box-shadow 150ms ease, color 150ms ease, transform 150ms ease;
+    }
+    .mobile-mode-btn.is-active {
+      background: var(--m-btn-bg); color: #000;
+      box-shadow: inset 5px 5px 14px var(--m-shadow-d), inset -5px -5px 14px var(--m-shadow-l);
+    }
+    .mobile-mode-btn:active:not(.is-active) {
+      box-shadow: inset 5px 5px 14px var(--m-shadow-d), inset -5px -5px 14px var(--m-shadow-l);
+      transform: scale(0.96);
+    }
+    .mobile-nav-btn {
+      display: block; background: var(--m-btn-bg); border-radius: 9999px;
+      box-shadow: 5px 5px 16px var(--m-shadow-d), -5px -5px 16px var(--m-shadow-l);
+      padding: 16px 24px; font-family: 'VT323', monospace; font-size: 22px;
+      color: #555; text-transform: uppercase; text-decoration: none;
+      text-align: center; cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: box-shadow 150ms ease, transform 150ms ease;
+    }
+    .mobile-nav-btn.is-active {
+      box-shadow: inset 5px 5px 14px var(--m-shadow-d), inset -5px -5px 14px var(--m-shadow-l);
+      color: #000;
+    }
+    .mobile-nav-btn:active {
+      transform: scale(0.98);
+      box-shadow: inset 5px 5px 14px var(--m-shadow-d), inset -5px -5px 14px var(--m-shadow-l);
+    }
+
+    html { scrollbar-width: none; }
+    html::-webkit-scrollbar { display: none; }
+    #scroll-track {
+      position: fixed; right: 16px; top: 24px; bottom: 24px;
+      width: 6px; z-index: 999; pointer-events: none;
+      transform: translateZ(0); will-change: transform;
+    }
+    #scroll-thumb {
+      position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+      display: flex; flex-direction: column; gap: 5px;
+    }
+    .scroll-dot {
+      width: 5px; height: 5px; border-radius: 50%;
+      background: var(--accent-orange, #FF5C00); display: block; flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+  <iframe id="top-bar" src="/top_row_permanent_V3.html" allowtransparency="true" scrolling="no"></iframe>
+
+  <div id="mobile-menu" class="mobile-menu">
+    <div class="mobile-menu-panel">
+      <div class="mobile-view-toggle">
+        <button class="mobile-mode-btn is-active" data-mode="2d">2D</button>
+        <button class="mobile-mode-btn" data-mode="3d">3D</button>
+      </div>
+      <a class="mobile-nav-btn" data-page="craft">Craft</a>
+      <a class="mobile-nav-btn is-active" data-page="about">About</a>
+      <a class="mobile-nav-btn" data-page="contact">Contact</a>
+    </div>
+  </div>
+
+  <div class="page-wrapper">
+    <div class="about-section">
+      <div class="content">
+
+        <div class="title-block anim anim-1">
+          <h1 class="about-title">Lucas Maher</h1>
+          <div class="dot-divider"></div>
+        </div>
+
+        <div class="accordion">
+
+          <div class="item anim anim-2" data-key="background">
+            <div class="item-header">
+              <span class="item-label" data-i18n="label-background">Background</span>
+              <div class="btn">+</div>
+            </div>
+            <div class="item-body">
+              <div class="text-inset" data-i18n-html="bg-text">
+                <p>Hi, I'm Lucas Maher, a 21 yo designer based in Munich.</p>
+                <p style="margin-top: 12px;">I've always created with my hands. Long before I discovered design, I was drawing, sculpting clay, cutting glass, welding metal, sewing fabric, and painting in oil and acrylic — constantly switching materials, constantly asking: what can this become?</p>
+                <p style="margin-top: 12px;">That restlessness led me to Industrial Design, where three-dimensional thinking meets real-world problems. Now, studying at Hochschule München, I'm channeling that same energy into the digital space — where 2D and 3D collide, and where screens are becoming the new material to shape.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="item anim anim-3" data-key="things-i-love">
+            <div class="item-header">
+              <span class="item-label" data-i18n="label-things-i-love">Things I Love</span>
+              <div class="btn">+</div>
+            </div>
+            <div class="item-body">
+              <div class="text-inset" data-i18n-html="love-text">
+                <p>What excites me most right now is spatial computing — VR & AR. The idea that digital experiences can exist in three-dimensional space, that you can step inside a design rather than just look at it through a screen, feels like the most radical shift in how humans interact with technology. I want to be at the forefront of that.</p>
+                <p style="margin-top: 12px;">Outside of that, I find a lot of inspiration in film — the way directors use composition, light, and pacing to guide attention and evoke emotion isn't so different from what we do as designers. And sport keeps me grounded: the discipline, the consistency, the reminder that good results come from showing up every day.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="item anim anim-4" data-key="design-philosophy">
+            <div class="item-header">
+              <span class="item-label" data-i18n="label-design-philosophy">Design Philosophy</span>
+              <div class="btn">+</div>
+            </div>
+            <div class="item-body">
+              <div class="text-inset" data-i18n-html="philosophy-text">
+                <p>Design that only looks good has already failed. I came to this field from fine art and craft — and that background taught me one thing above all: beauty without purpose is decoration, not design.</p>
+                <p style="margin-top: 12px;">I work at the intersection of bold aesthetics and real problem-solving. I'm not afraid to experiment, to try what hasn't been done, or to borrow from unexpected places. The best ideas often live at the edges — between physical and digital, between 2D and 3D, between what exists and what could.</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <img src="/images/about/57FBA5B1-E3B8-45B1-BC19-9A45E0AA39C4.JPEG" class="anim anim-5" alt="Lucas Maher" style="width: 100%; aspect-ratio: 3/2; object-fit: cover; object-position: left center; display: block;" />
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function closeItem(item) {
+      item.classList.add('closing');
+      item.querySelector('.btn').textContent = '+';
+      const body = item.querySelector('.item-body');
+      body.addEventListener('transitionend', function handler(e) {
+        if (e.propertyName === 'max-height') {
+          item.classList.remove('open', 'closing');
+          body.removeEventListener('transitionend', handler);
+        }
+      });
+    }
+
+    document.querySelectorAll('.item-header').forEach(header => {
+      header.addEventListener('click', () => {
+        const item = header.closest('.item');
+        const isOpen = item.classList.contains('open');
+        document.querySelectorAll('.item.open').forEach(i => {
+          if (!i.classList.contains('closing')) closeItem(i);
+        });
+        if (!isOpen) {
+          item.classList.add('open');
+          item.querySelector('.btn').textContent = '-';
+        }
+      });
+    });
+
+    // ── Page transitions ──────────────────────────────────────────
+    (function() {
+      var KF = '@keyframes _sR{from{transform:translateX(100%)}to{transform:translateX(0)}}@keyframes _sL{from{transform:translateX(-100%)}to{transform:translateX(0)}}';
+      var s = document.createElement('style'); s.textContent = KF; document.head.appendChild(s);
+      var DUR = 380, EASE = 'cubic-bezier(0.4,0,0.2,1)';
+
+      function _getWrap() {
+        var w = document.getElementById('_sw');
+        if (!w) {
+          w = document.createElement('div'); w.id = '_sw';
+          Array.from(document.body.children).forEach(function(c) {
+            if (c.id !== 'top-bar' && c.id !== '_sw') w.appendChild(c);
+          });
+          document.body.appendChild(w);
+        }
+        return w;
+      }
+
+      var dir = sessionStorage.getItem('_sv');
+      if (dir) {
+        sessionStorage.removeItem('_sv');
+        var wrap = _getWrap();
+        wrap.style.transform = dir === 'right' ? 'translateX(100%)' : 'translateX(-100%)';
+        var done = false;
+        function reveal() {
+          if (done) return; done = true;
+          requestAnimationFrame(function() {
+            wrap.style.transform = '';
+            wrap.style.animation = (dir === 'right' ? '_sR' : '_sL') + ' ' + DUR + 'ms ' + EASE + ' both';
+            setTimeout(function() { wrap.style.animation = ''; }, DUR + 60);
+          });
+        }
+        if (document.fonts && document.fonts.ready) { document.fonts.ready.then(reveal); } else { requestAnimationFrame(function() { requestAnimationFrame(reveal); }); }
+        setTimeout(reveal, 300);
+      }
+
+      window._nav = function(url, into) {
+        sessionStorage.setItem('_sv', into);
+        var dim = document.createElement('div');
+        dim.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0);z-index:9999;transition:background 220ms ease;pointer-events:none;';
+        document.body.appendChild(dim);
+        requestAnimationFrame(function() { dim.style.background = 'rgba(0,0,0,0.28)'; });
+        setTimeout(function() { location.href = url; }, 220);
+      };
+
+      window.addEventListener('message', function(e) {
+        if (e.data && e.data.type === 'page-slide') window._nav(e.data.url, e.data.enterFrom);
+      });
+    })();
+
+    (function () {
+      const menu = document.getElementById('mobile-menu');
+      function setMenuTheme() {
+        const bg = getComputedStyle(document.body).backgroundColor;
+        const m = bg.match(/[\d.]+/g);
+        let lum = 1;
+        if (m && m.length >= 3) {
+          const a = m[3] !== undefined ? +m[3] : 1;
+          if (a > 0.4) lum = (0.299 * +m[0] + 0.587 * +m[1] + 0.114 * +m[2]) / 255;
+        }
+        const dark = lum < 0.4;
+        menu.style.setProperty('--m-shadow-d', dark ? 'rgba(0,0,20,0.95)' : 'rgba(120,120,140,0.95)');
+        menu.style.setProperty('--m-shadow-l', dark ? 'rgba(255,255,255,0.38)' : 'rgba(255,255,255,0.85)');
+        menu.style.setProperty('--m-btn-bg',   dark ? 'rgba(220,220,227,0.68)' : 'rgba(220,220,227,0.45)');
+      }
+      setMenuTheme();
+      function openMenu()  { menu.classList.add('open'); }
+      function closeMenu() { menu.classList.remove('open'); }
+      window.addEventListener('message', e => {
+        if (e.data.type === 'mobile-menu-toggle')
+          menu.classList.contains('open') ? closeMenu() : openMenu();
+      });
+      menu.addEventListener('click', e => { if (e.target === menu) closeMenu(); });
+      menu.querySelectorAll('[data-mode]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (btn.dataset.mode === '3d') window._nav('/', 'right');
+          else window.location.href = '/2D.html';
+        });
+      });
+      menu.querySelectorAll('[data-page]').forEach(btn => {
+        btn.addEventListener('click', e => {
+          e.preventDefault(); closeMenu();
+          if      (btn.dataset.page === 'craft')   window.location.href = '/2D.html#craft-section';
+          else if (btn.dataset.page === 'about')   window.location.href = '/about2d.html';
+          else if (btn.dataset.page === 'contact') window.location.href = '/contact2d.html';
+        });
+      });
+    })();
+
+    let lastScrollY = 0;
+    let lastToggleY = 0;
+    const topBar = document.getElementById('top-bar');
+    const hideThreshold = 250;
+    const showThreshold = 180;
+
+    window.addEventListener('scroll', () => {
+      const currentScrollY = window.scrollY;
+      if (currentScrollY === 0) {
+        topBar.classList.remove('hide');
+        lastToggleY = 0;
+      } else if (currentScrollY > lastScrollY && Math.abs(currentScrollY - lastToggleY) > hideThreshold) {
+        topBar.classList.add('hide');
+        lastToggleY = currentScrollY;
+      } else if (currentScrollY < lastScrollY && Math.abs(currentScrollY - lastToggleY) > showThreshold) {
+        topBar.classList.remove('hide');
+        lastToggleY = currentScrollY;
+      }
+      lastScrollY = currentScrollY;
+    });
+
+    // ── i18n ─────────────────────────────────────────────────────
+    const TRANSLATIONS = {
+      en: {
+        'label-background': 'Background',
+        'bg-text': '<p>Hi, I\'m Lucas Maher, a 21 yo designer based in Munich.</p><p style="margin-top:12px;">I\'ve always created with my hands. Long before I discovered design, I was drawing, sculpting clay, cutting glass, welding metal, sewing fabric, and painting in oil and acrylic — constantly switching materials, constantly asking: what can this become?</p><p style="margin-top:12px;">That restlessness led me to Industrial Design, where three-dimensional thinking meets real-world problems. Now, studying at Hochschule München, I\'m channeling that same energy into the digital space — where 2D and 3D collide, and where screens are becoming the new material to shape.</p>',
+        'label-things-i-love': 'Things I Love',
+        'love-text': '<p>What excites me most right now is spatial computing — VR & AR. The idea that digital experiences can exist in three-dimensional space, that you can step inside a design rather than just look at it through a screen, feels like the most radical shift in how humans interact with technology. I want to be at the forefront of that.</p><p style="margin-top:12px;">Outside of that, I find a lot of inspiration in film — the way directors use composition, light, and pacing to guide attention and evoke emotion isn\'t so different from what we do as designers. And sport keeps me grounded: the discipline, the consistency, the reminder that good results come from showing up every day.</p>',
+        'label-design-philosophy': 'Design Philosophy',
+        'philosophy-text': '<p>Design that only looks good has already failed. I came to this field from fine art and craft — and that background taught me one thing above all: beauty without purpose is decoration, not design.</p><p style="margin-top:12px;">I work at the intersection of bold aesthetics and real problem-solving. I\'m not afraid to experiment, to try what hasn\'t been done, or to borrow from unexpected places. The best ideas often live at the edges — between physical and digital, between 2D and 3D, between what exists and what could.</p>',
+      },
+      de: {
+        'label-background': 'Hintergrund',
+        'bg-text': '<p>Hallo, ich bin Lucas Maher, ein 21-jähriger Designer aus München.</p><p style="margin-top:12px;">Ich habe schon immer mit meinen Händen erschaffen. Lange bevor ich das Design entdeckte, zeichnete ich, formte Ton, schnitt Glas, schweißte Metall, nähte Stoff und malte in Öl und Acryl — immer wieder wechselte ich die Materialien, immer wieder fragte ich: Was kann daraus werden?</p><p style="margin-top:12px;">Diese Ruhelosigkeit führte mich zum Industriedesign, wo dreidimensionales Denken auf reale Probleme trifft. Nun, im Studium an der Hochschule München, kanalisiere ich diese Energie in den digitalen Raum — wo 2D und 3D kollidieren und Bildschirme zum neuen Material werden, das geformt werden will.</p>',
+        'label-things-i-love': 'Was ich liebe',
+        'love-text': '<p>Was mich gerade am meisten begeistert, ist Spatial Computing — VR & AR. Der Gedanke, dass digitale Erlebnisse im dreidimensionalen Raum existieren können, dass man in ein Design eintreten kann, anstatt es nur durch einen Bildschirm zu betrachten, fühlt sich wie der radikalste Wandel in der Art an, wie Menschen mit Technologie interagieren. Ich möchte an vorderster Front dabei sein.</p><p style="margin-top:12px;">Darüber hinaus finde ich viel Inspiration im Film — die Art, wie Regisseure Komposition, Licht und Rhythmus einsetzen, um Aufmerksamkeit zu lenken und Emotionen zu wecken, unterscheidet sich nicht so sehr von dem, was wir als Designer tun. Und Sport hält mich geerdet: die Disziplin, die Konsequenz, die Erinnerung daran, dass gute Ergebnisse davon kommen, jeden Tag aufzutauchen.</p>',
+        'label-design-philosophy': 'Designphilosophie',
+        'philosophy-text': '<p>Design, das nur gut aussieht, hat bereits versagt. Ich bin aus der bildenden Kunst und dem Handwerk zu diesem Bereich gekommen — und dieser Hintergrund hat mir vor allem eines gelehrt: Schönheit ohne Zweck ist Dekoration, kein Design.</p><p style="margin-top:12px;">Ich arbeite an der Schnittstelle von mutiger Ästhetik und echter Problemlösung. Ich scheue mich nicht zu experimentieren, das Unerprobte zu versuchen oder von unerwarteten Orten zu borgen. Die besten Ideen leben oft an den Rändern — zwischen physisch und digital, zwischen 2D und 3D, zwischen dem, was existiert, und dem, was sein könnte.</p>',
+      },
+      fr: {
+        'label-background': 'Parcours',
+        'bg-text': '<p>Bonjour, je suis Lucas Maher, designer de 21 ans basé à Munich.</p><p style="margin-top:12px;">J\'ai toujours créé avec mes mains. Bien avant de découvrir le design, je dessinais, sculptais l\'argile, découpais du verre, soudais du métal, cousais du tissu et peignais à l\'huile et à l\'acrylique — changeant constamment de matériaux, me demandant constamment : qu\'est-ce que cela peut devenir ?</p><p style="margin-top:12px;">Cette agitation m\'a conduit au design industriel, où la pensée tridimensionnelle rencontre les problèmes du monde réel. Maintenant, en étudiant à la Hochschule München, je canalise cette même énergie dans l\'espace numérique — où le 2D et le 3D se percutent, et où les écrans deviennent le nouveau matériau à façonner.</p>',
+        'label-things-i-love': 'Ce que j\'aime',
+        'love-text': '<p>Ce qui m\'enthousiasme le plus en ce moment, c\'est le calcul spatial — la VR & RA. L\'idée que les expériences numériques peuvent exister dans un espace tridimensionnel, que l\'on peut entrer dans un design plutôt que de simplement le regarder à travers un écran, semble être le changement le plus radical dans la façon dont les humains interagissent avec la technologie. Je veux être à l\'avant-garde de cela.</p><p style="margin-top:12px;">En dehors de cela, je trouve beaucoup d\'inspiration dans le cinéma — la façon dont les réalisateurs utilisent la composition, la lumière et le rythme pour guider l\'attention et évoquer des émotions n\'est pas si différente de ce que nous faisons en tant que designers. Et le sport me maintient ancré : la discipline, la constance, le rappel que les bons résultats viennent de se montrer chaque jour.</p>',
+        'label-design-philosophy': 'Philosophie de design',
+        'philosophy-text': '<p>Un design qui ne fait que bien paraître a déjà échoué. Je suis venu à ce domaine par les beaux-arts et l\'artisanat — et ce parcours m\'a appris une chose par-dessus tout : la beauté sans but est décoration, pas design.</p><p style="margin-top:12px;">Je travaille à l\'intersection d\'une esthétique audacieuse et d\'une vraie résolution de problèmes. Je n\'ai pas peur d\'expérimenter, d\'essayer ce qui n\'a pas encore été fait, ou d\'emprunter à des endroits inattendus. Les meilleures idées vivent souvent aux marges — entre physique et numérique, entre 2D et 3D, entre ce qui existe et ce qui pourrait exister.</p>',
+      }
+    };
+    function applyLang(lang) {
+      const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
+      document.querySelectorAll('[data-i18n]').forEach(el => { if (t[el.dataset.i18n] !== undefined) el.textContent = t[el.dataset.i18n]; });
+      document.querySelectorAll('[data-i18n-html]').forEach(el => { if (t[el.dataset.i18nHtml] !== undefined) el.innerHTML = t[el.dataset.i18nHtml]; });
+    }
+    applyLang(localStorage.getItem('lang') || 'en');
+
+    window.addEventListener('message', function(e) {
+      if (!e.data || !e.data.type) return;
+      if (e.data.type === 'nav-expand') topBar.style.height = '280px';
+      if (e.data.type === 'nav-collapse') topBar.style.height = '90px';
+      if (e.data.type === 'lang-change') applyLang(e.data.lang);
+    });
+  </script>
+  <div id="scroll-track">
+    <div id="scroll-thumb">
+      <span class="scroll-dot"></span>
+      <span class="scroll-dot"></span>
+      <span class="scroll-dot"></span>
+      <span class="scroll-dot"></span>
+      <span class="scroll-dot"></span>
+    </div>
+  </div>
+  <script>
+    (function () {
+      var thumb = document.getElementById('scroll-thumb');
+      var track = document.getElementById('scroll-track');
+      var ticking = false;
+      function update() {
+        var scrolled  = window.scrollY;
+        var maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+        var progress  = maxScroll > 0 ? Math.max(0, Math.min(1, scrolled / maxScroll)) : 0;
+        thumb.style.top = (progress * (track.offsetHeight - thumb.offsetHeight)) + 'px';
+        ticking = false;
+      }
+      window.addEventListener('scroll', function () {
+        if (!ticking) { requestAnimationFrame(update); ticking = true; }
+      }, { passive: true });
+      update();
+    })();
+  </script>
+</body>
+</html>

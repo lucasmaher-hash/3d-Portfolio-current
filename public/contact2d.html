@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contact — Lucas Maher</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=VT323&family=Roboto:wght@400;500&family=Roboto+Flex:wdth@100&display=swap" rel="stylesheet" />
+  <style>
+    @font-face {
+      font-family: 'OCR-A-BT';
+      src: url('/OCR-A-BT.ttf') format('truetype');
+      font-weight: normal;
+      font-style: normal;
+    }
+
+    :root {
+      --bg-surface: #DCDCE3;
+      --text-primary: #1A1A1A;
+      --text-secondary: #8E8E93;
+      --text-tertiary: #c7c7cc;
+      --accent-orange: #FF5C00;
+      --border-color: #6f6f6f;
+
+      --shadow-raised-sm: 5px 5px 12px rgba(174,174,192,0.65), -5px -5px 12px rgba(255,255,255,1);
+      --shadow-raised: 8px 8px 18px rgba(174,174,192,0.65), -8px -8px 18px rgba(255,255,255,1);
+      --shadow-pressed: inset 5px 5px 10px rgba(174,174,192,0.6), inset -5px -5px 10px rgba(255,255,255,1);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100%;
+      background: var(--bg-surface);
+      color: var(--text-primary);
+      font-family: 'Roboto Flex', sans-serif;
+      line-height: 1.6;
+      padding: 0 clamp(20px, 3.9vw, 55px);
+    }
+
+    #top-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 108px;
+      border: none;
+      z-index: 10;
+      pointer-events: auto;
+      background: transparent;
+      overflow: visible;
+      transition: transform 300ms ease;
+    }
+
+    #top-bar.hide {
+      transform: translateY(-220px);
+    }
+
+    .page-wrapper {
+      padding-top: 90px;
+      padding-bottom: 12px;
+      border: 1px solid var(--border-color);
+      margin: 12px auto;
+      overflow: hidden;
+    }
+
+    /* Contact Section */
+    .contact-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 32px clamp(20px, 6vw, 80px) 96px;
+    }
+
+    .content {
+      width: min(644px, 100%);
+      display: flex;
+      flex-direction: column;
+      gap: 40px;
+    }
+
+    .title-block {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .contact-title {
+      font-family: 'OCR-A-BT', monospace;
+      font-size: clamp(32px, 5vw, 56px);
+      line-height: 1;
+      color: var(--text-primary);
+      text-transform: uppercase;
+    }
+
+    .dot-divider {
+      width: 100%;
+      height: 4px;
+      background-image: radial-gradient(circle, var(--text-primary) 1.5px, transparent 1.5px);
+      background-size: 10px 4px;
+      background-repeat: repeat-x;
+    }
+
+    .contact-list {
+      display: flex;
+      flex-direction: column;
+      gap: 40px;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .anim { opacity: 0; animation: fadeUp 350ms ease forwards; }
+    .anim-1 { animation-delay: 0ms; }
+    .anim-2 { animation-delay: 150ms; }
+    .anim-3 { animation-delay: 300ms; }
+    .anim-4 { animation-delay: 450ms; }
+
+    .contact-item {
+      background: var(--bg-surface);
+      border-radius: 999px;
+      box-shadow: -5px -5px 12px 0 rgba(255,255,255,1), 5px 5px 12px 0 rgba(174,174,192,0.65);
+      overflow: hidden;
+      transition: box-shadow 300ms ease-out, transform 300ms ease-out;
+      text-decoration: none;
+      color: inherit;
+      display: block;
+    }
+
+    .contact-item:hover {
+      box-shadow: -6px -6px 18px 0 rgba(255,255,255,1), 6px 6px 18px 0 rgba(174,174,192,0.8);
+      transform: translateY(-2px) scale(1.03);
+      transition: box-shadow 150ms ease, transform 150ms ease;
+    }
+
+    .contact-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 8px 16px;
+      user-select: none;
+    }
+
+    .contact-label {
+      flex: 1;
+      font-family: 'VT323', monospace;
+      font-size: 20px;
+      line-height: 1.1;
+      color: var(--text-primary);
+      text-transform: uppercase;
+    }
+
+    .btn {
+      width: 38px;
+      height: 37px;
+      background: var(--accent-orange);
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-family: 'VT323', monospace;
+      font-size: 22px;
+      color: #f0f0f2;
+      pointer-events: none;
+    }
+
+    /* ── Mobile layout ───────────────────────────────────────── */
+    @media (max-width: 640px) {
+      html, body { padding: 0; }
+      .page-wrapper {
+        margin: 0;
+        border-left: none;
+        border-right: none;
+        padding-top: 90px;
+      }
+      #top-bar { height: 108px; }
+      #top-bar.hide { transform: translateY(-90px); }
+    }
+
+    /* ── Mobile menu overlay ─────────────────────────────────── */
+    .mobile-menu {
+      position: fixed; inset: 0; z-index: 200;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(0,0,0,0.35);
+      opacity: 0; pointer-events: none; transition: opacity 250ms ease;
+      --m-shadow-d: rgba(120,120,140,0.95);
+      --m-shadow-l: rgba(255,255,255,0.85);
+      --m-btn-bg: rgba(220,220,227,0.45);
+    }
+    .mobile-menu.open { opacity: 1; pointer-events: auto; }
+    .mobile-menu-panel {
+      width: 75%;
+      background: rgba(220,220,227,0.18);
+      backdrop-filter: blur(24px) saturate(1.4);
+      -webkit-backdrop-filter: blur(24px) saturate(1.4);
+      border-radius: 28px;
+      border: 1px solid rgba(255,255,255,0.55);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.6), inset 0 -1px 0 rgba(174,174,192,0.15);
+      padding: 20px; display: flex; flex-direction: column; gap: 24px;
+      transform: translateY(10px); transition: transform 250ms ease;
+    }
+    .mobile-menu.open .mobile-menu-panel { transform: translateY(0); }
+    .mobile-view-toggle {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 5px;
+      background: rgba(220,220,227,0.45); border-radius: 9999px;
+      box-shadow: 5px 5px 16px var(--m-shadow-d), -5px -5px 16px var(--m-shadow-l);
+      padding: 5px;
+    }
+    .mobile-mode-btn {
+      border: none; background: transparent; border-radius: 9999px;
+      padding: 11px 0; font-family: 'VT323', monospace; font-size: 18px;
+      color: #555; cursor: pointer; text-align: center;
+      -webkit-tap-highlight-color: transparent;
+      transition: box-shadow 150ms ease, color 150ms ease, transform 150ms ease;
+    }
+    .mobile-mode-btn.is-active {
+      background: var(--m-btn-bg); color: #000;
+      box-shadow: inset 5px 5px 14px var(--m-shadow-d), inset -5px -5px 14px var(--m-shadow-l);
+    }
+    .mobile-mode-btn:active:not(.is-active) {
+      box-shadow: inset 5px 5px 14px var(--m-shadow-d), inset -5px -5px 14px var(--m-shadow-l);
+      transform: scale(0.96);
+    }
+    .mobile-nav-btn {
+      display: block; background: var(--m-btn-bg); border-radius: 9999px;
+      box-shadow: 5px 5px 16px var(--m-shadow-d), -5px -5px 16px var(--m-shadow-l);
+      padding: 16px 24px; font-family: 'VT323', monospace; font-size: 22px;
+      color: #555; text-transform: uppercase; text-decoration: none;
+      text-align: center; cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: box-shadow 150ms ease, transform 150ms ease;
+    }
+    .mobile-nav-btn.is-active {
+      box-shadow: inset 5px 5px 14px var(--m-shadow-d), inset -5px -5px 14px var(--m-shadow-l);
+      color: #000;
+    }
+    .mobile-nav-btn:active {
+      transform: scale(0.98);
+      box-shadow: inset 5px 5px 14px var(--m-shadow-d), inset -5px -5px 14px var(--m-shadow-l);
+    }
+
+    html { scrollbar-width: none; }
+    html::-webkit-scrollbar { display: none; }
+    #scroll-track {
+      position: fixed; right: 16px; top: 24px; bottom: 24px;
+      width: 6px; z-index: 999; pointer-events: none;
+      transform: translateZ(0); will-change: transform;
+    }
+    #scroll-thumb {
+      position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+      display: flex; flex-direction: column; gap: 5px;
+    }
+    .scroll-dot {
+      width: 5px; height: 5px; border-radius: 50%;
+      background: var(--accent-orange, #FF5C00); display: block; flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+  <iframe id="top-bar" src="/top_row_permanent_V3.html" allowtransparency="true" scrolling="no"></iframe>
+
+  <div id="mobile-menu" class="mobile-menu">
+    <div class="mobile-menu-panel">
+      <div class="mobile-view-toggle">
+        <button class="mobile-mode-btn is-active" data-mode="2d">2D</button>
+        <button class="mobile-mode-btn" data-mode="3d">3D</button>
+      </div>
+      <a class="mobile-nav-btn" data-page="craft">Craft</a>
+      <a class="mobile-nav-btn" data-page="about">About</a>
+      <a class="mobile-nav-btn is-active" data-page="contact">Contact</a>
+    </div>
+  </div>
+
+  <div class="page-wrapper">
+    <div class="contact-section">
+      <div class="content">
+
+        <div class="title-block anim anim-1">
+          <h1 class="contact-title" data-i18n="contact-title">Get In Touch</h1>
+          <div class="dot-divider"></div>
+        </div>
+
+        <div class="contact-list">
+
+          <a href="mailto:lucas.maher@outlook.com" class="contact-item anim anim-2">
+            <div class="contact-header">
+              <span class="contact-label">Email</span>
+              <div class="btn">↗</div>
+            </div>
+          </a>
+
+          <a href="https://www.linkedin.com/in/lucas-maher-5b53163bb/" target="_blank" rel="noopener" class="contact-item anim anim-3">
+            <div class="contact-header">
+              <span class="contact-label">LinkedIn</span>
+              <div class="btn">↗</div>
+            </div>
+          </a>
+
+          <a href="https://www.instagram.com/lucas.maher.visuals" target="_blank" rel="noopener" class="contact-item anim anim-4">
+            <div class="contact-header">
+              <span class="contact-label">Instagram</span>
+              <div class="btn">↗</div>
+            </div>
+          </a>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ── Page transitions ──────────────────────────────────────────
+    (function() {
+      var KF = '@keyframes _sR{from{transform:translateX(100%)}to{transform:translateX(0)}}@keyframes _sL{from{transform:translateX(-100%)}to{transform:translateX(0)}}';
+      var s = document.createElement('style'); s.textContent = KF; document.head.appendChild(s);
+      var DUR = 380, EASE = 'cubic-bezier(0.4,0,0.2,1)';
+
+      function _getWrap() {
+        var w = document.getElementById('_sw');
+        if (!w) {
+          w = document.createElement('div'); w.id = '_sw';
+          Array.from(document.body.children).forEach(function(c) {
+            if (c.id !== 'top-bar' && c.id !== '_sw') w.appendChild(c);
+          });
+          document.body.appendChild(w);
+        }
+        return w;
+      }
+
+      var dir = sessionStorage.getItem('_sv');
+      if (dir) {
+        sessionStorage.removeItem('_sv');
+        var wrap = _getWrap();
+        wrap.style.transform = dir === 'right' ? 'translateX(100%)' : 'translateX(-100%)';
+        var done = false;
+        function reveal() {
+          if (done) return; done = true;
+          requestAnimationFrame(function() {
+            wrap.style.transform = '';
+            wrap.style.animation = (dir === 'right' ? '_sR' : '_sL') + ' ' + DUR + 'ms ' + EASE + ' both';
+            setTimeout(function() { wrap.style.animation = ''; }, DUR + 60);
+          });
+        }
+        if (document.fonts && document.fonts.ready) { document.fonts.ready.then(reveal); } else { requestAnimationFrame(function() { requestAnimationFrame(reveal); }); }
+        setTimeout(reveal, 300);
+      }
+
+      window._nav = function(url, into) {
+        sessionStorage.setItem('_sv', into);
+        var dim = document.createElement('div');
+        dim.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0);z-index:9999;transition:background 220ms ease;pointer-events:none;';
+        document.body.appendChild(dim);
+        requestAnimationFrame(function() { dim.style.background = 'rgba(0,0,0,0.28)'; });
+        setTimeout(function() { location.href = url; }, 220);
+      };
+
+      window.addEventListener('message', function(e) {
+        if (e.data && e.data.type === 'page-slide') window._nav(e.data.url, e.data.enterFrom);
+      });
+    })();
+
+    (function () {
+      const menu = document.getElementById('mobile-menu');
+      function setMenuTheme() {
+        const bg = getComputedStyle(document.body).backgroundColor;
+        const m = bg.match(/[\d.]+/g);
+        let lum = 1;
+        if (m && m.length >= 3) {
+          const a = m[3] !== undefined ? +m[3] : 1;
+          if (a > 0.4) lum = (0.299 * +m[0] + 0.587 * +m[1] + 0.114 * +m[2]) / 255;
+        }
+        const dark = lum < 0.4;
+        menu.style.setProperty('--m-shadow-d', dark ? 'rgba(0,0,20,0.95)' : 'rgba(120,120,140,0.95)');
+        menu.style.setProperty('--m-shadow-l', dark ? 'rgba(255,255,255,0.38)' : 'rgba(255,255,255,0.85)');
+        menu.style.setProperty('--m-btn-bg',   dark ? 'rgba(220,220,227,0.68)' : 'rgba(220,220,227,0.45)');
+      }
+      setMenuTheme();
+      function openMenu()  { menu.classList.add('open'); }
+      function closeMenu() { menu.classList.remove('open'); }
+      window.addEventListener('message', e => {
+        if (e.data.type === 'mobile-menu-toggle')
+          menu.classList.contains('open') ? closeMenu() : openMenu();
+      });
+      menu.addEventListener('click', e => { if (e.target === menu) closeMenu(); });
+      menu.querySelectorAll('[data-mode]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (btn.dataset.mode === '3d') window._nav('/', 'right');
+          else window.location.href = '/2D.html';
+        });
+      });
+      menu.querySelectorAll('[data-page]').forEach(btn => {
+        btn.addEventListener('click', e => {
+          e.preventDefault(); closeMenu();
+          if      (btn.dataset.page === 'craft')   window.location.href = '/2D.html#craft-section';
+          else if (btn.dataset.page === 'about')   window.location.href = '/about2d.html';
+          else if (btn.dataset.page === 'contact') window.location.href = '/contact2d.html';
+        });
+      });
+    })();
+
+    let lastScrollY = 0;
+    let lastToggleY = 0;
+    const topBar = document.getElementById('top-bar');
+    const hideThreshold = 250;
+    const showThreshold = 180;
+
+    window.addEventListener('scroll', () => {
+      const currentScrollY = window.scrollY;
+      if (currentScrollY === 0) {
+        topBar.classList.remove('hide');
+        lastToggleY = 0;
+      } else if (currentScrollY > lastScrollY && Math.abs(currentScrollY - lastToggleY) > hideThreshold) {
+        topBar.classList.add('hide');
+        lastToggleY = currentScrollY;
+      } else if (currentScrollY < lastScrollY && Math.abs(currentScrollY - lastToggleY) > showThreshold) {
+        topBar.classList.remove('hide');
+        lastToggleY = currentScrollY;
+      }
+      lastScrollY = currentScrollY;
+    });
+
+    // ── i18n ─────────────────────────────────────────────────────
+    const TRANSLATIONS = {
+      en: { 'contact-title': 'Get In Touch' },
+      de: { 'contact-title': 'Kontakt aufnehmen' },
+      fr: { 'contact-title': 'Prendre contact' }
+    };
+    function applyLang(lang) {
+      const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
+      document.querySelectorAll('[data-i18n]').forEach(el => { if (t[el.dataset.i18n] !== undefined) el.textContent = t[el.dataset.i18n]; });
+    }
+    applyLang(localStorage.getItem('lang') || 'en');
+
+    window.addEventListener('message', function(e) {
+      if (!e.data || !e.data.type) return;
+      if (e.data.type === 'nav-expand') topBar.style.height = '280px';
+      if (e.data.type === 'nav-collapse') topBar.style.height = '90px';
+      if (e.data.type === 'lang-change') applyLang(e.data.lang);
+    });
+  </script>
+  <div id="scroll-track">
+    <div id="scroll-thumb">
+      <span class="scroll-dot"></span>
+      <span class="scroll-dot"></span>
+      <span class="scroll-dot"></span>
+      <span class="scroll-dot"></span>
+      <span class="scroll-dot"></span>
+    </div>
+  </div>
+  <script>
+    (function () {
+      var thumb = document.getElementById('scroll-thumb');
+      var track = document.getElementById('scroll-track');
+      var ticking = false;
+      function update() {
+        var scrolled  = window.scrollY;
+        var maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+        var progress  = maxScroll > 0 ? Math.max(0, Math.min(1, scrolled / maxScroll)) : 0;
+        thumb.style.top = (progress * (track.offsetHeight - thumb.offsetHeight)) + 'px';
+        ticking = false;
+      }
+      window.addEventListener('scroll', function () {
+        if (!ticking) { requestAnimationFrame(update); ticking = true; }
+      }, { passive: true });
+      update();
+    })();
+  </script>
+</body>
+</html>

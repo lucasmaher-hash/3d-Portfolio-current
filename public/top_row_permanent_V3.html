@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Top Row v3 · Lucas Maher</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=VT323&family=Roboto:wght@400;500&display=swap"
+    rel="stylesheet" />
+  <style>
+    @font-face {
+      font-family: 'OCR-A BT';
+      font-style: normal;
+      font-weight: 400;
+      font-display: swap;
+      src: local('OCR-A BT'), local('OCR A Std'), url('OCR-A-BT.ttf') format('truetype');
+    }
+
+    :root {
+      --bg-surface: #DCDCE3;
+      --text-primary: #1A1A1A;
+      --text-secondary: #8E8E93;
+      --accent-orange: #FF5C00;
+
+      --shadow-raised-sm:
+        5px 5px 12px rgba(174, 174, 192, 0.65),
+        -5px -5px 12px rgba(255, 255, 255, 1);
+      --shadow-raised:
+        8px 8px 18px rgba(174, 174, 192, 0.65),
+        -8px -8px 18px rgba(255, 255, 255, 1);
+      --shadow-pressed:
+        inset 5px 5px 10px rgba(174, 174, 192, 0.6),
+        inset -5px -5px 10px rgba(255, 255, 255, 1);
+      --shadow-hover:
+        11px 11px 22px rgba(174, 174, 192, 0.8),
+        -8px -8px 18px rgba(255, 255, 255, 1);
+
+      --ease: cubic-bezier(.2, .7, .2, 1);
+
+      /* Minimum air around the floating island */
+      --island-edge-x: clamp(44px, 8.6vw, 122px);
+      --island-edge-top: clamp(20px, 2.5vw, 24px);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html,
+    body {
+      min-height: 100vh;
+      overflow: visible;
+    }
+
+    body {
+      font-family: 'Roboto', system-ui, sans-serif;
+      color: var(--text-primary);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      background: transparent;
+      padding-top: 130px;
+    }
+
+    /* ── Outer track — a transparent layout layer that pins the
+         island near the top of the viewport and enforces the side
+         margins. Does NOT stretch the visible bar. ────────────── */
+    .top-row {
+      position: fixed;
+      top: var(--island-edge-top);
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      overflow: visible;
+
+      display: flex;
+      justify-content: center;
+      padding: 0 var(--island-edge-x);
+
+      /* clicks pass through except where children opt in */
+      pointer-events: none;
+    }
+
+    /* ── The floating bar — stretches across the screen (with a
+         small breathing gutter from the edges) but has NO shadow.
+         Three children are placed via grid: logo left, toggle
+         optically centred, nav right. ─────────────────────────── */
+    .nav-island {
+      pointer-events: auto;
+      background: var(--bg-surface);
+      border-radius: 9999px;
+      /* same pill shape as the inner buttons */
+      padding: 10px clamp(14px, 2vw, 24px);
+      box-shadow: none;
+      /* no shadow on the outer container */
+      width: 100%;
+      /* stretch within the gutter track */
+      overflow: visible;
+
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: clamp(16px, 2.5vw, 28px);
+      transition: box-shadow 260ms var(--ease);
+    }
+
+    .nav-island.is-2d-mode {
+      box-shadow: var(--shadow-raised-sm);
+    }
+
+    .nav-island>.nav-left {
+      justify-self: start;
+    }
+
+    .nav-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .lang-toggle {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+    }
+
+    .lang-btn {
+      background: none;
+      border: none;
+      font-family: 'VT323', monospace;
+      font-size: 14px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      padding: 0 1px;
+      line-height: 1;
+      letter-spacing: 0.04em;
+    }
+
+    .lang-btn.active {
+      color: var(--text-primary);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    .lang-sep {
+      font-family: 'VT323', monospace;
+      font-size: 14px;
+      color: var(--text-secondary);
+      opacity: 0.5;
+      pointer-events: none;
+    }
+
+    .nav-island>.view-toggle {
+      justify-self: center;
+    }
+
+    .nav-right {
+      justify-self: end;
+      display: flex;
+      align-items: center;
+      gap: clamp(8px, 1.5vw, 16px);
+    }
+
+    /* ── Logo (neumorphic circle) ─────────────────────────────── */
+    .logo {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--bg-surface);
+      box-shadow: var(--shadow-raised-sm);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'VT323', monospace;
+      font-size: 18px;
+      color: var(--text-primary);
+      text-decoration: none;
+      flex-shrink: 0;
+      transition: transform 260ms var(--ease), box-shadow 260ms var(--ease);
+    }
+
+    .logo:hover {
+      transform: translateY(-2px) scale(1.03);
+      box-shadow: 11px 11px 24px rgba(174, 174, 192, 0.9), -8px -8px 20px rgba(255, 255, 255, 1);
+      transition: transform 150ms ease, box-shadow 150ms ease;
+    }
+
+    /* ── Pill (shared) ────────────────────────────────────────── */
+    .pill {
+      background: var(--bg-surface);
+      border-radius: 9999px;
+      box-shadow: var(--shadow-raised-sm);
+      padding: 5px;
+      display: inline-flex;
+      gap: 4px;
+      transition: transform 300ms ease-out, box-shadow 300ms ease-out;
+    }
+
+    .pill:hover {
+      box-shadow: 11px 11px 24px rgba(174, 174, 192, 0.9), -8px -8px 20px rgba(255, 255, 255, 1);
+      transform: translateY(-2px) scale(1.03);
+      transition: transform 150ms ease, box-shadow 150ms ease;
+    }
+
+    .pill__seg {
+      min-width: 70px;
+      padding: 6px 18px;
+      border-radius: 18px;
+      font-family: 'VT323', monospace;
+      font-size: 16px;
+      color: var(--text-secondary);
+      background: transparent;
+      border: 0;
+      cursor: pointer;
+      text-align: center;
+      text-decoration: none;
+      line-height: 1.2;
+      letter-spacing: 0.02em;
+      transition: color 200ms var(--ease), box-shadow 220ms var(--ease),
+        background-color 220ms var(--ease);
+      -webkit-tap-highlight-color: transparent;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .pill__seg:hover {
+      color: var(--text-primary);
+    }
+
+    .pill__seg:focus-visible {
+      outline: 2px solid var(--accent-orange);
+      outline-offset: 2px;
+    }
+
+    .pill__seg.is-active {
+      background: var(--bg-surface);
+      color: var(--text-primary);
+      box-shadow: var(--shadow-pressed);
+      cursor: default;
+    }
+
+    /* ── Nav-pill variant: underline-active instead of pressed ── */
+    .nav-pill .pill__seg {
+      min-width: 0;
+      padding: 6px 14px 4px;
+      border-radius: 0;
+      position: relative;
+    }
+
+    .nav-pill .pill__seg::after {
+      content: '';
+      position: absolute;
+      left: 14px;
+      right: 14px;
+      bottom: 2px;
+      height: 1px;
+      background: var(--text-primary);
+      opacity: 0;
+      transition: opacity 200ms var(--ease);
+    }
+
+    .nav-pill .pill__seg.is-active {
+      background: transparent;
+      box-shadow: none;
+      color: var(--text-primary);
+      cursor: default;
+    }
+
+    .nav-pill .pill__seg.is-active::after {
+      opacity: 1;
+    }
+
+    /* ── Craft dropdown ──────────────────────────────────────── */
+    .craft-dropdown {
+      position: fixed;
+      background: rgba(220, 220, 227, 0.35);
+      backdrop-filter: blur(24px) saturate(1.4);
+      -webkit-backdrop-filter: blur(24px) saturate(1.4);
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.55);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.6),
+        inset 0 -1px 0 rgba(174, 174, 192, 0.15);
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 160px;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(-6px);
+      transition: opacity 200ms ease, transform 200ms ease;
+      transition-delay: 0s;
+      z-index: 2000;
+    }
+
+    .craft-dropdown.visible {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
+      transition-delay: 0.4s;
+    }
+
+    .craft-dropdown-item {
+      padding: 7px 14px;
+      font-family: 'VT323', monospace;
+      font-size: 16px;
+      color: white;
+      mix-blend-mode: difference;
+      text-transform: uppercase;
+      text-decoration: none;
+      border-radius: 999px;
+      letter-spacing: 0.04em;
+      transition: opacity 120ms ease;
+      white-space: nowrap;
+      display: block;
+    }
+
+    .craft-dropdown-item:hover {
+      color: #1A1A1A;
+      mix-blend-mode: normal;
+      opacity: 1;
+    }
+
+    /* ── Hamburger button ────────────────────────────────────── */
+    .hamburger {
+      display: none;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--bg-surface);
+      box-shadow: var(--shadow-raised-sm);
+      border: none;
+      cursor: pointer;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      flex-shrink: 0;
+      -webkit-tap-highlight-color: transparent;
+      transition: transform 260ms var(--ease), box-shadow 260ms var(--ease);
+    }
+
+    .hamburger span {
+      display: block;
+      width: 18px;
+      height: 2px;
+      background: var(--text-primary);
+      border-radius: 2px;
+    }
+
+    .hamburger:hover {
+      transform: translateY(-2px) scale(1.03);
+      box-shadow: 11px 11px 24px rgba(174,174,192,0.9), -8px -8px 20px rgba(255,255,255,1);
+      transition: transform 150ms ease, box-shadow 150ms ease;
+    }
+
+    /* ── Help (?) button — mobile landscape 3D only ─────────────── */
+    .help-btn {
+      display: none;
+      border: none;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    @media (pointer: coarse) and (orientation: landscape) {
+      .help-btn { display: inline-flex; }
+    }
+
+    /* ── Responsive ───────────────────────────────────────────── */
+    @media (max-width: 640px) {
+      :root { --island-edge-x: 14px; }
+
+      .view-toggle,
+      .nav-pill { display: none; }
+
+      .hamburger { display: flex; }
+
+      .nav-island {
+        grid-template-columns: 1fr auto;
+        padding: 8px;
+        gap: 12px;
+      }
+    }
+
+    /* ── Mobile 3D: collapsible island ──────────────────────── */
+    @media (pointer: coarse) {
+      .top-row.is-collapsible {
+        justify-content: flex-start;
+      }
+      .nav-island.is-collapsible {
+        padding: 8px;
+        max-width: 60px;
+        overflow: hidden;
+        transition: max-width 380ms cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .nav-island.is-collapsible.is-open {
+        max-width: calc(100vw - 28px);
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="craft-dropdown" class="craft-dropdown">
+    <span class="craft-dropdown-item" onclick="window.top.location.href='/vaccine2d.html'">Double Packaging</span>
+    <span class="craft-dropdown-item" onclick="window.top.location.href='/mac-lamp2d.html'">Mac-Lamp</span>
+    <span class="craft-dropdown-item" onclick="window.top.location.href='/portfolio2d.html'" data-nav="this-website">This Website</span>
+    <span class="craft-dropdown-item" onclick="window.top.location.href='/kaffeemaschine2d.html'">Cybercoffee</span>
+    <span class="craft-dropdown-item" onclick="window.top.location.href='/virtual_cooking2d.html'">Virtual Cooking</span>
+  </div>
+
+  <header class="top-row" role="banner">
+    <div class="nav-island">
+
+      <!-- Left: lang toggle + logo -->
+      <div class="nav-left">
+        <a href="#" class="logo" aria-label="Lucas Maher home" id="logo-btn">LM</a>
+        <div class="lang-toggle">
+          <button class="lang-btn" data-lang="de">de</button>
+          <span class="lang-sep">/</span>
+          <button class="lang-btn" data-lang="en">en</button>
+          <span class="lang-sep">/</span>
+          <button class="lang-btn" data-lang="fr">fr</button>
+        </div>
+      </div>
+
+      <!-- Middle button: 2D / 3D toggle -->
+      <div class="pill view-toggle" role="tablist" aria-label="View mode">
+        <button type="button" class="pill__seg" role="tab" aria-selected="false" data-mode="2d">2D</button>
+        <button type="button" class="pill__seg is-active" role="tab" aria-selected="true" data-mode="3d">3D</button>
+      </div>
+
+      <!-- Right side: nav + hamburger + help button -->
+      <div class="nav-right">
+        <nav class="pill nav-pill" role="tablist" aria-label="Primary">
+          <a href="#" class="pill__seg" role="tab" aria-selected="false" data-page="craft">Craft</a>
+          <a href="#" class="pill__seg" role="tab" aria-selected="false" data-page="about">About</a>
+          <a href="#" class="pill__seg" role="tab" aria-selected="false" data-page="contact">Contact</a>
+        </nav>
+        <button class="logo help-btn" id="help-btn" aria-label="Help">?</button>
+        <button class="hamburger" id="hamburger-btn" aria-label="Open menu">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <script>
+    document.getElementById('logo-btn').addEventListener('click', e => {
+      e.preventDefault();
+      const parentPath = window.top.location.pathname;
+      const is2DView = parentPath.includes('2D') || parentPath.includes('about2d') || parentPath.includes('contact2d') || parentPath.includes('vaccine2d') || parentPath.includes('mac-lamp2d') || parentPath.includes('portfolio2d') || parentPath.includes('kaffeemaschine2d') || parentPath.includes('virtual_cooking2d');
+      if (!is2DView && navigator.maxTouchPoints > 0) {
+        document.querySelector('.nav-island').classList.toggle('is-open');
+        return;
+      }
+      if (is2DView) {
+        if (window.top.location.pathname === '/2D.html') {
+          window.top.scrollTo({ top: 0, behavior: 'smooth' });
+        } else {
+          window.top.location.href = '/2D.html';
+        }
+      } else if (window.top.resetScene) {
+        window.top.resetScene();
+      }
+    });
+
+    (function () {
+      const parentPath = window.top.location.pathname;
+      const is2D = parentPath.includes('2D');
+      const isAbout2D = parentPath.includes('about2d');
+      const isContact2D = parentPath.includes('contact2d');
+      const isVaccine2D = parentPath.includes('vaccine2d');
+      const isMacLamp2D = parentPath.includes('mac-lamp2d');
+      const isPortfolio2D = parentPath.includes('portfolio2d');
+      const isKaffeemaschine2D = parentPath.includes('kaffeemaschine2d');
+      const isVirtualCooking2D = parentPath.includes('virtual_cooking2d');
+      const is2DView = is2D || isAbout2D || isContact2D || isVaccine2D || isMacLamp2D || isPortfolio2D || isKaffeemaschine2D || isVirtualCooking2D;
+      const navIsland = document.querySelector('.nav-island');
+
+      // Mobile 3D: collapse island behind LM button by default
+      if (!is2DView && navigator.maxTouchPoints > 0) {
+        document.querySelector('.top-row').classList.add('is-collapsible');
+        navIsland.classList.add('is-collapsible');
+      }
+
+      // Apply 2D mode styling — if a full-bleed .hero exists, wait until scrolled past it
+      if (is2DView) {
+        const heroEl = window.top.document.querySelector('.hero');
+        if (heroEl) {
+          function updateNavShadow() {
+            navIsland.classList.toggle('is-2d-mode', window.top.scrollY > heroEl.offsetHeight - 60);
+          }
+          window.top.addEventListener('scroll', updateNavShadow, { passive: true });
+          updateNavShadow();
+        } else {
+          navIsland.classList.add('is-2d-mode');
+        }
+      }
+
+      // Set initial active state based on current page
+      const modeSegs = document.querySelectorAll('[data-mode]');
+      modeSegs.forEach(s => {
+        const on = is2DView ? s.dataset.mode === '2d' : s.dataset.mode === '3d';
+        s.classList.toggle('is-active', on);
+        s.setAttribute('aria-selected', on ? 'true' : 'false');
+      });
+
+      // Set nav pill active state
+      const pageTabs = document.querySelectorAll('[data-page]');
+      pageTabs.forEach(seg => {
+        let isActive = false;
+        if (seg.dataset.page === 'about' && isAbout2D) isActive = true;
+        if (seg.dataset.page === 'contact' && isContact2D) isActive = true;
+        if (seg.dataset.page === 'craft' && is2D) isActive = true;
+        seg.classList.toggle('is-active', isActive);
+        seg.setAttribute('aria-selected', isActive ? 'true' : 'false');
+      });
+
+      document.querySelectorAll('.pill').forEach(group => {
+        const segs = group.querySelectorAll('.pill__seg');
+        segs.forEach(seg => {
+          seg.addEventListener('click', e => {
+            if (seg.tagName === 'A') e.preventDefault();
+            if (seg.classList.contains('is-active')) {
+              if (seg.dataset.mode === '2d') window.top.location.href = '/2D.html';
+              if (seg.dataset.mode === '3d' && window.top.resetScene) window.top.resetScene();
+              return;
+            }
+            segs.forEach(s => {
+              const on = s === seg;
+              s.classList.toggle('is-active', on);
+              s.setAttribute('aria-selected', on ? 'true' : 'false');
+            });
+            if (seg.dataset.mode === '2d') {
+              window.top.location.href = '/2D.html';
+            } else if (seg.dataset.mode === '3d') {
+              sessionStorage.setItem('_sv', 'right');
+              window.top.location.href = '/';
+            } else if (seg.dataset.page === 'about') {
+              if (is2DView) {
+                window.top.location.href = '/about2d.html';
+              } else {
+                window.top.openAboutOverlay();
+              }
+            } else if (seg.dataset.page === 'contact') {
+              if (is2DView) {
+                window.top.location.href = '/contact2d.html';
+              } else {
+                window.top.openContactOverlay();
+              }
+            } else if (seg.dataset.page === 'craft') {
+              if (is2DView) {
+                window.top.location.href = '/2D.html#craft-section';
+              } else {
+                window.top.openCraftOverlay();
+              }
+            }
+          });
+        });
+      });
+    })();
+
+    // ── Hamburger → tell parent page to toggle the mobile menu ──
+    document.getElementById('hamburger-btn').addEventListener('click', () => {
+      window.parent.postMessage({ type: 'mobile-menu-toggle' }, '*');
+    });
+
+    // ── Help button → open controls overlay (3D only) ────────────
+    (function () {
+      const helpBtn = document.getElementById('help-btn');
+      const parentPath = window.top.location.pathname;
+      const is2DView = parentPath.includes('2D') || parentPath.includes('about2d') ||
+                       parentPath.includes('contact2d') || parentPath.includes('vaccine2d') ||
+                       parentPath.includes('mac-lamp2d') || parentPath.includes('portfolio2d') ||
+                       parentPath.includes('kaffeemaschine2d') || parentPath.includes('virtual_cooking2d');
+      if (is2DView) helpBtn.style.setProperty('display', 'none', 'important');
+      helpBtn.addEventListener('click', () => {
+        window.parent.postMessage({ type: 'openControls' }, '*');
+      });
+    })();
+
+    // ── Language toggle ───────────────────────────────────────────
+    (function() {
+      const NAV_LANG = {
+        en: { craft: 'Craft', about: 'About', contact: 'Contact', thisWebsite: 'This Website' },
+        de: { craft: 'Projekte', about: 'Über mich', contact: 'Kontakt', thisWebsite: 'Diese Website' },
+        fr: { craft: 'Projets', about: 'À propos', contact: 'Contact', thisWebsite: 'Ce site' }
+      };
+      const q = s => document.querySelector(s);
+      function applyNavLang(l) {
+        const t = NAV_LANG[l] || NAV_LANG.en;
+        if (q('[data-page="craft"]'))        q('[data-page="craft"]').textContent = t.craft;
+        if (q('[data-page="about"]'))        q('[data-page="about"]').textContent = t.about;
+        if (q('[data-page="contact"]'))      q('[data-page="contact"]').textContent = t.contact;
+        if (q('[data-nav="this-website"]'))  q('[data-nav="this-website"]').textContent = t.thisWebsite;
+        document.querySelectorAll('.lang-btn').forEach(btn => {
+          btn.classList.toggle('active', btn.dataset.lang === l);
+        });
+      }
+      const initLang = localStorage.getItem('lang') || 'en';
+      applyNavLang(initLang);
+      document.querySelectorAll('.lang-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const l = btn.dataset.lang;
+          localStorage.setItem('lang', l);
+          applyNavLang(l);
+          try { window.parent.postMessage({ type: 'lang-change', lang: l }, '*'); } catch(e) {}
+        });
+      });
+      setTimeout(() => {
+        try { window.parent.postMessage({ type: 'lang-change', lang: localStorage.getItem('lang') || 'en' }, '*'); } catch(e) {}
+      }, 100);
+    })();
+
+    // ── Craft dropdown (2D mode only) ────────────────────────────
+    (function () {
+      const parentPath = window.top.location.pathname;
+      const is2DView = parentPath.includes('2D') || parentPath.includes('about2d') || parentPath.includes('contact2d') || parentPath.includes('vaccine2d') || parentPath.includes('mac-lamp2d') || parentPath.includes('portfolio2d') || parentPath.includes('kaffeemaschine2d') || parentPath.includes('virtual_cooking2d');
+      if (!is2DView) return;
+
+      const craftSeg = document.querySelector('[data-page="craft"]');
+      const dropdown = document.getElementById('craft-dropdown');
+      const header = document.querySelector('.top-row');
+      if (!craftSeg || !dropdown || !header) return;
+
+      function position() {
+        const cRect = craftSeg.getBoundingClientRect();
+        dropdown.style.top = (cRect.bottom + 12) + 'px';
+        dropdown.style.left = cRect.left + 'px';
+      }
+
+      let hideTimer;
+
+      function show() {
+        clearTimeout(hideTimer);
+        position();
+        dropdown.classList.add('visible');
+        try { window.parent.postMessage({ type: 'nav-expand' }, '*'); } catch(e) {}
+      }
+
+      function hide() {
+        hideTimer = setTimeout(() => {
+          dropdown.classList.remove('visible');
+          try { window.parent.postMessage({ type: 'nav-collapse' }, '*'); } catch(e) {}
+        }, 120);
+      }
+
+      craftSeg.addEventListener('mouseenter', show);
+      craftSeg.addEventListener('mouseleave', hide);
+      dropdown.addEventListener('mouseenter', () => clearTimeout(hideTimer));
+      dropdown.addEventListener('mouseleave', hide);
+    })();
+  </script>
+
+</body>
+
+</html>

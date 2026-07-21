@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Morphing blob</title>
+<style>
+  :root {
+    --surface: #DCDCE3;
+    --shadow-dark: rgba(174, 174, 192, 0.65);
+    --shadow-light: rgba(255, 255, 255, 1);
+  }
+  html, body { margin: 0; height: 100%; overflow: visible; }
+  body {
+    background: transparent;
+    display: grid;
+    place-items: center;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #1a1a1a;
+    padding: 8%;
+    box-sizing: border-box;
+    overflow: visible;
+  }
+  .stage {
+    width: min(470px, 67.2vmin);
+    aspect-ratio: 1 / 1;
+    display: grid;
+    place-items: center;
+    overflow: visible;
+    touch-action: pan-y;
+  }
+  .blob {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    filter:
+      drop-shadow(29px 29px 27px rgba(174,174,192,1))
+      drop-shadow(-21px -21px 20px rgba(255,255,255,1));
+    will-change: filter;
+  }
+  .blob path {
+    fill: var(--surface);
+  }
+</style>
+</head>
+<body>
+  <div class="stage">
+    <svg id="svg" class="blob" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+      <path id="morph" d="" />
+      <!-- Invisible hit-test path: always holds the undistorted morph so the
+           dent never moves the hit boundary under the cursor. -->
+      <path id="hit" d="" fill="black" style="visibility: hidden; pointer-events: none;" />
+    </svg>
+  </div>
+
+  <script src="https://unpkg.com/flubber@0.4.2/build/flubber.min.js"></script>
+  <script>
+    const SHAPES = [
+      // blob1
+      "M 615.19 51.46 C 654.11 50.00 696.09 56.32 731.49 73.07 C 755.59 84.47 778.10 103.24 789.13 127.94 C 808.93 172.30 793.38 213.06 779.06 255.83 C 771.84 277.38 765.06 299.05 761.68 321.58 C 760.07 332.38 758.78 345.10 762.72 355.56 C 771.21 378.03 806.59 377.87 826.12 375.26 C 847.03 372.46 871.41 361.35 891.92 371.17 C 901.13 375.57 907.25 383.53 910.49 393.09 C 934.88 465.14 789.14 576.59 746.29 626.54 C 732.57 642.53 723.18 659.99 713.88 678.76 C 708.75 689.12 704.37 699.60 702.91 711.17 C 697.71 752.47 729.33 792.67 749.91 825.64 C 757.51 837.81 765.49 850.61 770.01 864.28 C 774.46 877.76 774.25 891.76 767.61 904.49 C 760.63 917.90 747.83 928.74 733.35 933.10 C 677.14 950.00 646.88 892.29 604.40 869.83 C 569.53 851.40 528.70 855.45 492.27 866.47 C 447.74 880.75 388.23 923.12 343.83 925.33 C 321.15 926.46 296.05 914.55 279.63 899.46 C 244.85 867.50 256.55 811.20 262.10 769.77 C 265.11 747.28 268.36 723.97 267.17 701.23 C 262.03 603.44 150.83 639.73 95.62 589.22 C 77.25 572.41 69.45 549.37 68.49 524.95 C 65.12 439.39 156.64 310.35 212.96 249.70 C 281.83 175.51 367.17 123.56 460.93 87.22 C 511.20 67.73 561.08 53.46 615.19 51.46 Z",
+      // blob2
+      "M 160.69 177.45 C 171.17 178.25 173.75 171.70 184.36 169.52 C 187.11 168.96 194.14 169.06 195.65 167.91 L 195.71 166.41 C 204.63 162.89 231.96 167.09 240.91 166.51 L 241.55 166.46 C 260.83 173.21 277.02 186.13 291.77 200.04 C 297.83 205.78 303.68 211.73 309.31 217.90 C 317.54 227.07 324.98 235.86 334.01 243.53 C 354.34 260.79 365.10 254.57 382.15 238.26 C 389.85 230.90 408.68 223.47 420.06 227.22 C 421.18 227.60 422.29 228.02 423.38 228.46 C 424.92 230.08 426.48 231.70 427.48 233.72 C 429.67 238.19 430.24 243.60 431.51 248.40 C 434.31 258.91 440.61 268.38 452.35 268.80 C 464.75 269.25 476.70 262.33 487.17 256.45 C 539.37 227.09 575.58 200.15 639.25 213.71 C 656.12 217.30 675.28 224.49 687.37 237.28 C 695.31 245.68 698.91 257.60 698.55 269.04 C 698.26 278.28 696.29 287.51 695.68 296.75 C 694.20 319.16 700.71 342.11 716.07 358.90 C 727.78 371.71 745.85 380.51 762.74 383.97 C 774.72 386.43 787.02 387.43 798.87 390.53 C 837.43 400.58 875.12 425.23 901.04 455.34 C 909.88 465.61 917.26 476.75 924.11 488.44 C 938.94 513.77 950.00 542.44 948.82 572.24 C 947.15 614.45 924.05 651.07 893.64 679.06 C 855.18 714.45 827.22 719.16 776.23 716.94 C 756.78 716.09 737.15 712.67 717.91 709.67 C 709.90 708.43 701.83 706.86 693.75 706.21 C 637.96 701.75 577.74 704.75 523.42 719.14 C 486.04 729.04 449.38 744.31 414.42 760.72 C 401.97 766.56 389.31 772.40 377.04 778.61 C 367.57 783.41 321.87 808.56 315.09 809.64 C 314.26 809.55 311.58 809.30 310.95 809.58 C 263.14 831.16 207.03 837.11 156.99 819.62 C 150.74 817.44 145.40 812.11 137.77 812.39 C 132.68 810.97 114.58 796.40 110.26 792.71 C 80.44 767.25 50.00 732.53 63.85 690.16 C 71.82 665.78 92.23 641.20 105.28 618.77 C 116.91 598.76 128.11 577.63 137.71 556.49 C 154.76 519.10 178.44 469.06 152.12 430.29 C 144.47 418.80 133.81 406.11 127.59 393.77 C 106.33 351.64 93.84 301.52 105.97 254.92 C 114.25 223.12 132.59 194.17 160.69 177.45 Z",
+      // blob3
+      "M 589.32 50.69 C 601.64 50.00 610.46 53.98 621.61 59.60 C 640.49 68.40 652.21 93.42 659.97 116.89 C 669.35 145.25 678.45 147.86 699.54 157.63 C 723.04 168.51 751.60 174.71 773.01 191.95 C 788.08 204.07 804.17 237.94 802.56 262.41 C 800.79 289.31 785.67 323.82 768.97 338.94 C 745.08 358.71 718.88 369.12 690.29 373.83 C 665.44 377.91 626.68 378.89 622.97 425.64 C 621.11 449.06 652.59 457.89 664.34 476.23 C 683.59 506.28 672.72 548.08 644.96 559.43 C 632.78 564.48 619.52 566.67 609.95 578.67 C 591.51 601.78 594.14 651.19 602.21 680.15 C 606.41 692.84 614.21 709.05 620.77 719.73 C 667.52 795.92 667.67 866.68 596.04 911.00 C 547.76 940.88 511.87 950.00 458.54 946.67 C 407.49 941.24 349.28 917.69 305.18 882.23 C 265.11 850.00 224.51 789.53 213.68 727.27 C 195.83 615.70 283.96 531.62 342.74 475.02 C 388.20 431.23 461.28 383.49 432.31 290.95 C 424.26 265.24 407.82 240.26 392.91 219.65 C 376.97 197.60 360.18 167.99 374.86 136.57 C 392.33 103.14 435.93 78.72 465.26 71.14 C 477.78 67.99 490.53 66.79 503.26 67.56 C 522.29 68.47 541.21 76.06 559.55 73.81 C 573.25 72.13 575.58 54.62 589.32 50.69 Z",
+      // blob4
+      "M 196.26 693.38 C 196.10 685.30 207.92 672.34 213.70 667.43 C 223.02 659.51 234.84 653.09 240.20 641.55 C 245.09 619.95 226.22 601.87 210.79 589.86 C 208.24 587.87 206.66 586.04 204.44 583.82 C 198.27 580.01 192.70 574.83 186.87 570.74 C 174.11 561.78 160.96 553.56 149.11 543.37 C 116.76 511.54 98.57 462.66 107.04 417.59 C 112.21 390.08 137.72 360.45 160.57 345.16 C 194.38 322.51 236.04 313.51 275.70 307.18 C 280.78 306.37 286.47 306.33 291.15 304.15 C 293.27 303.26 296.26 304.10 298.49 303.69 C 343.69 295.35 454.75 290.68 419.84 216.97 C 410.29 196.81 402.18 182.47 409.77 158.71 C 411.74 152.56 416.18 149.29 418.08 144.23 C 416.07 140.21 404.14 133.08 402.59 126.30 C 400.75 118.20 399.02 107.10 402.19 99.04 C 418.29 58.17 469.07 50.00 506.64 62.50 C 571.63 82.62 624.60 116.37 650.94 181.40 C 671.95 233.24 686.95 286.06 712.79 335.74 C 713.98 338.04 714.47 341.29 715.71 343.86 C 730.44 374.52 750.74 402.19 775.57 425.46 C 783.08 432.40 791.36 438.67 799.44 444.93 C 801.22 446.32 803.43 447.12 805.30 448.38 C 807.14 449.62 808.73 451.24 810.54 452.53 C 817.16 457.21 824.17 461.61 831.07 465.87 C 843.20 473.34 855.90 479.95 867.67 487.96 C 891.07 503.88 901.43 526.39 891.27 553.71 C 886.99 565.20 879.97 575.45 871.92 584.62 C 840.65 620.27 799.49 632.03 759.50 654.32 C 756.03 656.25 752.95 658.78 749.62 660.94 C 745.49 663.61 741.16 666.05 737.17 668.92 C 734.99 670.48 733.14 672.49 731.05 674.19 C 720.44 682.74 711.08 691.39 702.55 702.04 C 698.68 706.87 695.35 712.44 691.18 716.96 C 688.37 720.00 687.79 724.60 685.05 727.73 C 683.54 729.46 683.88 732.23 682.81 734.27 C 672.87 753.28 670.74 778.78 667.56 799.85 C 662.26 834.93 651.07 908.16 625.87 932.51 C 615.40 942.62 602.03 947.19 587.75 948.37 C 568.10 950.00 551.96 943.86 537.17 931.13 C 508.13 906.15 496.11 858.04 487.03 822.15 C 482.93 805.93 479.16 789.22 472.71 773.72 C 463.60 751.84 448.01 729.64 429.46 714.75 C 411.49 700.34 396.87 694.62 373.60 696.21 C 335.82 698.80 311.23 728.95 285.13 752.26 C 279.81 757.01 273.70 760.45 268.21 764.88 C 266.54 766.23 264.01 766.07 262.05 766.82 C 260.19 767.53 258.64 768.97 256.75 769.75 C 249.55 772.71 239.63 774.60 231.83 773.51 C 220.40 771.90 211.03 765.66 204.24 756.46 C 201.47 752.70 196.12 745.40 196.23 740.59 C 190.78 733.92 191.50 700.69 196.26 693.38 Z",
+    ];
+
+    // Continuous morph — no hold at any anchor shape. Each shape-to-shape
+    // transition takes MORPH_MS, then immediately rolls into the next.
+    const MORPH_MS = 7000;
+    const CYCLE_MS = MORPH_MS * SHAPES.length;
+
+    // Pre-build interpolators for each consecutive pair, wrapping back to the
+    // first shape so the loop is seamless. flubber handles paths with
+    // different command counts/orderings without snapping.
+    const interps = SHAPES.map((from, i) => {
+      const to = SHAPES[(i + 1) % SHAPES.length];
+      return flubber.interpolate(from, to, { maxSegmentLength: 4 });
+    });
+
+    const svgEl = document.getElementById("svg");
+    const pathEl = document.getElementById("morph");
+    const hitEl = document.getElementById("hit");
+    pathEl.setAttribute("d", SHAPES[0]);
+    hitEl.setAttribute("d", SHAPES[0]);
+
+    // ── Dent state ───────────────────────────────────────────────────────
+    // The dent is anchored at the entry point and pushes points on the blob's
+    // entry edge inward along the direction the mouse was moving when it
+    // crossed the silhouette. State machine: idle → pending → active →
+    // releasing → idle.
+    const STRENGTH_LERP     = 8;   // rate snapping INTO a dent (~0.3 s to full)
+    const STRENGTH_LERP_OUT = 1.8; // rate easing BACK to normal (~1.5 s to settle)
+    const DENT_RADIUS = 320;      // viewBox units — affected zone around each dent
+    const DENT_DEPTH = 140;       // viewBox units — max push along dent.dir (more pronounced stretch/poke)
+    const VEL_HISTORY_MS = 80;    // averaging window for entry/exit motion direction
+
+    // Multiple independent dents, each applied to the path each frame.
+    // Dents can be 'entry' (cave-in on enter) or 'exit' (pull-out on leave).
+    // Each has its own center, dir, strength, and fade timer.
+    // They stack on the path independently so multiple can coexist.
+    let dents = []; // array of { center, dir, strength, target, type, releaseTimer }
+    const EXIT_HOLD_MS = 500;  // how long exit pulse stays at full before fading
+    const ENTRY_HOLD_MS = 500; // how long entry pulse stays at full before fading
+    // Minimum viewBox distance between dent triggers. Blob spans ~50–950, so
+    // 160 ≈ 16% width. Only enforced against dents with significant strength (>0.1).
+    const MIN_DENT_DIST = 160;
+
+    let isOverBlob = false;
+
+    const mouseHistory = []; // [{ x, y, t }] — positions in viewBox coords
+    function currentDirection() {
+      if (mouseHistory.length < 2) return { x: 1, y: 0 };
+      const a = mouseHistory[0];
+      const b = mouseHistory[mouseHistory.length - 1];
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      const m = Math.hypot(dx, dy);
+      if (m < 0.5) return { x: 1, y: 0 };
+      return { x: dx / m, y: dy / m };
+    }
+
+    function dentAllowed(p) {
+      // Check if new dent at p is far enough from all existing visible dents
+      for (const dent of dents) {
+        if (dent.strength > 0.1) {
+          if (Math.hypot(p.x - dent.center.x, p.y - dent.center.y) < MIN_DENT_DIST) {
+            return false;
+          }
+        }
+      }
+      return true;
+    }
+
+    function createDent(center, dir, type) {
+      const dent = {
+        center,
+        dir,
+        strength: 0,
+        target: 1, // immediately start morphing toward full strength
+        type, // 'entry' or 'exit'
+        releaseTimer: null,
+        velocity: 0, // for bouncy spring physics on release
+      };
+      dents.push(dent);
+
+      const holdTime = type === 'entry' ? ENTRY_HOLD_MS : EXIT_HOLD_MS;
+      dent.releaseTimer = setTimeout(() => {
+        dent.target = 0; // start fading
+        dent.releaseTimer = null;
+      }, holdTime);
+
+      return dent;
+    }
+
+    function onEnter(p) {
+      isOverBlob = true;
+      if (!dentAllowed(p)) return; // inside exclusion zone — skip cave-in
+
+      // Fade all entry dents (we're entering, so dismiss previous ones)
+      for (const dent of dents) {
+        if (dent.type === 'entry') dent.target = 0;
+      }
+
+      // Create a new entry dent
+      createDent({ x: p.x, y: p.y }, currentDirection(), 'entry');
+    }
+
+    function onLeave(p) {
+      isOverBlob = false;
+      if (!dentAllowed(p)) return; // inside exclusion zone — skip pull-out
+
+      // Fade all entry dents (we're leaving)
+      for (const dent of dents) {
+        if (dent.type === 'entry') dent.target = 0;
+      }
+
+      // Create a new exit dent
+      createDent({ x: p.x, y: p.y }, currentDirection(), 'exit');
+    }
+
+    // Hit-test the live path against the cursor position on every pointermove.
+    const svgPt = svgEl.createSVGPoint();
+    document.addEventListener("pointermove", (e) => {
+      if (e.pointerType === 'touch') return; // touch: only pointerdown/up handle dents
+      svgPt.x = e.clientX;
+      svgPt.y = e.clientY;
+      const ctm = svgEl.getScreenCTM();
+      if (!ctm) return;
+      const local = svgPt.matrixTransform(ctm.inverse());
+
+      const now = performance.now();
+      mouseHistory.push({ x: local.x, y: local.y, t: now });
+      while (mouseHistory.length && now - mouseHistory[0].t > VEL_HISTORY_MS) {
+        mouseHistory.shift();
+      }
+
+      // Hit-test against the UNDISTORTED morph (the dent never moves the
+      // boundary under the cursor — that was the source of the edge stutter).
+      let hit;
+      if (hitEl.isPointInFill) {
+        const p = svgEl.createSVGPoint();
+        p.x = local.x;
+        p.y = local.y;
+        hit = hitEl.isPointInFill(p);
+      } else {
+        hit = local.x >= 0 && local.x <= 1000 && local.y >= 0 && local.y <= 1000;
+      }
+
+      if (hit && !isOverBlob) onEnter(local);
+      else if (!hit && isOverBlob) onLeave(local);
+    });
+
+    // ── Touch / tap ─────────────────────────────────────────────────────
+    // pointerdown: finger lands on blob → immediate inward dent
+    svgEl.addEventListener('pointerdown', (e) => {
+      svgPt.x = e.clientX;
+      svgPt.y = e.clientY;
+      const ctm = svgEl.getScreenCTM();
+      if (!ctm) return;
+      const local = svgPt.matrixTransform(ctm.inverse());
+      const now = performance.now();
+      mouseHistory.push({ x: local.x, y: local.y, t: now });
+
+      let hit = false;
+      if (hitEl.isPointInFill) {
+        const p = svgEl.createSVGPoint();
+        p.x = local.x; p.y = local.y;
+        hit = hitEl.isPointInFill(p);
+      } else {
+        hit = local.x >= 50 && local.x <= 950 && local.y >= 50 && local.y <= 950;
+      }
+
+      if (hit && !isOverBlob) {
+        // Direction: push inward toward blob centre so the dent caves in
+        const dx = 500 - local.x, dy = 500 - local.y;
+        const m = Math.hypot(dx, dy);
+        const dir = m > 1 ? { x: dx / m, y: dy / m } : { x: 0, y: -1 };
+        isOverBlob = true;
+        if (dentAllowed(local)) createDent({ x: local.x, y: local.y }, dir, 'entry');
+      }
+    });
+
+    // pointerup: finger lifts → spring-out exit dent
+    document.addEventListener('pointerup', (e) => {
+      if (!isOverBlob) return;
+      svgPt.x = e.clientX;
+      svgPt.y = e.clientY;
+      const ctm = svgEl.getScreenCTM();
+      if (!ctm) return;
+      const local = svgPt.matrixTransform(ctm.inverse());
+      onLeave(local);
+    });
+
+    // ── Path distortion ──────────────────────────────────────────────────
+    // For each dent, walk the path token-by-token and push every (x,y) —
+    // anchor or bezier control point — by a smoothstep-falloff vector
+    // pointing in dent.dir. Multiple dents stack by reapplying the function.
+    const PATH_TOKEN_RE = /[MLCZ]|-?\d+(?:\.\d+)?/gi;
+    function applyDent(d, dent) {
+      if (dent.strength < 0.005 || !dent.center) return d;
+      const tokens = d.match(PATH_TOKEN_RE);
+      if (!tokens) return d;
+      const out = [];
+      let i = 0;
+      while (i < tokens.length) {
+        const cmd = tokens[i++];
+        out.push(cmd);
+        let pairs = 0;
+        switch (cmd.toUpperCase()) {
+          case "M": case "L": pairs = 1; break;
+          case "C": pairs = 3; break;
+          case "Z": default: pairs = 0;
+        }
+        for (let p = 0; p < pairs; p++) {
+          const x = parseFloat(tokens[i++]);
+          const y = parseFloat(tokens[i++]);
+          const dx = x - dent.center.x;
+          const dy = y - dent.center.y;
+          const dist = Math.hypot(dx, dy);
+          let push = 0;
+          if (dist < DENT_RADIUS) {
+            const t = 1 - dist / DENT_RADIUS;
+            push = DENT_DEPTH * (t * t * (3 - 2 * t)) * dent.strength;
+          }
+          const nx = x + dent.dir.x * push;
+          const ny = y + dent.dir.y * push;
+          out.push(nx.toFixed(2), ny.toFixed(2));
+        }
+      }
+      return out.join(" ");
+    }
+
+    // ── Main loop ────────────────────────────────────────────────────────
+    let lastFrame = performance.now();
+    const t0 = lastFrame;
+    function tick(now) {
+      const dt = Math.min(0.1, (now - lastFrame) / 1000);
+      lastFrame = now;
+
+      const elapsed = (now - t0) % CYCLE_MS;
+      const stage = Math.floor(elapsed / MORPH_MS);
+      const progress = (elapsed - stage * MORPH_MS) / MORPH_MS;
+      const morphed = interps[stage](progress);
+      // Keep the hidden hit-test path tracking the undistorted shape.
+      hitEl.setAttribute("d", morphed);
+
+      let d = morphed;
+
+      // Update all dents: snap in with exponential lerp, release with bouncy spring physics.
+      for (const dent of dents) {
+        const releasing = dent.strength > dent.target;
+
+        if (releasing) {
+          // Spring physics for a bouncy release — overshoots slightly then settles
+          const springForce = (dent.target - dent.strength) * 5; // spring stiffness
+          dent.velocity += springForce * dt;
+          dent.velocity *= Math.exp(-2.8 * dt); // damping (lower = bouncier, higher = less bounce)
+          dent.strength += dent.velocity * dt;
+          // Clamp to prevent overshooting below 0
+          if (dent.strength < dent.target) dent.strength = dent.target;
+        } else {
+          // Fast snap-in with exponential lerp
+          const rate = STRENGTH_LERP;
+          dent.strength += (dent.target - dent.strength) * (1 - Math.exp(-rate * dt));
+        }
+      }
+
+      // Apply all dents to the path (they stack).
+      for (const dent of dents) {
+        d = applyDent(d, dent);
+      }
+
+      // Remove fully faded dents to keep the array clean.
+      dents = dents.filter(dent => dent.strength > 0.005);
+
+      pathEl.setAttribute("d", d);
+      requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  </script>
+</body>
+</html>
