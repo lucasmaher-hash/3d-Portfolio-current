@@ -42,9 +42,10 @@ When resuming work in a new session:
 
 **Navigation:**
 - Every 2D page embeds nav as a fixed iframe (`#top-bar` → `/top_row_permanent_V3.html`)
-- Iframe height: 90px default, expands to 280px when Craft dropdown opens (via `postMessage`)
-- Always `z-index: 10` to sit above page content
+- Iframe height: 90px default, expands to **400px** when Craft dropdown opens (via `postMessage`)
+- Always `z-index: 9999` to sit above all page content
 - **Critical:** Host page `.page-wrapper` must have `overflow: visible` (not `hidden`), else dropdown gets clipped
+- **Dropdown expand height:** Increased from 280px to 400px to ensure full dropdown visibility without clipping
 
 ## Page map
 
@@ -244,9 +245,11 @@ Organized by project for clarity:
 4. **Video crop**
    - Step 3 (map-courses.mov): cropped bottom 3px via clip-path to remove unwanted line
 
-5. **Dropdown fix**
-   - `.page-wrapper` overflow changed from `hidden` to `visible` on 2D.html
-   - Ensures nav dropdown doesn't get clipped when opening
+5. **Dropdown fixes** (applied to all 9 2D pages)
+   - `.page-wrapper` overflow changed from `hidden` to `visible`
+   - Iframe expand height increased from 280px → 400px to give dropdown room
+   - `z-index: #top-bar` increased from 10 → 9999 to sit above all content
+   - Ensures nav dropdown displays fully without clipping
 
 ## Tips for Next Session
 
@@ -408,10 +411,11 @@ html { overflow-x: clip; }  /* Not 'hidden' — clip allows sticky positioning *
 - **`position: fixed` inside iframes clipped to iframe viewport** — why Craft dropdown uses `postMessage` to expand iframe instead of relying on `overflow: visible` alone
 - **Scroll-hide nav** — every 2D page adds/removes `.hide` on `#top-bar` based on scroll direction (250px down threshold / 180px up threshold)
 - **Video filenames must be URL-safe** — no spaces; use hyphens (e.g., `map-courses.mov` not `map courses.mov`)
-- **Unify page z-index stack** (top to bottom):
-  - `z-index: 10` — #top-bar (nav iframe)
-  - `z-index: 3` — .hero-blob (sits above header/divider)
-  - `z-index: 2` — .hero-header (breadcrumb, title, divider)
+- **Z-index stack** (top to bottom):
+  - `z-index: 9999` — #top-bar (nav iframe; all 2D pages)
+  - `z-index: 3` — .hero-blob (sits above header/divider on Unify)
+  - `z-index: 2` — .hero-header (breadcrumb, title, divider on Unify)
+  - `z-index: 200` — .mobile-menu (mobile overlay)
   - `z-index: auto` (0) — page content, project grid
 - **Overflow handling:**
   - `.page-wrapper` must be `overflow: visible` (not `hidden`) so nav dropdown doesn't get clipped

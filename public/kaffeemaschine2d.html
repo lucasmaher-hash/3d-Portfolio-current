@@ -638,14 +638,6 @@
         'label-role': 'Rolle', 'val-role': 'UI/UX<br>Nutzertests',
         'label-skills': 'Werkzeuge', 'val-skills': 'Figma<br>Prototyping<br>Claude Code',
         'nav-prev': '<< ZURÜCK', 'nav-this-website': 'Diese Website', 'nav-next': 'WEITER >>',
-      },
-      fr: {
-        'hero-desc': 'Les machines à café ont parmi les interfaces les plus oubliables du monde. Je voulais prendre exactement cette banalité et la pousser quelque part de visuellement spécifique — une esthétique rétro-futuriste des années 2000 qui semble appartenir à un appareil sorti d\'un film de science-fiction de 2003. L\'interface est entièrement interactive : six boutons latéraux physiques réagissent en direct à ce qui est à l\'écran, les mauvaises pressions font trembler l\'écran et déclenchent un buzz synthétisé, et les scanlines CRT ainsi que l\'affichage Digital-7 Mono ancrent l\'époque. Conçu dans Figma, puis recréé pixel par pixel en HTML — autant un exercice de code qu\'un exercice de design.',
-        'label-timeline': 'Calendrier', 'val-timeline': 'Mai 2026 —<br>Juin 2026',
-        'label-team': 'Équipe', 'val-team': 'Juste moi',
-        'label-role': 'Rôle', 'val-role': 'UI/UX<br>Tests utilisateurs',
-        'label-skills': 'Outils', 'val-skills': 'Figma<br>Prototypage<br>Claude Code',
-        'nav-prev': '<< PRÉCÉDENT', 'nav-this-website': 'Ce site', 'nav-next': 'SUIVANT >>',
       }
     };
     function applyLang(lang) {
@@ -657,7 +649,7 @@
 
     window.addEventListener('message', function(e) {
       if (!e.data || !e.data.type) return;
-      if (e.data.type === 'nav-expand') topBar.style.height = '280px';
+      if (e.data.type === 'nav-expand') topBar.style.height = '400px';
       if (e.data.type === 'nav-collapse') topBar.style.height = '90px';
       if (e.data.type === 'lang-change') applyLang(e.data.lang);
     });

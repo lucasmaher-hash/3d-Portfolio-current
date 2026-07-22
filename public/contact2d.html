@@ -425,8 +425,7 @@
     // ── i18n ─────────────────────────────────────────────────────
     const TRANSLATIONS = {
       en: { 'contact-title': 'Get In Touch' },
-      de: { 'contact-title': 'Kontakt aufnehmen' },
-      fr: { 'contact-title': 'Prendre contact' }
+      de: { 'contact-title': 'Kontakt aufnehmen' }
     };
     function applyLang(lang) {
       const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
@@ -436,7 +435,7 @@
 
     window.addEventListener('message', function(e) {
       if (!e.data || !e.data.type) return;
-      if (e.data.type === 'nav-expand') topBar.style.height = '280px';
+      if (e.data.type === 'nav-expand') topBar.style.height = '400px';
       if (e.data.type === 'nav-collapse') topBar.style.height = '90px';
       if (e.data.type === 'lang-change') applyLang(e.data.lang);
     });

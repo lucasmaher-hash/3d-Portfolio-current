@@ -536,14 +536,6 @@
         'love-text': '<p>Was mich gerade am meisten begeistert, ist Spatial Computing — VR & AR. Der Gedanke, dass digitale Erlebnisse im dreidimensionalen Raum existieren können, dass man in ein Design eintreten kann, anstatt es nur durch einen Bildschirm zu betrachten, fühlt sich wie der radikalste Wandel in der Art an, wie Menschen mit Technologie interagieren. Ich möchte an vorderster Front dabei sein.</p><p style="margin-top:12px;">Darüber hinaus finde ich viel Inspiration im Film — die Art, wie Regisseure Komposition, Licht und Rhythmus einsetzen, um Aufmerksamkeit zu lenken und Emotionen zu wecken, unterscheidet sich nicht so sehr von dem, was wir als Designer tun. Und Sport hält mich geerdet: die Disziplin, die Konsequenz, die Erinnerung daran, dass gute Ergebnisse davon kommen, jeden Tag aufzutauchen.</p>',
         'label-design-philosophy': 'Designphilosophie',
         'philosophy-text': '<p>Design, das nur gut aussieht, hat bereits versagt. Ich bin aus der bildenden Kunst und dem Handwerk zu diesem Bereich gekommen — und dieser Hintergrund hat mir vor allem eines gelehrt: Schönheit ohne Zweck ist Dekoration, kein Design.</p><p style="margin-top:12px;">Ich arbeite an der Schnittstelle von mutiger Ästhetik und echter Problemlösung. Ich scheue mich nicht zu experimentieren, das Unerprobte zu versuchen oder von unerwarteten Orten zu borgen. Die besten Ideen leben oft an den Rändern — zwischen physisch und digital, zwischen 2D und 3D, zwischen dem, was existiert, und dem, was sein könnte.</p>',
-      },
-      fr: {
-        'label-background': 'Parcours',
-        'bg-text': '<p>Bonjour, je suis Lucas Maher, designer de 21 ans basé à Munich.</p><p style="margin-top:12px;">J\'ai toujours créé avec mes mains. Bien avant de découvrir le design, je dessinais, sculptais l\'argile, découpais du verre, soudais du métal, cousais du tissu et peignais à l\'huile et à l\'acrylique — changeant constamment de matériaux, me demandant constamment : qu\'est-ce que cela peut devenir ?</p><p style="margin-top:12px;">Cette agitation m\'a conduit au design industriel, où la pensée tridimensionnelle rencontre les problèmes du monde réel. Maintenant, en étudiant à la Hochschule München, je canalise cette même énergie dans l\'espace numérique — où le 2D et le 3D se percutent, et où les écrans deviennent le nouveau matériau à façonner.</p>',
-        'label-things-i-love': 'Ce que j\'aime',
-        'love-text': '<p>Ce qui m\'enthousiasme le plus en ce moment, c\'est le calcul spatial — la VR & RA. L\'idée que les expériences numériques peuvent exister dans un espace tridimensionnel, que l\'on peut entrer dans un design plutôt que de simplement le regarder à travers un écran, semble être le changement le plus radical dans la façon dont les humains interagissent avec la technologie. Je veux être à l\'avant-garde de cela.</p><p style="margin-top:12px;">En dehors de cela, je trouve beaucoup d\'inspiration dans le cinéma — la façon dont les réalisateurs utilisent la composition, la lumière et le rythme pour guider l\'attention et évoquer des émotions n\'est pas si différente de ce que nous faisons en tant que designers. Et le sport me maintient ancré : la discipline, la constance, le rappel que les bons résultats viennent de se montrer chaque jour.</p>',
-        'label-design-philosophy': 'Philosophie de design',
-        'philosophy-text': '<p>Un design qui ne fait que bien paraître a déjà échoué. Je suis venu à ce domaine par les beaux-arts et l\'artisanat — et ce parcours m\'a appris une chose par-dessus tout : la beauté sans but est décoration, pas design.</p><p style="margin-top:12px;">Je travaille à l\'intersection d\'une esthétique audacieuse et d\'une vraie résolution de problèmes. Je n\'ai pas peur d\'expérimenter, d\'essayer ce qui n\'a pas encore été fait, ou d\'emprunter à des endroits inattendus. Les meilleures idées vivent souvent aux marges — entre physique et numérique, entre 2D et 3D, entre ce qui existe et ce qui pourrait exister.</p>',
       }
     };
     function applyLang(lang) {
@@ -555,7 +547,7 @@
 
     window.addEventListener('message', function(e) {
       if (!e.data || !e.data.type) return;
-      if (e.data.type === 'nav-expand') topBar.style.height = '280px';
+      if (e.data.type === 'nav-expand') topBar.style.height = '400px';
       if (e.data.type === 'nav-collapse') topBar.style.height = '90px';
       if (e.data.type === 'lang-change') applyLang(e.data.lang);
     });

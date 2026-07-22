@@ -858,30 +858,6 @@
         'step-polish-title': 'Feinschliff',
         'step-polish-text': 'Slide-Übergänge zwischen Seiten, Scroll-Hide-Nav-Verhalten, Schreibmaschinen-Hero-Animation und mobiles Querformat-Vollbild — alles in Vanilla JS, ohne Bibliotheken.',
         'nav-prev': '<< ZURÜCK', 'nav-next': 'WEITER >>',
-      },
-      fr: {
-        'breadcrumb': 'Portfolio&nbsp;&nbsp;/&nbsp;&nbsp;Projets&nbsp;&nbsp;/&nbsp;&nbsp;Ce site',
-        'label-timeline': 'Calendrier', 'val-timeline': '2025<br>En cours',
-        'label-team': 'Équipe', 'val-team': 'Juste moi',
-        'label-role': 'Rôle', 'val-role': 'Designer &amp;<br>Développeur',
-        'label-stack': 'Stack', 'val-stack': 'Blender · Three.js<br>HTML / CSS<br>Vanilla JS · Vite',
-        'section-overview': 'Aperçu / Concept',
-        'concept-heading': 'Le Concept',
-        'concept-text': 'Un portfolio qui reflète ma façon de penser — spatialement. Le mode 3D permet aux visiteurs de déambuler dans un environnement de studio où chaque projet existe dans l\'espace physique. Le mode 2D est une mise en page éditoriale claire pour la lecture. Les deux partagent la même navigation, le même contenu et le même langage de design.',
-        'constraint-heading': 'La Contrainte',
-        'constraint-text': 'Pas de frameworks. Pas de React, pas de bibliothèques UI — juste du Vanilla JS, HTML, CSS et Vite comme bundler. La contrainte a forcé la clarté : chaque animation, chaque interaction et chaque décision de mise en page a été écrite à la main. La base de code reste lisible et rapide.',
-        'section-process': 'Processus', 'process-sub': '5 Étapes · Concept → Finition',
-        'step-blender-title': 'Blender',
-        'step-blender-text': 'La scène 3D — un studio minimaliste avec un Mac, une lampe de bureau, des étagères et des œuvres encadrées — a été modélisée et éclairée dans Blender. Matériaux physiquement plausibles pour le rendu en temps réel. Exportée comme un seul .glb compressé chargé par Three.js à l\'exécution.',
-        'step-threejs-title': 'Three.js',
-        'step-threejs-text': 'Contrôleur de caméra à la première personne, éclairage environnemental HDR et superpositions de projets au clic. La scène se charge une fois et reste en mémoire pendant la navigation.',
-        'step-2dlayout-title': 'Mise en Page 2D',
-        'step-2dlayout-text': 'La couche portfolio plate — construite en HTML/CSS sans framework. Design de surface neumorphique, police OCR-A-BT, espacement fluide basé sur clamp() et un wrapper de page bordé qui se replie en pleine largeur sur mobile.',
-        'step-nav-title': 'Navigation',
-        'step-nav-text': 'Une barre de navigation partagée (basée sur iframe) relie les deux modes. Sur mobile, un menu superposé glassmorphique remplace la navigation bureau. Un joystick virtuel gère le déplacement à la première personne en 3D.',
-        'step-polish-title': 'Finition',
-        'step-polish-text': 'Transitions glissantes entre les pages, navigation masquée au défilement, animation de machine à écrire hero et plein écran paysage mobile — tout en Vanilla JS, sans bibliothèques.',
-        'nav-prev': '<< PRÉCÉDENT', 'nav-next': 'SUIVANT >>',
       }
     };
     function applyLang(lang) {
@@ -893,7 +869,7 @@
 
     window.addEventListener('message', function(e) {
       if (!e.data || !e.data.type) return;
-      if (e.data.type === 'nav-expand') topBar.style.height = '280px';
+      if (e.data.type === 'nav-expand') topBar.style.height = '400px';
       if (e.data.type === 'nav-collapse') topBar.style.height = '90px';
       if (e.data.type === 'lang-change') applyLang(e.data.lang);
     });

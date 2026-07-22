@@ -749,7 +749,6 @@
     const TITLES_BY_LANG = {
       en: ['Interface Designer...','Product Designer...','Detail Obsessed Designer...','3D & UI Hybrid...','Motion & Interface Designer...','Interaction Designer...'],
       de: ['Interface Designer...','Produktdesigner...','Detailbesessener Designer...','3D & UI Designer...','Motion & Interface Designer...','Interaktionsdesigner...'],
-      fr: ['Designer d\'Interface...','Designer Produit...','Designer obsédé par les détails...','Hybride 3D & UI...','Designer Motion & Interface...','Designer d\'Interaction...'],
     };
     let currentTitles = TITLES_BY_LANG[localStorage.getItem('lang') || 'en'];
     const typeEl = document.getElementById('typewriter');
@@ -948,14 +947,6 @@
         'btn-view-work': 'Ansehen',
         'footer-copyright': '© 2025 Lucas Maher. Alle Rechte vorbehalten.',
         'footer-note': 'Mit Sorgfalt gebaut<br>und viel zu viel Kaffee.',
-      },
-      fr: {
-        'tagline1': 'Du matériau au pixel.',
-        'tagline2': 'En savoir plus →',
-        'craft-title': 'Projets',
-        'btn-view-work': 'Voir',
-        'footer-copyright': '© 2025 Lucas Maher. Tous droits réservés.',
-        'footer-note': 'Construit avec soin<br>et beaucoup trop de café.',
       }
     };
     function applyLang(lang) {
@@ -968,7 +959,7 @@
 
     window.addEventListener('message', function(e) {
       if (!e.data || !e.data.type) return;
-      if (e.data.type === 'nav-expand') topBar.style.height = '280px';
+      if (e.data.type === 'nav-expand') topBar.style.height = '400px';
       if (e.data.type === 'nav-collapse') topBar.style.height = '90px';
       if (e.data.type === 'lang-change') applyLang(e.data.lang);
     });

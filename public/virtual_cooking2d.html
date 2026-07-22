@@ -459,6 +459,120 @@
       width: 5px; height: 5px; border-radius: 50%;
       background: var(--accent-orange, #FF5C00); display: block; flex-shrink: 0;
     }
+
+    /* ── At a glance lead paragraph (big, light) ── */
+    .glance-lead {
+      font-family: 'Roboto Flex', sans-serif;
+      font-weight: 300;
+      font-size: clamp(18px, 2.2vw, 24px);
+      line-height: 1.4;
+      letter-spacing: -0.01em;
+      color: var(--text-primary);
+    }
+
+    /* ── Design-process: staggered 3D-panel renders + text ── */
+    .stagger-list {
+      display: flex;
+      flex-direction: column;
+      gap: clamp(56px, 8vw, 120px);
+      margin-top: clamp(24px, 4vw, 48px);
+    }
+
+    .stagger-row {
+      display: flex;
+      align-items: center;
+      gap: clamp(28px, 5vw, 72px);
+      max-width: 860px;
+    }
+
+    /* image right, text left — pushed to the right side */
+    .stagger-row.right {
+      flex-direction: row-reverse;
+      margin-left: auto;
+    }
+
+    /* image left, text right — indented from the left edge */
+    .stagger-row.indent { margin-left: clamp(20px, 7vw, 110px); }
+
+    .stagger-figure {
+      flex: 0 0 auto;
+      width: clamp(220px, 32vw, 380px);
+    }
+
+    .stagger-figure img { width: 100%; height: auto; display: block; }
+
+    .stagger-copy {
+      font-size: 14.4px;
+      line-height: 1.7;
+      color: var(--text-secondary);
+      max-width: 440px;
+    }
+
+    /* ── Final result ── */
+    .result-heading-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .section-meta {
+      font-family: 'VT323', monospace;
+      font-size: 16px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+    }
+
+    .result-subhead {
+      font-family: 'OCR-A-BT', monospace;
+      font-size: clamp(20px, 2.6vw, 26px);
+      letter-spacing: -0.02em;
+      color: var(--text-primary);
+    }
+
+    .result-image-pair {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: clamp(20px, 3vw, 40px);
+    }
+
+    .result-image-pair img {
+      width: 100%;
+      height: auto;
+      display: block;
+      border-radius: 16px;
+      box-shadow: var(--shadow-pressed);
+    }
+
+    @media (max-width: 860px) {
+      .stagger-row,
+      .stagger-row.right,
+      .stagger-row.indent {
+        margin-left: 0; max-width: none; flex-direction: row;
+      }
+      .stagger-figure { width: clamp(160px, 34vw, 240px); }
+    }
+
+    @media (max-width: 640px) {
+      .stagger-row,
+      .stagger-row.right,
+      .stagger-row.indent { flex-direction: column; align-items: flex-start; gap: 18px; }
+      .stagger-figure { width: clamp(180px, 60vw, 280px); }
+      .result-image-pair { grid-template-columns: 1fr; }
+    }
+
+    /* Wide-aspect external monitors (wider than the 16:10 MacBook screen):
+       pull the staggered rows into a centred column and enlarge the panels
+       so they don't read as small and far apart. MacBook (~1.55) is untouched. */
+    @media (min-width: 1600px) and (min-aspect-ratio: 1.7) {
+      .stagger-list { max-width: 1180px; margin-left: auto; margin-right: auto; }
+      .stagger-row { max-width: 980px; gap: clamp(48px, 5vw, 96px); }
+      .stagger-row.indent { margin-left: clamp(40px, 5vw, 110px); }
+      .stagger-figure { width: clamp(320px, 25vw, 460px); }
+      .stagger-copy { max-width: 520px; font-size: 16px; }
+    }
   </style>
 </head>
 <body>
@@ -495,6 +609,12 @@
       </div>
     </div>
 
+    <!-- At a Glance -->
+    <div class="section" style="border-bottom: none; padding-bottom: 0;">
+      <h2 class="section-title" data-i18n="section-glance">At a Glance</h2>
+      <p class="glance-lead" style="margin-top: clamp(20px, 3vw, 32px);">[ Placeholder ] A short, punchy summary of the Virtual Cooking concept — one or two lines that frame the project before the details begin.</p>
+    </div>
+
     <!-- Meta -->
     <div class="section">
       <div class="meta-grid">
@@ -517,125 +637,87 @@
       </div>
     </div>
 
-    <!-- ── Everything below runs inside the two-line guide column ── -->
-    <div class="guide-col">
-
-      <!-- At a Glance -->
-      <div class="guide-section">
-        <div class="section-heading-row">
-          <h2 class="section-title" data-i18n="section-glance">At a Glance</h2>
-        </div>
-        <div class="dot-divider"></div>
-        <div class="glance-list">
-          <div class="glance-row">
-            <span class="glance-dot"></span>
-            <span class="glance-label" data-i18n="glance-what-label">What</span>
-            <span class="glance-value" data-i18n="glance-what-value">A VR kitchen companion — recipe steps on the left, ingredients &amp; timers on the right, always in view.</span>
-          </div>
-          <div class="glance-row">
-            <span class="glance-dot"></span>
-            <span class="glance-label" data-i18n="glance-interaction-label">Interaction</span>
-            <span class="glance-value" data-i18n="glance-interaction-value">Controller-free — click and swipe gestures only.</span>
-          </div>
-          <div class="glance-row">
-            <span class="glance-dot"></span>
-            <span class="glance-label" data-i18n="glance-status-label">Status</span>
-            <span class="glance-value" data-i18n="glance-status-value">A concept, not a shipped product.</span>
-          </div>
-          <div class="glance-row">
-            <span class="glance-dot"></span>
-            <span class="glance-label" data-i18n="glance-fit-label">Best fit</span>
-            <span class="glance-value" data-i18n="glance-fit-value">High-volume kitchens juggling dozens of orders at once.</span>
-          </div>
-        </div>
+    <!-- Identifying the problem -->
+    <div class="guide-section">
+      <div class="section-heading-row">
+        <h2 class="section-title">Identifying the problem</h2>
+        <span class="step-badge">0</span>
       </div>
-
-      <!-- Overview / Concept -->
-      <div class="guide-section">
-        <div class="section-heading-row">
-          <h2 class="section-title" data-i18n="section-overview">Overview / Concept</h2>
-          <span class="step-badge">0</span>
-        </div>
-        <div class="dot-divider"></div>
-        <div class="guide-media">
-          <img src="/images/vr-cookbook/side_v1_final_V1.png" alt="Virtual Cooking — side view of the two-panel layout" />
-        </div>
-        <p class="guide-text" data-i18n-html="overview-text-1">Cooking with a recipe rarely goes smoothly — you're constantly wiping your hands to check a measurement, flip back a page, or squint at a timer across the kitchen. Virtual Cooking imagines a VR headset that keeps all of that in view instead: instructions on the left, ingredients and running timers on the right, hands free the entire time.</p>
-        <p class="guide-text" data-i18n-html="overview-text-2">Most VR design leans safe and sterile. I wanted to push in the other direction — a distinct, tactile visual language built from 3D panels rather than flat menus, finished in a shiny brushed-silver material as a small homage to the stainless steel that fills every real kitchen.</p>
-      </div>
-
-      <!-- Instructions panel -->
-      <div class="guide-section">
-        <div class="section-heading-row">
-          <h2 class="section-title" data-i18n="section-instructions">Instructions, Without Lifting a Finger</h2>
-          <span class="step-badge">1</span>
-        </div>
-        <div class="dot-divider"></div>
-        <div class="guide-media">
-          <video autoplay loop muted playsinline>
-            <source src="/videos/vr-cookbook/manual_swipe_V2.mov" type="video/quicktime" />
-            <source src="/videos/vr-cookbook/manual_swipe_V2.mov" type="video/mp4" />
-          </video>
-        </div>
-        <p class="guide-text" data-i18n-html="instructions-text">The left panel holds the recipe itself — steps, quantities, technique notes — always sitting in the corner of your vision. Swipe through it the same way you'd flip a page, no controller, no sticky fingers on a screen.</p>
-      </div>
-
-      <!-- Ingredients & Timer panel -->
-      <div class="guide-section">
-        <div class="section-heading-row">
-          <h2 class="section-title" data-i18n="section-ingredients">Ingredients &amp; Timers, Always in Reach</h2>
-          <span class="step-badge">2</span>
-        </div>
-        <div class="dot-divider"></div>
-        <div class="guide-media">
-          <video autoplay loop muted playsinline>
-            <source src="/videos/vr-cookbook/timer_V1.mov" type="video/quicktime" />
-            <source src="/videos/vr-cookbook/timer_V1.mov" type="video/mp4" />
-          </video>
-        </div>
-        <p class="guide-text" data-i18n-html="ingredients-text">The right panel tracks what's cooking. Ingredient lists stay pinned next to the pan they belong to, and timers run alongside them — set with a glance, checked without turning around.</p>
-      </div>
-
-      <!-- No controllers needed -->
-      <div class="guide-section">
-        <div class="section-heading-row">
-          <h2 class="section-title" data-i18n="section-controllers">No Controllers Needed</h2>
-          <span class="step-badge">3</span>
-        </div>
-        <div class="dot-divider"></div>
-        <div class="guide-media">
-          <video autoplay loop muted playsinline>
-            <source src="/videos/vr-cookbook/manual_click_V2.mov" type="video/quicktime" />
-            <source src="/videos/vr-cookbook/manual_click_V2.mov" type="video/mp4" />
-          </video>
-        </div>
-        <p class="guide-text" data-i18n-html="controllers-text">Every interaction — opening a step, setting a timer, dismissing a panel — works through hand tracking alone: a click to select, a swipe to move on. The goal was an interface that disappears into the act of cooking rather than adding another device to hold.</p>
-      </div>
-
+      <div class="dot-divider"></div>
+      <p class="guide-text">[ Placeholder ] Set out the everyday friction Virtual Cooking responds to — the moment cooking from a recipe breaks down: wet hands, flipping pages, squinting at a timer across the kitchen.</p>
+      <p class="guide-text">[ Placeholder ] A second paragraph on the design ambition — pushing against safe, sterile VR toward a tactile, brushed-silver visual language built from 3D panels.</p>
     </div>
 
-    <!-- Full-bleed breakout render -->
-    <div class="breakout-media">
-      <img src="/images/vr-cookbook/back_final_V1.jpg" alt="Virtual Cooking — full render, rear view" />
+    <!-- Design process -->
+    <div class="guide-section">
+      <div class="section-heading-row">
+        <h2 class="section-title">Design process</h2>
+        <span class="step-badge">1</span>
+      </div>
+      <div class="dot-divider"></div>
+
+      <div class="stagger-list">
+        <div class="stagger-row">
+          <div class="stagger-figure">
+            <img src="/images/vr-cookbook/Panel_Left.png" alt="Recipe panel render" />
+          </div>
+          <p class="stagger-copy">[ Placeholder ] The left panel holds the recipe itself — steps, quantities, technique notes — always sitting in the corner of your vision.</p>
+        </div>
+        <div class="stagger-row right">
+          <div class="stagger-figure">
+            <img src="/images/vr-cookbook/Panel_Right.png" alt="Ingredients panel render" />
+          </div>
+          <p class="stagger-copy">[ Placeholder ] The right panel tracks what's cooking — ingredient lists stay pinned next to the pan they belong to.</p>
+        </div>
+        <div class="stagger-row indent">
+          <div class="stagger-figure">
+            <img src="/images/vr-cookbook/Stopwatch.png" alt="Timer render" />
+          </div>
+          <p class="stagger-copy">[ Placeholder ] Timers run alongside each dish — set with a glance, checked without turning around.</p>
+        </div>
+      </div>
+
+      <div class="guide-media" style="margin-top: clamp(40px, 6vw, 80px);">
+        <img src="/images/vr-cookbook/blender-modeling.png" alt="Modelling the panels in Blender" />
+      </div>
+      <p class="guide-text">[ Placeholder ] Every panel was modelled in Blender and shaped into a tactile, brushed-silver form language rather than flat menus.</p>
+
+      <div class="guide-media">
+        <img src="/images/vr-cookbook/app-preview.png" alt="The concept running in the browser" />
+      </div>
+      <p class="guide-text">[ Placeholder ] Brought to life in the browser with Three.js — every interaction runs on hand tracking alone: a click to select, a swipe to move on.</p>
     </div>
 
-    <div class="guide-col">
+    <!-- Final result -->
+    <div class="guide-section" style="border-bottom: none;">
+      <div class="result-heading-row">
+        <h2 class="section-title">Final result</h2>
+        <span class="section-meta">5 Steps · Modeling → Render</span>
+      </div>
+      <div class="dot-divider"></div>
 
-      <!-- Concept disclaimer -->
-      <div class="guide-section">
-        <span class="reflection-tag" data-i18n="reflection-tag-1">Reality Check</span>
-        <h2 class="reflection-title" data-i18n="section-concept">A Concept, Not (Yet) a Product</h2>
-        <p class="guide-text" data-i18n-html="concept-text-1">This is a concept, not a working prototype. Consumer VR headsets today are still bulky, heat up fast, and aren't rated for splashes, heat, or flour — hardware built for gaming, not a stovetop. Cooking is also a deeply tactile, social activity, and strapping on a headset to make dinner would trade away most of what makes it enjoyable at home.</p>
-        <p class="guide-text" data-i18n-html="concept-text-2">Where the idea gets more interesting is outside the home kitchen.</p>
+      <h3 class="result-subhead" style="margin-top: clamp(12px, 2vw, 20px);">Instruction manual</h3>
+      <div class="guide-media">
+        <video autoplay loop muted playsinline>
+          <source src="/videos/vr-cookbook/manual_click_V2.mov" type="video/quicktime" />
+          <source src="/videos/vr-cookbook/manual_click_V2.mov" type="video/mp4" />
+        </video>
+      </div>
+      <p class="guide-text">[ Placeholder ] Walk through the finished instruction panel — swiping through recipe steps hands-free inside the headset view.</p>
+
+      <div class="result-image-pair" style="margin-top: clamp(8px, 2vw, 16px);">
+        <img src="/images/vr-cookbook/back_final_V2.jpg" alt="Final render — rear view" />
+        <img src="/images/vr-cookbook/timer_click_V1.jpg" alt="Final render — timer interaction" />
       </div>
 
-      <!-- Restaurant use case -->
-      <div class="guide-section">
-        <span class="reflection-tag" data-i18n="reflection-tag-2">A Better Fit</span>
-        <h2 class="reflection-title" data-i18n="section-restaurant">Where This Could Work Today</h2>
-        <p class="guide-text" data-i18n-html="restaurant-text">Professional kitchens are a different story. A busy service means a cook juggling a dozen tickets, each with its own recipe, timing, and plating spec — usually tracked on paper or a screen bolted to the wall. A heads-up display that surfaces the right recipe and running timer for whatever's on the pass in front of you, hands-free, in a loud and fast-moving line, is a genuinely useful problem to solve — and one lightweight AR glasses, rather than a full VR headset, could actually take on as the hardware matures.</p>
+      <h3 class="result-subhead" style="margin-top: clamp(32px, 5vw, 64px);">Timer &amp; ingredients</h3>
+      <div class="guide-media">
+        <video autoplay loop muted playsinline>
+          <source src="/videos/vr-cookbook/timer_V1.mov" type="video/quicktime" />
+          <source src="/videos/vr-cookbook/timer_V1.mov" type="video/mp4" />
+        </video>
       </div>
-
+      <p class="guide-text">[ Placeholder ] The finished timer-and-ingredients panel in action — quantities and countdowns pinned right where they're needed.</p>
     </div>
 
     <div class="project-nav">
@@ -829,36 +911,6 @@
         'restaurant-text': 'In professionellen Küchen sieht es anders aus. Während des Service jongliert eine Köchin oder ein Koch mit einem Dutzend Bestellungen, jede mit eigenem Rezept, eigenem Timing und eigener Anrichte-Vorgabe — meist auf Papier oder einem Bildschirm an der Wand festgehalten. Ein Head-up-Display, das genau das passende Rezept und den laufenden Timer für das gerade anstehende Gericht zeigt, freihändig, mitten im lauten Trubel des Passes, ist ein echtes, lohnendes Problem — und eines, das eher leichte AR-Brillen als ein komplettes VR-Headset lösen könnten, sobald die Hardware so weit ist.',
         'nav-prev': '<< ZURÜCK', 'nav-next': 'WEITER >>',
         'nav-cybercoffee': 'Cybercoffee', 'nav-double-packaging': 'Double Packaging', 'nav-unify': 'Unify',
-      },
-      fr: {
-        'breadcrumb': 'Portfolio&nbsp;&nbsp;/&nbsp;&nbsp;Projets&nbsp;&nbsp;/&nbsp;&nbsp;Virtual Cooking',
-        'label-timeline': 'Calendrier', 'val-timeline': 'Mai 2026 —<br>Juil. 2026',
-        'label-team': 'Équipe', 'val-team': 'Juste moi',
-        'label-role': 'Rôle', 'val-role': 'Designer concept',
-        'label-tools': 'Outils', 'val-tools': 'Blender<br>Three.js<br>HTML / CSS / JS<br>Vibe Coding',
-        'section-glance': 'En un coup d\'œil',
-        'glance-what-label': 'Quoi', 'glance-what-value': 'Un compagnon de cuisine en VR — les étapes de la recette à gauche, les ingrédients et minuteurs à droite, toujours visibles.',
-        'glance-interaction-label': 'Interaction', 'glance-interaction-value': 'Sans manette — seulement des gestes de clic et de balayage.',
-        'glance-status-label': 'Statut', 'glance-status-value': 'Un concept, pas un produit fini.',
-        'glance-fit-label': 'Idéal pour', 'glance-fit-value': 'Les cuisines à fort volume qui jonglent avec de nombreuses recettes à la fois.',
-        'section-overview': 'Aperçu / Concept',
-        'overview-text-1': 'Cuisiner avec une recette se passe rarement sans accroc — on s\'essuie sans cesse les mains pour vérifier une quantité, revenir en arrière d\'une page, ou loucher vers un minuteur à l\'autre bout de la cuisine. Virtual Cooking imagine un casque VR qui garde tout cela dans le champ de vision : les instructions à gauche, les ingrédients et les minuteurs en cours à droite, les mains libres en permanence.',
-        'overview-text-2': 'La plupart des designs VR restent sages et aseptisés. J\'ai voulu prendre le contre-pied — un langage visuel distinct et tactile, construit autour de panneaux 3D plutôt que de menus plats, fini dans un argent brossé et brillant, en hommage à l\'acier inoxydable qui équipe chaque vraie cuisine.',
-        'section-instructions': 'Les instructions, sans lever le petit doigt',
-        'instructions-text': 'Le panneau de gauche contient la recette elle-même — étapes, quantités, notes de technique — toujours dans un coin du champ de vision. On le fait défiler comme on tournerait une page, sans manette ni doigts collants sur un écran.',
-        'section-ingredients': 'Ingrédients & minuteurs, toujours à portée',
-        'ingredients-text': 'Le panneau de droite suit ce qui cuit. Les listes d\'ingrédients restent épinglées près de la bonne poêle, et les minuteurs tournent juste à côté — réglés d\'un regard, vérifiés sans se retourner.',
-        'section-controllers': 'Aucune manette nécessaire',
-        'controllers-text': 'Chaque interaction — ouvrir une étape, régler un minuteur, fermer un panneau — passe uniquement par le suivi des mains : un clic pour sélectionner, un balayage pour avancer. L\'objectif était une interface qui s\'efface dans l\'acte de cuisiner plutôt que d\'ajouter un appareil de plus à tenir.',
-        'reflection-tag-1': 'Retour à la réalité',
-        'section-concept': 'Un concept, pas (encore) un produit',
-        'concept-text-1': 'Ceci est un concept, pas un prototype fonctionnel. Les casques VR grand public actuels restent encombrants, chauffent vite, et ne sont conçus ni pour les éclaboussures, ni pour la chaleur, ni pour la farine — pensés pour le jeu, pas pour la cuisinière. Cuisiner est aussi une activité profondément tactile et sociale, et enfiler un casque pour préparer le dîner sacrifierait justement ce qui rend la cuisine à la maison agréable.',
-        'concept-text-2': 'L\'idée devient plus intéressante en dehors de la cuisine domestique.',
-        'reflection-tag-2': 'Un meilleur terrain',
-        'section-restaurant': 'Où cela pourrait déjà fonctionner',
-        'restaurant-text': 'Les cuisines professionnelles, c\'est une autre histoire. En plein service, un cuisinier jongle avec une dizaine de commandes, chacune avec sa recette, son timing et sa présentation — le tout généralement suivi sur papier ou sur un écran fixé au mur. Un affichage tête haute qui fait apparaître la bonne recette et le minuteur en cours pour ce qui est sur le passe, mains libres, en plein bruit et rythme du service, est un vrai problème à résoudre — et un problème que des lunettes AR légères, plutôt qu\'un casque VR complet, pourraient prendre en charge à mesure que le matériel progresse.',
-        'nav-prev': '<< PRÉCÉDENT', 'nav-next': 'SUIVANT >>',
-        'nav-cybercoffee': 'Cybercoffee', 'nav-double-packaging': 'Double Packaging', 'nav-unify': 'Unify',
       }
     };
     function applyLang(lang) {
@@ -870,7 +922,7 @@
 
     window.addEventListener('message', function(e) {
       if (!e.data || !e.data.type) return;
-      if (e.data.type === 'nav-expand') topBar.style.height = '280px';
+      if (e.data.type === 'nav-expand') topBar.style.height = '400px';
       if (e.data.type === 'nav-collapse') topBar.style.height = '90px';
       if (e.data.type === 'lang-change') applyLang(e.data.lang);
     });

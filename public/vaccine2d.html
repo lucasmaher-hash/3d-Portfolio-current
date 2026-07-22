@@ -833,21 +833,6 @@
         'step4-heading': 'Shading', 'step4-text': 'Der Beutel kombiniert Transparent BSDF für Klarheit, Translucent BSDF für die milchige Streuung an den gewellten Bereichen und Glossy mit IOR-gesteuertem Fresnel für die glänzenden Kunststoffhöhepunkte.',
         'step5-heading': 'Finales Rendering', 'step5-text': 'Cycles-Ausgabe bei 1920×1400, einzelnes Key-Licht bei 6500K, im Compositor entrauscht. Zwei Hero-Pässe exportiert — ein kühler blauer klinischer Frontalblick und ein rosafarbener Winkel als Portfolio-Cover.',
         'nav-next': 'WEITER >>',
-      },
-      fr: {
-        'label-timeline': 'Calendrier', 'val-timeline': 'Printemps 2026<br/>4 semaines',
-        'label-team': 'Équipe', 'val-team': 'Juste moi',
-        'label-role': 'Rôle', 'val-role': 'Designer 3D',
-        'label-skills': 'Outils', 'val-skills': 'Blender · Cycles<br/>Simulation tissu<br/>Shading matériaux',
-        'section-overview': 'Aperçu / Concept',
-        'overview-text': 'Les emballages sous vide sont généralement photographiés à plat — la gravité et la succion dans le monde réel ne laissent pas beaucoup d\'options. Cette contrainte faisait partie de ce qui rendait ce projet intéressant : en CGI, l\'emballage peut se tenir debout, tourner librement et être éclairé sous n\'importe quel angle. L\'objet lui-même était aussi un choix délibéré, inspiré du tutoriel d\'intranetgirl — je voulais quelque chose d\'unconventionnel, un assemblage qu\'on ne verrait normalement pas commercialisé. Un flacon pharmaceutique scellé dans un sachet zippé remplit parfaitement ce critère. Cela constituait également un défi technique utile : deux matériaux au comportement physique opposé, ce qui m\'a poussé pour la première fois dans la simulation de tissu, le rendu Cycles et les shaders transparents.',
-        'section-process': 'Processus', 'process-sub': '5 Étapes · Modélisation → Rendu',
-        'step1-heading': 'Modélisation', 'step1-text': 'Le corps du flacon modélisé à partir d\'un seul profil, tourné et resserré avec des edge loops autour du bouchon. Le bouchon séparé en objet propre pour être UV-unwrappé proprement pour la bande d\'étiquette. La subdivision surface conservée pour le rendu final afin d\'arrondir la silhouette sans perdre les nervures à la base.',
-        'step2-heading': 'Topologie', 'step2-text': 'Le sachet subdivisé à ~250k triangles — assez de résolution pour que la sim tissu résolve les fines ridules là où le plastique se colle sur le flacon sans exploser en bruit.',
-        'step3-heading': 'Sim. sous vide', 'step3-text': 'Simulation de tissu avec pression négative — le sachet se colle activement sur la bouteille rigide. 192 frames simulées, la frame 90 choisie comme héro.',
-        'step4-heading': 'Shading', 'step4-text': 'Le sachet mélange le BSDF transparent pour la clarté, le BSDF translucide pour la diffusion laiteuse sur les zones froissées, et le Glossy avec Fresnel basé sur l\'IOR pour les reflets brillants du plastique.',
-        'step5-heading': 'Rendu final', 'step5-text': 'Sortie Cycles à 1920×1400, lumière principale unique à 6500K, débruitée dans le compositeur. Deux passes héro livrées — un frontal clinique bleu froid et un angle rosé utilisé comme couverture de portfolio.',
-        'nav-next': 'SUIVANT >>',
       }
     };
     function applyLang(lang) {
@@ -859,7 +844,7 @@
 
     window.addEventListener('message', function(e) {
       if (!e.data || !e.data.type) return;
-      if (e.data.type === 'nav-expand') topBar.style.height = '280px';
+      if (e.data.type === 'nav-expand') topBar.style.height = '400px';
       if (e.data.type === 'nav-collapse') topBar.style.height = '90px';
       if (e.data.type === 'lang-change') applyLang(e.data.lang);
     });

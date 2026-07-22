@@ -425,8 +425,6 @@
           <button class="lang-btn" data-lang="de">de</button>
           <span class="lang-sep">/</span>
           <button class="lang-btn" data-lang="en">en</button>
-          <span class="lang-sep">/</span>
-          <button class="lang-btn" data-lang="fr">fr</button>
         </div>
       </div>
 
@@ -593,8 +591,7 @@
     (function() {
       const NAV_LANG = {
         en: { craft: 'Craft', about: 'About', contact: 'Contact', thisWebsite: 'This Website' },
-        de: { craft: 'Projekte', about: 'Über mich', contact: 'Kontakt', thisWebsite: 'Diese Website' },
-        fr: { craft: 'Projets', about: 'À propos', contact: 'Contact', thisWebsite: 'Ce site' }
+        de: { craft: 'Projekte', about: 'Über mich', contact: 'Kontakt', thisWebsite: 'Diese Website' }
       };
       const q = s => document.querySelector(s);
       function applyNavLang(l) {
@@ -607,7 +604,9 @@
           btn.classList.toggle('active', btn.dataset.lang === l);
         });
       }
-      const initLang = localStorage.getItem('lang') || 'en';
+      // French was removed — coerce any old stored 'fr' preference back to English
+      let initLang = localStorage.getItem('lang') || 'en';
+      if (initLang === 'fr') { initLang = 'en'; localStorage.setItem('lang', 'en'); }
       applyNavLang(initLang);
       document.querySelectorAll('.lang-btn').forEach(btn => {
         btn.addEventListener('click', () => {
