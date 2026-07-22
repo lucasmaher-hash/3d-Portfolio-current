@@ -1,24 +1,50 @@
 # CLAUDE.md
 
-This is Lucas Maher's portfolio website.
+Lucas Maher's portfolio website — vanilla JS + Vite, neumorphic design system, Three.js 3D mode.
 
-## Commands
+## Quick Start
 
 ```bash
-npm run dev       # dev server at http://localhost:5173
-npm run build     # production build → dist/
-npm run preview   # preview the production build
+# Install dependencies (first time only)
+npm install
+
+# Start dev server (local testing)
+npm run dev
+# Opens at http://localhost:5173 — hot-reload enabled
+
+# Build for production
+npm run build
+
+# Preview production build locally
+npm run preview
 ```
 
-No test runner or linter is configured.
+**No test runner or linter is configured.** All testing is manual.
+
+## Session Startup Checklist
+
+When resuming work in a new session:
+1. `npm run dev` — start the dev server
+2. Open http://localhost:5173 in browser
+3. Test both 2D and 3D modes (toggle in nav or mobile menu)
+4. Verify video playback on Unify page (steps 2–6 have portrait phone videos)
+5. Check nav dropdown doesn't clip content on any page (iframe z-index and `.page-wrapper overflow` issues)
+6. Inspect hero blob on Unify page — pupils should track cursor; blob should sit above header dotted line
+7. Test mobile responsiveness at 860px breakpoint (scrollytelling switches from sticky pin to static layout)
 
 ## Architecture
 
-Vanilla JS, no framework. Vite bundles `src/main.js` and `src/style.css`. Everything else lives in `public/` and is served as static assets.
+**Vanilla JS, no framework.** Vite bundles `src/main.js` and `src/style.css`. Everything else lives in `public/` as static assets.
 
-The site has two "modes":
-- **3D mode** — Three.js scene (`src/main.js`) rendered in `index.html`. The 3D craft/about/contact pages are in `public/*3d.html`.
-- **2D mode** — Flat neumorphic design system. All 2D pages live in `public/*2d.html`. The landing page for 2D is `public/2D.html`.
+**Two modes:**
+- **3D mode** — Three.js scene (`src/main.js` → `index.html`). 3D pages: `public/*3d.html`
+- **2D mode** — Neumorphic flat design. All 2D pages: `public/*2d.html`. Landing: `public/2D.html`
+
+**Navigation:**
+- Every 2D page embeds nav as a fixed iframe (`#top-bar` → `/top_row_permanent_V3.html`)
+- Iframe height: 90px default, expands to 280px when Craft dropdown opens (via `postMessage`)
+- Always `z-index: 10` to sit above page content
+- **Critical:** Host page `.page-wrapper` must have `overflow: visible` (not `hidden`), else dropdown gets clipped
 
 ## Page map
 
@@ -130,13 +156,23 @@ The interactive coffee machine is a self-contained mini-app:
 7. **Concept disclaimer** — two reflection sections (Reality Check, Where This Could Work)
 8. **Project nav** — points to Unify (06)
 
-**Unify (06)** — Phone video showcase layout:
-1. **Hero device** — centered portrait phone video (homepage)
-2. **Header + meta grid** — standard (placeholders; Timeline/Team/Role/Tools TBD)
-3. **At a Glance** — quick summary (same as Virtual Cooking)
-4. **Feature rows** (6 total) — alternating left/right phone video + text block pairs:
-   - 01 Home, 02 Timetable, 03 Navigation, 04 Friends, 05 Socials, 06 Settings
-5. **Project nav** — points to Double Packaging (01, wrap)
+**Unify (06)** — Extended blob hero + scroll-driven dual-video sections:
+1. **Hero blob** (CUSTOM) — Large pink blob extends off top of page; pupils track cursor; sits above dotted divider (z-index: 3)
+2. **Header + breadcrumb** — Sits bottom-left of hero; includes dotted divider
+3. **Meta grid** — 4 neumorphic tiles (Timeline/Team/Role/Skills — all `[ ... ]` placeholders)
+4. **At a Glance** — Quick summary paragraph
+5. **Feature 1: Home** — Standard single video + text (left-aligned)
+6. **Features 2 & 5: Timetable + Socials** — SCROLL-DRIVEN DUAL-VIDEO section:
+   - Layout: text LEFT, videos RIGHT (mirrored from steps 3&4)
+   - Two videos side-by-side; one is full-size, one is 40% smaller
+   - Scroll or click to toggle which is active; inactive video pauses
+   - Video heights: active = `clamp(442px, 62.4vh, 676px)`; inactive = 60% of that
+   - Mobile (≤860px): stacks vertically, both videos same size, both panels visible
+7. **Features 3 & 4: Navigation + Friends** — SCROLL-DRIVEN DUAL-VIDEO section:
+   - Layout: videos LEFT, text RIGHT (original layout)
+   - Same scroll/click toggle behavior as steps 2&5
+8. **Feature 6: Settings** — Standard single video + text (right-aligned, reversed grid)
+9. **Project nav** — Links to Virtual Cooking (prev) and Double Packaging (next)
 
 **Page background colors**:
 - Standard pages: `#DCDCE3` (--bg-surface)
@@ -166,19 +202,220 @@ Organized by project for clarity:
 - `/public/severance_V23.glb` — 3D model used in the Three.js scene
 - `/public/OCR-A-BT.ttf` — custom monospace font
 
-## Missing / TBD
+## Current Status & Missing / TBD
 
-- **Kaffeemaschine app** (`public/kaffeemaschine/kaffeemaschine.html`) — deleted from disk in asset cleanup. Needs restoration from backup. The page `kaffeemaschine2d.html` expects this as an iframe.
-- **Unify page content** — All meta tiles (Timeline, Team, Role, Tools) and feature section copy are placeholders (`[ ... ]`). Fill in real values and feature descriptions.
-- **Virtual Cooking English copy** — Current text is my draft. You'll edit for tone/accuracy.
+**Unify page (06):**
+- ✅ Hero blob with pupil tracking
+- ✅ Scroll-driven dual-video scrollytelling for steps 2&5 (text left, videos right) and 3&4 (videos left, text right)
+- ✅ Mobile-responsive fallback (sticky pin → static layout at ≤860px)
+- ⏳ Meta tiles: Timeline, Team, Role, Skills — all `[ ... ]` placeholders
+- ⏳ Feature copy: all `[ Placeholder ]` markers; fill via TRANSLATIONS object (EN/DE/FR)
 
-## Known patterns / gotchas
+**Kaffeemaschine app** (`public/kaffeemaschine/kaffeemaschine.html`):
+- ❌ **Missing from disk** — was deleted during asset cleanup
+- Needs restoration from backup; `kaffeemaschine2d.html` embeds it as an iframe
 
-- **`clip-path: inset(0)` on `.project-section`** in `2D.html` — prevents neumorphic box-shadow from the `--shadow-raised` white highlight bleeding across section borders
-- **`minmax(0, 1fr)` in CSS grid** — required when a grid column contains a long OCR-A-BT title; without it the title overflows and collapses the other column
-- **`position: fixed` inside iframes is clipped to the iframe's viewport height** — this is why the Craft dropdown needed the postMessage resize approach rather than just `overflow: visible`
-- **Scroll-hide nav** — every 2D page adds/removes `.hide` on `#top-bar` based on scroll direction with 250px down / 180px up thresholds
-- **Video filenames must be URL-safe** — video files with spaces in names (e.g., `map courses.mov`) break as `<source src>` URLs; rename to hyphens (e.g., `map-courses.mov`)
-- **Unify video background color** — The phone videos embed a light gray app UI background (`#D8D7DC`, RGB 216,215,220). The page background is set to this exact color to eliminate the seam at video edges. Use Digital Color Meter in sRGB mode to sample if the hue drifts across devices.
-- **Virtual Cooking layout uses guide-section** — The single-track centered layout reuses `.guide-section` (same padding as other sections) rather than adding a narrower `.guide-col` wrapper. This keeps consistent page-wrapper border framing.
-- **i18n placeholders** — Unify page meta tiles and feature copy use `[ Placeholder ]` markers. Fill these in via the TRANSLATIONS object at the bottom of `unify2d.html` (EN/DE/FR).
+**Virtual Cooking (05):**
+- Current English text is draft; edit for tone/accuracy
+- Layout is finalized; asset files stable
+
+**3D mode:**
+- Index.html and Three.js scene stable
+- No recent changes
+
+## Recent Changes (Last Session)
+
+1. **Unify hero blob**
+   - Created extended pink blob (Figma export) that bleeds off top of page
+   - Implemented cursor-tracking pupils with SVG coordinate transforms
+   - Positioned absolutely above page frame; z-index: 3 ensures it sits above header divider
+
+2. **Scroll-driven scrollytelling**
+   - Implemented two dual-video sections with scroll-triggered state toggles
+   - Videos at 40% size when inactive; enlarge to full size when active
+   - Only active video plays; inactive pauses to prevent audio overlap
+   - Click a video to scroll-jump to that step; smooth scroll triggers toggle via scroll listener
+   - Mobile fallback: stacks vertically, disables sticky pin, shows both panels
+
+3. **Layout mirroring**
+   - Steps 2&5 (Timetable/Socials): text LEFT, videos RIGHT (flex-direction: row-reverse)
+   - Steps 3&4 (Navigation/Friends): videos LEFT, text RIGHT (original order)
+
+4. **Video crop**
+   - Step 3 (map-courses.mov): cropped bottom 3px via clip-path to remove unwanted line
+
+5. **Dropdown fix**
+   - `.page-wrapper` overflow changed from `hidden` to `visible` on 2D.html
+   - Ensures nav dropdown doesn't get clipped when opening
+
+## Tips for Next Session
+
+- **Always test the dropdown** before claiming work is done. Open 2D.html, hover Craft, check that project titles aren't cut off.
+- **Check both desktop and mobile** (860px breakpoint). Scrollytelling has different behavior on each.
+- **Video playback:** If videos don't autoplay, check browser autoplay policies. Muted + playsinline should bypass restrictions.
+- **Color sampling:** Use Digital Color Meter (macOS, Apple App Store) in sRGB mode to sample exact colors if you need to match video backgrounds or adjust shadows.
+- **SVG coordinates:** The blob's pupil positions come from Figma. If you re-export the blob, update: eye centers (ex, ey), pupil rest positions (rx, ry), and MAX travel distance in the tracking JS.
+- **Sticky positioning fragile:** Root-level `overflow-x: hidden` breaks sticky pins. Use `clip` instead. Page-wrapper `overflow: visible` needed for dropdown; use `clip-path` on child sections for shadow boundaries.
+- **i18n:** All text strings on Unify are in the `TRANSLATIONS` object (bottom of `unify2d.html`). Add new keys there; reference via `data-i18n` or `data-i18n-html` attributes in HTML.
+
+## Unify Page: Hero Blob Implementation
+
+**SVG Blob** (exported from Figma, sits in `<div class="hero-blob">` inside `.hero-top`):
+- Large pink shape (#FF88C8) with two white circles (eyes) and two dark pupils
+- SVG viewBox: `"-10 -65 760 830"` — allows head to bleed off top edge
+- Positioned absolute: `top: clamp(-85px, -6vw, -50px); right: clamp(-10px, 2vw, 48px);`
+- Height: `clamp(440px, 50vw, 680px)`; width: `auto` (maintains aspect ratio)
+- **Z-index: 3** — sits above header (z-index: 2) so blob appears above dotted divider line
+
+**Pupil Tracking** (JavaScript at bottom of `unify2d.html`):
+- Listens for `pointermove` events; converts client coords to SVG space via `getScreenCTM()`
+- Each pupil (id: `unify-pupil-l` / `unify-pupil-r`) constrained within its eye circle
+- Max travel: 108px from eye center (prevents pupils escaping white areas)
+- Smooth follow: 0.18 easing factor per frame (requestAnimationFrame loop)
+- **Edge case:** When pointer leaves window, pupils ease back to rest position
+
+**Hero Section CSS:**
+```css
+.hero-top {
+  position: relative;
+  padding: 0 clamp(40px, 8vw, 80px);
+  min-height: clamp(400px, 44vw, 620px);
+  display: flex;
+  align-items: flex-end;
+}
+
+.page-wrapper {
+  overflow: visible;  /* CRITICAL: allows blob to bleed past top border */
+}
+
+/* At root level: */
+html { overflow-x: clip; }  /* Not 'hidden' — clip allows sticky positioning */
+```
+
+## Unify Page: Scroll-Driven Dual-Video Sections (Scrollytelling)
+
+**HTML Structure** (two sections with identical pattern):
+```html
+<section class="scrolly" id="timetable-socials-scrolly">  <!-- Steps 2 & 5 -->
+  <div class="scrolly-sticky">
+    <div class="scrolly-media">
+      <div class="scrolly-vid is-active" data-step="timetable"> ... </div>
+      <div class="scrolly-vid" data-step="socials"> ... </div>
+    </div>
+    <div class="scrolly-copy">
+      <div class="scrolly-panel is-active" data-step="timetable"> ... </div>
+      <div class="scrolly-panel" data-step="socials"> ... </div>
+    </div>
+  </div>
+</section>
+
+<section class="scrolly" id="nav-friends-scrolly">  <!-- Steps 3 & 4 -->
+  <!-- Same structure, different data-step values: "courses" / "friends" -->
+</section>
+```
+
+**CSS Details:**
+```css
+.scrolly {
+  position: relative;
+  height: 175vh;  /* Tall spacer: allows ~75vh of scroll "room" before/after sticky pin */
+}
+
+.scrolly-sticky {
+  position: sticky;
+  top: 12vh;  /* Sits 12vh from top; leaves room for nav + breathing space */
+  height: 76vh;
+  display: flex;
+  align-items: center;
+  gap: clamp(28px, 5vw, 64px);
+  padding: 0 clamp(40px, 8vw, 80px);
+}
+
+/* Only #timetable-socials-scrolly mirrors layout (text LEFT, videos RIGHT) */
+#timetable-socials-scrolly .scrolly-sticky {
+  flex-direction: row-reverse;
+}
+#timetable-socials-scrolly .scrolly-media {
+  margin-right: 50px;  /* Nudge videos toward center from the right */
+}
+
+/* #nav-friends-scrolly keeps original order (videos LEFT, text RIGHT) */
+#nav-friends-scrolly .scrolly-media {
+  margin-left: 50px;  /* Nudge videos toward center from the left */
+}
+
+.scrolly-vid video {
+  height: calc(clamp(442px, 62.4vh, 676px) * 0.6);  /* Inactive: 40% smaller */
+  transition: height 480ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.scrolly-vid.is-active video {
+  height: clamp(442px, 62.4vh, 676px);  /* Active: full size, matches other videos */
+}
+
+.scrolly-copy {
+  flex: 1 1 auto;
+  align-self: center;
+}
+
+.scrolly-panel {
+  position: absolute;
+  top: 50%;
+  left: 0; right: 0;
+  transform: translateY(-50%);
+  opacity: 0;
+  transition: opacity 350ms ease;
+  pointer-events: none;
+}
+.scrolly-panel.is-active {
+  opacity: 1;
+  pointer-events: auto;
+}
+```
+
+**JavaScript Behavior** (`initScrolly()` function runs on both `.scrolly` sections):
+1. Measures scroll progress as fraction of section height (0 to 1)
+2. At midpoint (0.5), toggles active video/panel to the second step
+3. Only active video plays; inactive pauses (prevents audio overlap)
+4. Click a video → smooth scroll to position (0.15 or 0.85 of section) that triggers the toggle
+5. Throttled with `requestAnimationFrame` to avoid excessive updates
+
+**Mobile fallback** (≤860px breakpoint):
+- `.scrolly` height → `auto` (no tall spacer)
+- `.scrolly-sticky` → `position: static` (no sticky pin); `flex-direction: column` (stack vertically)
+- Both videos same height; both panels visible; no toggle behavior
+- Useful on small screens where scroll range is too small to trigger transitions
+
+## Unify Page: Video Details
+
+**Video files** (all in `/public/videos/unify/`):
+- `homepage.mov` — Feature 1 (Home)
+- `timetable.mov` — Feature 2 (Timetable, scrolly section)
+- `map-courses.mov` — Feature 3 (Navigation, scrolly section)
+- `map-friends.mov` — Feature 4 (Friends, scrolly section)
+- `socials.mov` — Feature 5 (Socials, scrolly section)
+- `settings.mov` — Feature 6 (Settings)
+
+**Critical:** All video filenames use hyphens (not spaces). `<source>` URLs break with spaces.
+
+**Background color:** All Unify videos embed `#D8D7DC` (RGB 216,215,220) as their app UI background. Page background matches exactly to eliminate seams at video edges. ⚠️ If colors drift, use Digital Color Meter (macOS) in sRGB mode to sample.
+
+**Crop note:** Step 3 (map-courses.mov) has bottom 3px cropped via `clip-path: inset(0 0 3px 0)` to remove an unwanted line.
+
+## Known Patterns & Gotchas
+
+- **`clip-path: inset(0)` on `.project-section`** in `2D.html` — prevents neumorphic white box-shadow highlight from bleeding across borders
+- **`minmax(0, 1fr)` in CSS grid** — required when a column holds long OCR-A-BT titles; otherwise title overflows and crushes the other column
+- **`position: fixed` inside iframes clipped to iframe viewport** — why Craft dropdown uses `postMessage` to expand iframe instead of relying on `overflow: visible` alone
+- **Scroll-hide nav** — every 2D page adds/removes `.hide` on `#top-bar` based on scroll direction (250px down threshold / 180px up threshold)
+- **Video filenames must be URL-safe** — no spaces; use hyphens (e.g., `map-courses.mov` not `map courses.mov`)
+- **Unify page z-index stack** (top to bottom):
+  - `z-index: 10` — #top-bar (nav iframe)
+  - `z-index: 3` — .hero-blob (sits above header/divider)
+  - `z-index: 2` — .hero-header (breadcrumb, title, divider)
+  - `z-index: auto` (0) — page content, project grid
+- **Overflow handling:**
+  - `.page-wrapper` must be `overflow: visible` (not `hidden`) so nav dropdown doesn't get clipped
+  - Root `html` must be `overflow-x: clip` (not `hidden`) so sticky positioning doesn't break
+  - `.project-section` uses `clip-path: inset(0)` to prevent shadow bleed without breaking stickiness
+- **i18n on Unify:** Meta tiles and feature copy are placeholders (`[ ... ]`). Edit via `TRANSLATIONS` object at bottom of `unify2d.html` (EN/DE/FR)
+- **Virtual Cooking layout:** Uses `.guide-section` (standard padding) for centered single-track layout, not a custom narrower wrapper

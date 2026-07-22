@@ -32,7 +32,9 @@
 
     html, body {
       width: 100%;
-      overflow-x: hidden;
+      /* clip (not hidden) prevents the root from becoming a scroll
+         container, which would break position:sticky in the scrolly section */
+      overflow-x: clip;
       /* Matched to the app-UI background baked into the phone videos so
          there's no visible seam where a video meets the page. */
       background: #D8D7DC;
@@ -62,22 +64,53 @@
       padding-bottom: 12px;
       border: 1px solid var(--border-color);
       margin: 12px auto;
-      overflow: hidden;
+      /* visible (not hidden) so the hero blob can break out above the
+         top border and run to the very top edge of the page */
+      overflow: visible;
     }
 
-    /* ── Hero (centred device) ── */
-    .hero-device {
-      border-bottom: 1px solid var(--border-color);
-      padding: clamp(40px, 6vw, 72px) clamp(40px, 8vw, 80px);
+    /* ── Hero: big blob anchored top-right, bleeding off the top ──
+       The blob is larger than the hero box and positioned above it, so
+       its head is clipped by the top edge (overflow:hidden) — it reads
+       as running off the top of the page. The header (breadcrumb + title
+       + divider) sits at the bottom-left, beneath the blob's eyes. */
+    .hero-top {
+      position: relative;
+      padding: 0 clamp(40px, 8vw, 80px);
+      min-height: clamp(400px, 44vw, 620px);
       display: flex;
-      justify-content: center;
+      align-items: flex-end;
     }
 
-    .hero-device video {
+    /* The blob is anchored to the top of the page-wrapper and pulled up
+       past its top border (margin + border ≈ 13px) so it runs to the very
+       top edge of the page, unclipped by the frame. */
+    .hero-blob {
+      position: absolute;
+      top: clamp(-85px, -6vw, -50px);
+      right: clamp(-10px, 2vw, 48px);
+      height: clamp(440px, 50vw, 680px);
       width: auto;
-      height: clamp(360px, 52vh, 560px);
-      max-width: 100%;
-      display: block;
+      pointer-events: none;
+      overflow: visible;
+      z-index: 3;
+    }
+
+    .hero-blob circle[id^="unify-pupil"] {
+      will-change: cx, cy;
+    }
+
+    .hero-header {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      padding-bottom: clamp(4px, 1vw, 10px);
+    }
+
+    /* ── Shared section padding ── */
+    .section {
+      border-bottom: 1px solid var(--border-color);
+      padding: clamp(32px, 5vw, 56px) clamp(40px, 8vw, 80px);
     }
 
     /* ── Shared section padding ── */
@@ -270,7 +303,7 @@
 
     .feature-media video {
       width: auto;
-      height: clamp(340px, 48vh, 520px);
+      height: clamp(442px, 62.4vh, 676px);
       max-width: 100%;
       display: block;
     }
@@ -297,6 +330,120 @@
       color: var(--text-primary);
     }
 
+    /* ── Scroll-driven dual-video section (steps 03 + 04) ──
+       A tall spacer pins the .scrolly-sticky panel; scrolling past its
+       midpoint (or clicking a video) swaps which video is full-size and
+       which text panel shows. Videos on the left, text on the right. */
+    .scrolly {
+      position: relative;
+      height: 175vh;
+    }
+
+    .scrolly-sticky {
+      position: sticky;
+      top: 12vh;
+      height: 76vh;
+      display: flex;
+      align-items: center;
+      gap: clamp(28px, 5vw, 64px);
+      padding: 0 clamp(40px, 8vw, 80px);
+    }
+
+    .scrolly-media {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: flex-end;      /* phones stand on a shared baseline */
+      gap: clamp(16px, 2vw, 32px);
+      margin-left: 50px;          /* nudge the pair toward centre */
+    }
+
+    /* Only mirror layout for steps 2 & 5 (Timetable/Socials) */
+    #timetable-socials-scrolly .scrolly-sticky {
+      flex-direction: row-reverse;  /* text left, videos right */
+    }
+
+    #timetable-socials-scrolly .scrolly-media {
+      margin-left: 0;
+      margin-right: 50px;         /* nudge toward centre from right */
+    }
+
+    .scrolly-vid { cursor: pointer; }
+
+    .scrolly-vid video {
+      display: block;
+      width: auto;
+      height: calc(clamp(442px, 62.4vh, 676px) * 0.6);   /* inactive: 40% smaller */
+      transition: height 480ms cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    #nav-friends-scrolly .scrolly-vid[data-step="courses"] video {
+      clip-path: inset(0 0 3px 0);   /* crop bottom 3px */
+    }
+
+    .scrolly-vid.is-active video {
+      height: clamp(442px, 62.4vh, 676px);   /* matches the other feature videos */
+    }
+
+    .scrolly-copy {
+      position: relative;
+      flex: 1 1 auto;
+      min-width: 0;
+      align-self: center;
+      min-height: 220px;
+    }
+
+    .scrolly-panel {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: clamp(16px, 2vw, 22px);
+      opacity: 0;
+      transition: opacity 350ms ease;
+      pointer-events: none;
+    }
+
+    .scrolly-panel.is-active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* progress rail: two dots showing which step is active */
+    .scrolly-rail {
+      position: absolute;
+      left: clamp(16px, 3vw, 40px);
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .scrolly-rail span {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--text-tertiary);
+      transition: background 300ms ease, transform 300ms ease;
+    }
+    .scrolly-rail span.on { background: var(--accent-orange); transform: scale(1.3); }
+
+    @media (max-width: 860px) {
+      .scrolly { height: auto; }
+      .scrolly-sticky {
+        position: static; height: auto;
+        flex-direction: column; align-items: stretch;
+        gap: 28px; padding: 32px 20px;
+      }
+      .scrolly-media { justify-content: center; margin-left: 0; }
+      .scrolly-vid video,
+      .scrolly-vid.is-active video { height: clamp(360px, 64vw, 460px); }
+      .scrolly-copy { min-height: 0; }
+      .scrolly-panel { position: static; transform: none; opacity: 1; pointer-events: auto; }
+      .scrolly-panel + .scrolly-panel { margin-top: 24px; }
+      .scrolly-rail { display: none; }
+    }
+
     @media (max-width: 860px) {
       .meta-grid { grid-template-columns: 1fr 1fr; }
       .feature-row,
@@ -312,12 +459,13 @@
       #top-bar.hide { transform: translateY(-90px); }
       .section { padding: 24px 20px; }
       .guide-section { padding: 32px 20px; }
-      .hero-device { padding: 32px 20px; }
+      .hero-top { padding: 0 20px; min-height: clamp(420px, 92vw, 560px); }
+      .hero-blob { height: clamp(400px, 108vw, 620px); right: -30px; top: -30px; }
       .project-title { font-size: clamp(32px, 9vw, 56px); }
       .meta-grid { grid-template-columns: 1fr 1fr; gap: 11px; }
       .meta-tile { padding: 8px; gap: 8px; height: 155px; min-height: 0; }
       .meta-inset { padding: 8px 10px; }
-      .feature-media video { height: clamp(320px, 60vh, 460px); }
+      .feature-media video { height: clamp(416px, 78vh, 598px); }
     }
 
     /* ── Project nav ──────────────────────────────────────── */
@@ -472,24 +620,34 @@
 
   <div class="page-wrapper">
 
-    <!-- Hero (centred device) -->
-    <div class="hero-device">
-      <video autoplay loop muted playsinline>
-        <source src="/videos/unify/homepage.mov" type="video/quicktime" />
-        <source src="/videos/unify/homepage.mov" type="video/mp4" />
-      </video>
+    <!-- Hero: extended blob runs off the top-right; header sits bottom-left.
+         Blob exported from Figma; pupils track the cursor. -->
+    <div class="hero-top">
+      <svg id="unify-blob" class="hero-blob" viewBox="-10 -65 760 830" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M323.21 756.493C234.412 756.11 213.731 661.375 202.306 549.236C199.532 554.819 196.622 560.291 193.579 565.6C178.334 592.198 142.361 636.09 118.884 632.259C3.27708 608.835 31.0147 384.119 25.2783 265.741C25.2772 -86 -6.99887 -60 202.306 -60L429.004 -60C709.5 -55 694.991 -102 694.991 171.552C703.989 276.413 668.813 333.55 601.172 349.148C612.796 465.829 649.858 629.358 560.806 710.631C539.425 730.443 513.556 736.463 489.14 727.269C450.275 712.108 432.59 675.002 413.366 627.06C391.475 696.237 375.125 738.926 323.21 756.493Z" fill="#FF88C8"/>
+        <circle cx="266.586" cy="324.744" r="168.5" fill="#fff"/>
+        <circle cx="574.086" cy="324.744" r="168" fill="#fff"/>
+        <circle id="unify-pupil-l" cx="223.086" cy="425.744" r="52.5" fill="#292925"/>
+        <circle id="unify-pupil-r" cx="530.586" cy="425.744" r="52.5" fill="#292925"/>
+      </svg>
+      <div class="hero-header">
+        <div class="project-header">
+          <p class="breadcrumb" data-i18n-html="breadcrumb">Portfolio&nbsp;&nbsp;/&nbsp;&nbsp;Projects&nbsp;&nbsp;/&nbsp;&nbsp;Unify</p>
+          <div class="title-row">
+            <h1 class="project-title">Unify</h1>
+            <span class="accent-dot"></span>
+          </div>
+          <div class="dot-divider"></div>
+        </div>
+      </div>
     </div>
 
-    <!-- Header -->
-    <div class="section" style="border-bottom: none;">
-      <div class="project-header">
-        <p class="breadcrumb" data-i18n-html="breadcrumb">Portfolio&nbsp;&nbsp;/&nbsp;&nbsp;Projects&nbsp;&nbsp;/&nbsp;&nbsp;Unify</p>
-        <div class="title-row">
-          <h1 class="project-title">Unify</h1>
-          <span class="accent-dot"></span>
-        </div>
-        <div class="dot-divider"></div>
+    <!-- At a Glance -->
+    <div class="guide-section" style="border-bottom: none;">
+      <div class="section-heading-row">
+        <h2 class="section-title" data-i18n="section-overview">At a Glance</h2>
       </div>
+      <p class="guide-text" data-i18n="overview-text">Unify helps students connect more easily: it automatically syncs timetables, shows shared free periods, makes meeting up with friends effortless, and supports everyday campus life with live locations and interactive campus and building navigation.</p>
     </div>
 
     <!-- Meta -->
@@ -508,45 +666,14 @@
           <div class="meta-inset" data-i18n="val-role">[ Role ]</div>
         </div>
         <div class="meta-tile">
-          <div class="meta-label" data-i18n="label-tools">Tools</div>
-          <div class="meta-inset" data-i18n-html="val-tools">[ Tools ]</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- At a Glance -->
-    <div class="guide-section">
-      <div class="section-heading-row">
-        <h2 class="section-title" data-i18n="section-glance">At a Glance</h2>
-      </div>
-      <div class="dot-divider"></div>
-      <p class="guide-text" data-i18n="overview-text">Unify helps students connect more easily: it automatically syncs timetables, shows shared free periods, makes meeting up with friends effortless, and supports everyday campus life with live locations and interactive campus and building navigation.</p>
-      <div class="glance-list">
-        <div class="glance-row">
-          <span class="glance-dot"></span>
-          <span class="glance-label" data-i18n="glance-what-label">What</span>
-          <span class="glance-value" data-i18n="glance-what-value">A campus app that helps students find each other and their shared free time.</span>
-        </div>
-        <div class="glance-row">
-          <span class="glance-dot"></span>
-          <span class="glance-label" data-i18n="glance-core-label">Core idea</span>
-          <span class="glance-value" data-i18n="glance-core-value">Automatic timetable matching surfaces the overlaps that make meeting up easy.</span>
-        </div>
-        <div class="glance-row">
-          <span class="glance-dot"></span>
-          <span class="glance-label" data-i18n="glance-nav-label">Navigation</span>
-          <span class="glance-value" data-i18n="glance-nav-value">Live friend locations plus interactive campus and building navigation.</span>
-        </div>
-        <div class="glance-row">
-          <span class="glance-dot"></span>
-          <span class="glance-label" data-i18n="glance-status-label">Status</span>
-          <span class="glance-value" data-i18n="glance-status-value">[ Placeholder — add specifics later ]</span>
+          <div class="meta-label" data-i18n="label-skills">Skills</div>
+          <div class="meta-inset" data-i18n-html="val-skills">[ Skills ]</div>
         </div>
       </div>
     </div>
 
     <!-- Feature 1: Home -->
-    <div class="guide-section">
+    <div class="guide-section" style="border-bottom: none;">
       <div class="feature-row">
         <div class="feature-media">
           <video autoplay loop muted playsinline>
@@ -562,76 +689,74 @@
       </div>
     </div>
 
-    <!-- Feature 2: Timetable -->
-    <div class="guide-section">
-      <div class="feature-row reverse">
-        <div class="feature-media">
-          <video autoplay loop muted playsinline>
-            <source src="/videos/unify/timetable.mov" type="video/quicktime" />
-            <source src="/videos/unify/timetable.mov" type="video/mp4" />
-          </video>
+    <!-- Features 2 & 5: scroll-driven dual video (Timetable / Socials) —
+         videos left, text right; scroll or click swaps the active one. -->
+    <section class="scrolly" id="timetable-socials-scrolly">
+      <div class="scrolly-sticky">
+        <div class="scrolly-media">
+          <div class="scrolly-vid is-active" data-step="timetable">
+            <video autoplay loop muted playsinline>
+              <source src="/videos/unify/timetable.mov" type="video/quicktime" />
+              <source src="/videos/unify/timetable.mov" type="video/mp4" />
+            </video>
+          </div>
+          <div class="scrolly-vid" data-step="socials">
+            <video autoplay loop muted playsinline>
+              <source src="/videos/unify/socials.mov" type="video/quicktime" />
+              <source src="/videos/unify/socials.mov" type="video/mp4" />
+            </video>
+          </div>
         </div>
-        <div class="feature-copy">
-          <span class="feature-kicker" data-i18n="feat-timetable-kicker">02 — Timetable</span>
-          <h2 class="feature-title" data-i18n="feat-timetable-title">Timetables That Match Themselves</h2>
-          <p class="guide-text" data-i18n="feat-timetable-text">[ Placeholder ] Unify syncs everyone's schedule automatically and highlights the free periods you share, so finding a common gap takes no coordination. Real copy to follow.</p>
+        <div class="scrolly-copy">
+          <div class="scrolly-panel is-active" data-step="timetable">
+            <span class="feature-kicker" data-i18n="feat-timetable-kicker">02 — Timetable</span>
+            <h2 class="feature-title" data-i18n="feat-timetable-title">Timetables That Match Themselves</h2>
+            <p class="guide-text" data-i18n="feat-timetable-text">[ Placeholder ] Unify syncs everyone's schedule automatically and highlights the free periods you share, so finding a common gap takes no coordination. Real copy to follow.</p>
+          </div>
+          <div class="scrolly-panel" data-step="socials">
+            <span class="feature-kicker" data-i18n="feat-socials-kicker">05 — Socials</span>
+            <h2 class="feature-title" data-i18n="feat-socials-title">Make the Plan</h2>
+            <p class="guide-text" data-i18n="feat-socials-text">[ Placeholder ] The social layer makes reaching out and setting up plans with friends effortless, right where you already see their availability. Real copy to follow.</p>
+          </div>
         </div>
       </div>
-    </div>
+    </section>
 
-    <!-- Feature 3: Course navigation -->
-    <div class="guide-section">
-      <div class="feature-row">
-        <div class="feature-media">
-          <video autoplay loop muted playsinline>
-            <source src="/videos/unify/map-courses.mov" type="video/quicktime" />
-            <source src="/videos/unify/map-courses.mov" type="video/mp4" />
-          </video>
+    <!-- Features 3 & 4: scroll-driven dual video (Navigation / Friends) —
+         videos left, text right; scroll or click swaps the active one. -->
+    <section class="scrolly" id="nav-friends-scrolly">
+      <div class="scrolly-sticky">
+        <div class="scrolly-media">
+          <div class="scrolly-vid is-active" data-step="courses">
+            <video autoplay loop muted playsinline>
+              <source src="/videos/unify/map-courses.mov" type="video/quicktime" />
+              <source src="/videos/unify/map-courses.mov" type="video/mp4" />
+            </video>
+          </div>
+          <div class="scrolly-vid" data-step="friends">
+            <video autoplay loop muted playsinline>
+              <source src="/videos/unify/map-friends.mov" type="video/quicktime" />
+              <source src="/videos/unify/map-friends.mov" type="video/mp4" />
+            </video>
+          </div>
         </div>
-        <div class="feature-copy">
-          <span class="feature-kicker" data-i18n="feat-courses-kicker">03 — Navigation</span>
-          <h2 class="feature-title" data-i18n="feat-courses-title">Find the Right Room</h2>
-          <p class="guide-text" data-i18n="feat-courses-text">[ Placeholder ] Interactive campus and building navigation routes you straight to your next lecture hall — no more hunting for room numbers across floors. Real copy to follow.</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Feature 4: Friends map -->
-    <div class="guide-section">
-      <div class="feature-row reverse">
-        <div class="feature-media">
-          <video autoplay loop muted playsinline>
-            <source src="/videos/unify/map-friends.mov" type="video/quicktime" />
-            <source src="/videos/unify/map-friends.mov" type="video/mp4" />
-          </video>
-        </div>
-        <div class="feature-copy">
-          <span class="feature-kicker" data-i18n="feat-friends-kicker">04 — Friends</span>
-          <h2 class="feature-title" data-i18n="feat-friends-title">See Who's Nearby</h2>
-          <p class="guide-text" data-i18n="feat-friends-text">[ Placeholder ] Live friend locations show who's on campus and where, turning a chance overlap into an easy meet-up between classes. Real copy to follow.</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Feature 5: Socials -->
-    <div class="guide-section">
-      <div class="feature-row">
-        <div class="feature-media">
-          <video autoplay loop muted playsinline>
-            <source src="/videos/unify/socials.mov" type="video/quicktime" />
-            <source src="/videos/unify/socials.mov" type="video/mp4" />
-          </video>
-        </div>
-        <div class="feature-copy">
-          <span class="feature-kicker" data-i18n="feat-socials-kicker">05 — Socials</span>
-          <h2 class="feature-title" data-i18n="feat-socials-title">Make the Plan</h2>
-          <p class="guide-text" data-i18n="feat-socials-text">[ Placeholder ] The social layer makes reaching out and setting up plans with friends effortless, right where you already see their availability. Real copy to follow.</p>
+        <div class="scrolly-copy">
+          <div class="scrolly-panel is-active" data-step="courses">
+            <span class="feature-kicker" data-i18n="feat-courses-kicker">03 — Navigation</span>
+            <h2 class="feature-title" data-i18n="feat-courses-title">Find the Right Room</h2>
+            <p class="guide-text" data-i18n="feat-courses-text">[ Placeholder ] Interactive campus and building navigation routes you straight to your next lecture hall — no more hunting for room numbers across floors. Real copy to follow.</p>
+          </div>
+          <div class="scrolly-panel" data-step="friends">
+            <span class="feature-kicker" data-i18n="feat-friends-kicker">04 — Friends</span>
+            <h2 class="feature-title" data-i18n="feat-friends-title">See Who's Nearby</h2>
+            <p class="guide-text" data-i18n="feat-friends-text">[ Placeholder ] Live friend locations show who's on campus and where, turning a chance overlap into an easy meet-up between classes. Real copy to follow.</p>
+          </div>
         </div>
       </div>
-    </div>
+    </section>
 
     <!-- Feature 6: Settings -->
-    <div class="guide-section">
+    <div class="guide-section" style="border-bottom: none;">
       <div class="feature-row reverse">
         <div class="feature-media">
           <video autoplay loop muted playsinline>
@@ -784,8 +909,8 @@
         'label-timeline': 'Timeline', 'val-timeline': '[ Timeline ]',
         'label-team': 'Team', 'val-team': '[ Team ]',
         'label-role': 'Role', 'val-role': '[ Role ]',
-        'label-tools': 'Tools', 'val-tools': '[ Tools ]',
-        'section-glance': 'At a Glance',
+        'label-skills': 'Skills', 'val-skills': '[ Skills ]',
+        'section-overview': 'At a Glance',
         'overview-text': 'Unify helps students connect more easily: it automatically syncs timetables, shows shared free periods, makes meeting up with friends effortless, and supports everyday campus life with live locations and interactive campus and building navigation.',
         'glance-what-label': 'What', 'glance-what-value': 'A campus app that helps students find each other and their shared free time.',
         'glance-core-label': 'Core idea', 'glance-core-value': 'Automatic timetable matching surfaces the overlaps that make meeting up easy.',
@@ -811,8 +936,8 @@
         'label-timeline': 'Zeitraum', 'val-timeline': '[ Zeitraum ]',
         'label-team': 'Team', 'val-team': '[ Team ]',
         'label-role': 'Rolle', 'val-role': '[ Rolle ]',
-        'label-tools': 'Werkzeuge', 'val-tools': '[ Werkzeuge ]',
-        'section-glance': 'Auf einen Blick',
+        'label-skills': 'Fähigkeiten', 'val-skills': '[ Fähigkeiten ]',
+        'section-overview': 'Auf einen Blick',
         'overview-text': 'Die App hilft Studierenden dabei, sich einfacher zu vernetzen: Sie gleicht Stundenpläne automatisch ab, zeigt gemeinsame freie Zeiten, erleichtert das Verabreden mit Freunden und unterstützt mit Live-Standorten sowie interaktiver Campus- und Gebäudenavigation im Uni-Alltag.',
         'glance-what-label': 'Was', 'glance-what-value': 'Eine Campus-App, die Studierenden hilft, sich und ihre gemeinsame freie Zeit zu finden.',
         'glance-core-label': 'Kernidee', 'glance-core-value': 'Der automatische Stundenplan-Abgleich zeigt die Überschneidungen, die das Treffen leicht machen.',
@@ -838,8 +963,8 @@
         'label-timeline': 'Calendrier', 'val-timeline': '[ Calendrier ]',
         'label-team': 'Équipe', 'val-team': '[ Équipe ]',
         'label-role': 'Rôle', 'val-role': '[ Rôle ]',
-        'label-tools': 'Outils', 'val-tools': '[ Outils ]',
-        'section-glance': 'En un coup d\'œil',
+        'label-skills': 'Compétences', 'val-skills': '[ Compétences ]',
+        'section-overview': 'En un coup d\'œil',
         'overview-text': 'L\'application aide les étudiants à se connecter plus facilement : elle synchronise automatiquement les emplois du temps, montre les créneaux libres communs, facilite les rendez-vous entre amis et accompagne le quotidien universitaire avec des positions en direct ainsi qu\'une navigation interactive du campus et des bâtiments.',
         'glance-what-label': 'Quoi', 'glance-what-value': 'Une app de campus qui aide les étudiants à se retrouver et à trouver leur temps libre commun.',
         'glance-core-label': 'Idée clé', 'glance-core-value': 'La synchronisation automatique des emplois du temps révèle les chevauchements qui facilitent les rencontres.',
@@ -874,6 +999,124 @@
       if (e.data.type === 'nav-collapse') topBar.style.height = '90px';
       if (e.data.type === 'lang-change') applyLang(e.data.lang);
     });
+
+    // ── Blob pupils track the cursor ─────────────────────────────
+    // Each pupil moves toward the pointer but is clamped to stay inside
+    // its white eye. Coordinates come straight from the Figma export.
+    (function () {
+      const svg = document.getElementById('unify-blob');
+      const pr  = document.getElementById('unify-pupil-r');
+      const pl  = document.getElementById('unify-pupil-l');
+      if (!svg || !pr || !pl) return;
+
+      // eye centre (ex,ey) + pupil rest position (rx,ry) per eye
+      const EYES = [
+        { el: pr, ex: 574.086, ey: 324.744, rx: 530.586, ry: 425.744 },
+        { el: pl, ex: 266.586, ey: 324.744, rx: 223.086, ry: 425.744 },
+      ];
+      const MAX = 108;            // max pupil travel from eye centre (eyeR - pupilR ≈ 115)
+      const state = EYES.map(e => ({ x: e.rx, y: e.ry }));
+      let targetX = null, targetY = null;   // null ⇒ rest (look toward Figma default)
+
+      function clientToSvg(cx, cy) {
+        const ctm = svg.getScreenCTM();
+        if (!ctm) return null;
+        const pt = svg.createSVGPoint();
+        pt.x = cx; pt.y = cy;
+        return pt.matrixTransform(ctm.inverse());
+      }
+      window.addEventListener('pointermove', function (e) {
+        const p = clientToSvg(e.clientX, e.clientY);
+        if (p) { targetX = p.x; targetY = p.y; }
+      }, { passive: true });
+      document.addEventListener('mouseleave', function () { targetX = targetY = null; });
+
+      function frame() {
+        for (let i = 0; i < EYES.length; i++) {
+          const e = EYES[i];
+          let tx, ty;
+          if (targetX === null) {                 // ease back to rest
+            tx = e.rx; ty = e.ry;
+          } else {
+            let dx = targetX - e.ex, dy = targetY - e.ey;
+            const d = Math.hypot(dx, dy);
+            if (d > MAX) { dx = dx / d * MAX; dy = dy / d * MAX; }
+            tx = e.ex + dx; ty = e.ey + dy;
+          }
+          state[i].x += (tx - state[i].x) * 0.18;  // smooth follow
+          state[i].y += (ty - state[i].y) * 0.18;
+          e.el.setAttribute('cx', state[i].x.toFixed(2));
+          e.el.setAttribute('cy', state[i].y.toFixed(2));
+        }
+        requestAnimationFrame(frame);
+      }
+      requestAnimationFrame(frame);
+    })();
+
+    // ── Scroll-driven dual-video section (steps 03 + 04) ─────────
+    // The .scrolly-sticky panel is pinned; crossing the section's
+    // midpoint (or clicking a video) swaps which video is full-size
+    // and which text panel is shown.
+    function initScrolly(scrolly) {
+      const vids   = scrolly.querySelectorAll('.scrolly-vid');
+      const panels = scrolly.querySelectorAll('.scrolly-panel');
+      const steps  = Array.from(vids).map(v => v.dataset.step);   // [first, second]
+      if (steps.length < 2) return;
+      let current = steps[0];
+
+      function setActive(step) {
+        if (step === current) return;
+        current = step;
+        vids.forEach(v => {
+          const on = v.dataset.step === step;
+          v.classList.toggle('is-active', on);
+          const video = v.querySelector('video');
+          if (video) {
+            if (on) { video.play().catch(() => {}); }
+            else { video.pause(); }
+          }
+        });
+        panels.forEach(p => p.classList.toggle('is-active', p.dataset.step === step));
+      }
+
+      // pause whichever video isn't active on load
+      vids.forEach(v => {
+        if (!v.classList.contains('is-active')) {
+          const video = v.querySelector('video');
+          if (video) video.pause();
+        }
+      });
+      function metrics() {
+        const rect = scrolly.getBoundingClientRect();
+        const top = rect.top + window.scrollY;
+        const total = Math.max(scrolly.offsetHeight - window.innerHeight, 1);
+        return { top, total };
+      }
+      let ticking = false;
+      function onScroll() {
+        if (ticking) return;
+        ticking = true;
+        requestAnimationFrame(() => {
+          const { top, total } = metrics();
+          const p = Math.min(Math.max((window.scrollY - top) / total, 0), 1);
+          setActive(p < 0.5 ? steps[0] : steps[1]);
+          ticking = false;
+        });
+      }
+      window.addEventListener('scroll', onScroll, { passive: true });
+      window.addEventListener('resize', onScroll);
+      onScroll();
+
+      // click a video → scroll to that step's position (which also flips state)
+      vids.forEach(v => {
+        v.addEventListener('click', () => {
+          const { top, total } = metrics();
+          const p = v.dataset.step === steps[0] ? 0.15 : 0.85;
+          window.scrollTo({ top: Math.round(top + p * total), behavior: 'smooth' });
+        });
+      });
+    }
+    document.querySelectorAll('.scrolly').forEach(initScrolly);
   </script>
   <div id="scroll-track">
     <div id="scroll-thumb">
