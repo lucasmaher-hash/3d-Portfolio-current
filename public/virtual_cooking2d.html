@@ -508,6 +508,16 @@
       max-width: 440px;
     }
 
+    /* Process screenshots — constrained + staggered, caption above image */
+    .process-shot {
+      display: flex;
+      flex-direction: column;
+      gap: clamp(14px, 1.6vw, 20px);
+    }
+
+    .process-shot.shift-right { width: 66%; margin-left: 27%; }
+    .process-shot.shift-left  { width: 80%; }
+
     /* ── Final result ── */
     .result-heading-row {
       display: flex;
@@ -553,6 +563,8 @@
         margin-left: 0; max-width: none; flex-direction: row;
       }
       .stagger-figure { width: clamp(160px, 34vw, 240px); }
+      .process-shot.shift-right,
+      .process-shot.shift-left { width: 100%; margin-left: 0; }
     }
 
     @media (max-width: 640px) {
@@ -566,7 +578,7 @@
     /* Wide-aspect external monitors (wider than the 16:10 MacBook screen):
        pull the staggered rows into a centred column and enlarge the panels
        so they don't read as small and far apart. MacBook (~1.55) is untouched. */
-    @media (min-width: 1600px) and (min-aspect-ratio: 1.7) {
+    @media (min-width: 1600px) and (min-aspect-ratio: 17/10) {
       .stagger-list { max-width: 1180px; margin-left: auto; margin-right: auto; }
       .stagger-row { max-width: 980px; gap: clamp(48px, 5vw, 96px); }
       .stagger-row.indent { margin-left: clamp(40px, 5vw, 110px); }
@@ -594,7 +606,7 @@
 
     <!-- Hero -->
     <div class="hero">
-      <img src="/images/vr-cookbook/back_final_V2.jpg" alt="Virtual Cooking hero" />
+      <img src="/images/vr-cookbook/side_v1_final_V1.png" alt="Virtual Cooking hero" />
     </div>
 
     <!-- Header -->
@@ -677,15 +689,19 @@
         </div>
       </div>
 
-      <div class="guide-media" style="margin-top: clamp(40px, 6vw, 80px);">
-        <img src="/images/vr-cookbook/blender-modeling.png" alt="Modelling the panels in Blender" />
+      <div class="process-shot shift-right" style="margin-top: clamp(84px, 12.6vw, 168px);">
+        <p class="guide-text">[ Placeholder ] Every panel was modelled in Blender and shaped into a tactile, brushed-silver form language rather than flat menus.</p>
+        <div class="guide-media">
+          <img src="/images/vr-cookbook/blender-modeling.png" alt="Modelling the panels in Blender" />
+        </div>
       </div>
-      <p class="guide-text">[ Placeholder ] Every panel was modelled in Blender and shaped into a tactile, brushed-silver form language rather than flat menus.</p>
 
-      <div class="guide-media">
-        <img src="/images/vr-cookbook/app-preview.png" alt="The concept running in the browser" />
+      <div class="process-shot shift-left" style="margin-top: clamp(72px, 11vw, 96px); margin-bottom: clamp(72px, 11vw, 96px);">
+        <p class="guide-text">[ Placeholder ] Brought to life in the browser with Three.js — every interaction runs on hand tracking alone: a click to select, a swipe to move on.</p>
+        <div class="guide-media">
+          <img src="/images/vr-cookbook/app-preview.png" alt="The concept running in the browser" />
+        </div>
       </div>
-      <p class="guide-text">[ Placeholder ] Brought to life in the browser with Three.js — every interaction runs on hand tracking alone: a click to select, a swipe to move on.</p>
     </div>
 
     <!-- Final result -->
@@ -696,7 +712,7 @@
       </div>
       <div class="dot-divider"></div>
 
-      <h3 class="result-subhead" style="margin-top: clamp(12px, 2vw, 20px);">Instruction manual</h3>
+      <h3 class="result-subhead" style="margin-top: clamp(64px, 9vw, 100px);">Instruction manual</h3>
       <div class="guide-media">
         <video autoplay loop muted playsinline>
           <source src="/videos/vr-cookbook/manual_click_V2.mov" type="video/quicktime" />
@@ -705,19 +721,18 @@
       </div>
       <p class="guide-text">[ Placeholder ] Walk through the finished instruction panel — swiping through recipe steps hands-free inside the headset view.</p>
 
+      <h3 class="result-subhead" style="margin-top: clamp(32px, 5vw, 64px);">Timer &amp; ingredients</h3>
       <div class="result-image-pair" style="margin-top: clamp(8px, 2vw, 16px);">
         <img src="/images/vr-cookbook/back_final_V2.jpg" alt="Final render — rear view" />
         <img src="/images/vr-cookbook/timer_click_V1.jpg" alt="Final render — timer interaction" />
       </div>
-
-      <h3 class="result-subhead" style="margin-top: clamp(32px, 5vw, 64px);">Timer &amp; ingredients</h3>
+      <p class="guide-text">[ Placeholder ] The finished timer-and-ingredients panel in action — quantities and countdowns pinned right where they're needed.</p>
       <div class="guide-media">
         <video autoplay loop muted playsinline>
           <source src="/videos/vr-cookbook/timer_V1.mov" type="video/quicktime" />
           <source src="/videos/vr-cookbook/timer_V1.mov" type="video/mp4" />
         </video>
       </div>
-      <p class="guide-text">[ Placeholder ] The finished timer-and-ingredients panel in action — quantities and countdowns pinned right where they're needed.</p>
     </div>
 
     <div class="project-nav">

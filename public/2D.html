@@ -199,7 +199,10 @@
       grid-template-columns: 1fr 1fr;
       gap: clamp(24px, 5vw, 80px);
       align-items: start;
-      clip-path: inset(0);
+      /* Relax the bottom edge by 1px so the 1px border-bottom divider is
+         never clipped away at fractional device-pixel heights; top/left/right
+         stay clipped to contain the neumorphic tile shadows. */
+      clip-path: inset(0 0 -1px 0);
     }
 
     .project-section.reverse {
@@ -705,7 +708,7 @@
       </div>
       <a href="/virtual_cooking2d.html" style="display:block;">
         <div class="project-tile" style="box-shadow: none; overflow: hidden; cursor: pointer;">
-          <img src="/images/vr-cookbook/back_final_V2.jpg" alt="Virtual Cooking" style="width: 100%; height: 100%; object-fit: cover; display: block;" />
+          <img src="/images/vr-cookbook/side_v1_final_V1.png" alt="Virtual Cooking" style="width: 100%; height: 100%; object-fit: cover; display: block;" />
         </div>
       </a>
     </div>
