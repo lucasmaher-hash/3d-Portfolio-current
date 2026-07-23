@@ -212,7 +212,7 @@ Organized by project for clarity:
 - `unify/` — Unify app screen recordings (portrait phone videos; each still has `#D8D7DC` baked in around the phone — the files are untouched, the grey is hidden with CSS `clip-path`, not removed)
 
 **Other**:
-- `/public/kaffeemaschine/kaffeemaschine.html` — Interactive coffee machine app (⚠️ missing from disk; needs restore)
+- `/public/kaffeemaschine/kaffeemaschine.html` — Interactive coffee machine app, plus its assets (`beans.png`, `logo.png`, `milk.png`, `screen.png`, `size.png`, `cursor.png`, `cursor@2x.png`) — all must sit beside the HTML
 - `/public/severance_V23.glb` — 3D model used in the Three.js scene
 - `/public/OCR-A-BT.ttf` — custom monospace font
 
@@ -232,8 +232,8 @@ Organized by project for clarity:
 - Leftover unused CSS: `.breakout-media`, `.glance-list`
 
 **Kaffeemaschine app** (`public/kaffeemaschine/kaffeemaschine.html`):
-- ❌ **Missing from disk** — was deleted during asset cleanup
-- Needs restoration from backup; `kaffeemaschine2d.html` embeds it as an iframe
+- ✅ **Restored and committed.** Copied from `~/Documents/creative-work/ongoing/GitHub/kaffeemaschine_external_copy/` (the 5 Jul version) and verified working in the iframe on `kaffeemaschine2d.html`.
+- It had never been tracked by git in this repo, which is why it went missing with no way to recover it here. It **is** tracked now — keep it that way.
 
 **3D mode:**
 - Index.html and Three.js scene stable; no recent changes

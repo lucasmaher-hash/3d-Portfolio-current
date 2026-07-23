@@ -1,0 +1,2113 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kaffeemaschine</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.cdnfonts.com/css/digital-7-mono" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    * { cursor: url(cursor.png) 12 2, pointer !important; }
+    @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 2dppx) {
+      * { cursor: image-set(url(cursor.png) 1x, url(cursor@2x.png) 2x) 12 2, pointer !important; }
+    }
+
+    body {
+      background: transparent;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      min-height: auto;
+      padding-top: 20px;
+      font-family: 'JetBrains Mono', monospace;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    /* ── Machine container ──────────────────────────────── */
+    .machine {
+      position: relative;
+      width: min(504px, 96vw);
+      aspect-ratio: 969 / 1344;
+      /* egg body is drawn as an exact SVG silhouette (.egg-body); the
+         container itself is transparent and only provides the 969×1344
+         Figma coordinate frame that screen + buttons are positioned in */
+      background: transparent;
+    }
+    /* exact egg silhouette traced from Figma "new egg shape" (398:1156) */
+    .egg-body {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* ── Physical side buttons ──────────────────────────── */
+    .phys-btn {
+      position: absolute;
+      background: none;
+      border: none;
+      padding: 0;
+      display: block;
+    }
+    .phys-btn:active { filter: brightness(0.95); }
+    .phys-btn svg { display: block; width: 100%; height: 100%; }
+    /* inward-pointing chevron icon centered on each side button (Figma 384:1097) */
+    /* chevrons anchored to each button's inner (screen-facing) edge so all three
+       on a side share one vertical line; uniform px width keeps them aligned */
+    .phys-btn .phys-chev {
+      position: absolute;
+      top: 50%;
+      right: 6px; /* left buttons: inset from inner edge */
+      width: 18px;
+      height: auto;
+      transform: translateY(-50%);
+      pointer-events: none;
+    }
+    .phys-btn .phys-chev.flip { right: auto; left: 6px; transform: translateY(-50%) scaleX(-1); }
+    /* top buttons: chevron nudged down */
+    .btn-L1 .phys-chev, .btn-R1 .phys-chev { top: calc(50% + 20px); }
+    .btn-L3 .phys-chev, .btn-R3 .phys-chev { top: calc(50% - 17px); }
+    /* chevron turns light red (matching screen text/buttons) when the button has an action */
+    .phys-btn .phys-chev path { stroke: #939393; }
+    .phys-btn.chev-active .phys-chev path { stroke: #ff7171; }
+
+    /* boxes from Figma 384:1097 (machine 969×1344); inner straight edges align to screen bezel */
+    .btn-L1 { left: 6.52%;  top: 25.22%; width: 11.85%; height: 21.73%; }
+    .btn-L2 { left: 4.85%;  top: 48.14%; width: 13.52%; height: 16.22%; }
+    .btn-L3 { left: 6.67%;  top: 65.55%; width: 11.70%; height: 18.53%; }
+    .btn-R1 { left: 81.63%; top: 25.22%; width: 11.85%; height: 21.73%; }
+    .btn-R2 { left: 81.63%; top: 48.14%; width: 13.52%; height: 16.22%; }
+    .btn-R3 { left: 81.63%; top: 65.55%; width: 11.70%; height: 18.53%; }
+
+    /* ── Top logo button (Figma "new egg shape" frame 398:1272) ── */
+    .logo-btn {
+      position: absolute;
+      left: 37.87%;
+      top: 12.05%;
+      width: 25.08%;
+      height: 8.01%;
+      padding: 0;
+      border: none;
+      border-radius: 999px; /* stadium / pill */
+      background: #E6E6E6;
+      box-shadow:
+        inset 0 6px 4px rgba(255,255,255,0.95),
+        inset 0 -7px 9px rgba(0,0,0,0.34);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 2;
+      transition: filter 0.2s;
+    }
+    .logo-btn:active { filter: brightness(0.96); }
+    .logo-btn.phys-pressed { transform: scale(0.9); } /* same shrink as the side buttons */
+    .logo-btn img { width: 82.7%; height: auto; display: block; pointer-events: none; }
+
+    /* ── Display ────────────────────────────────────────── */
+    .display {
+      position: absolute;
+      /* black screen narrowed to Figma ratio 513/969 = 52.94% of machine width,
+         re-centered horizontally; vertical position/height unchanged */
+      left: calc(23.53% - 12px);
+      top: calc(25.15% - 12px - 5px + 4px);
+      width: calc(52.94% + 24px);
+      height: calc(58.26% + 24px);
+      border-radius: 13px;
+      background: #E6E6E6;
+      padding: 12px;
+      box-shadow: inset 0 -8.18px 10.64px rgba(0,0,0,0.42);
+    }
+
+    .display-inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      background: #000;
+      border-radius: 3px;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    /* wrong-button feedback: a brief horizontal shake of the on-screen content
+       only (the black background + scanlines stay put) */
+    @keyframes screen-shake {
+      0%, 100% { transform: translateX(0); }
+      15% { transform: translateX(-3px); }
+      30% { transform: translateX(3px); }
+      45% { transform: translateX(-2px); }
+      60% { transform: translateX(2px); }
+      80% { transform: translateX(-1px); }
+    }
+    .screen.shake { animation: screen-shake 0.32s ease both; }
+
+    .screen-bg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .display-inner::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        90deg, transparent 0px, transparent 2px,
+        rgba(0,0,0,0.15) 2px, rgba(0,0,0,0.15) 4px
+      );
+      pointer-events: none;
+      z-index: 20;
+    }
+
+    .pause-badge {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 25;
+      display: none;
+      font-family: 'Digital-7 Mono', 'Digital-7', monospace;
+      /* sized off the shared text scale so it stays compact on any width */
+      font-size: calc(var(--hdr-font) * 1.05);
+      letter-spacing: 0.1em;
+      color: #ff7171;
+      padding: 0.3em 0.6em;
+      border: 1.5px solid #ff7171;
+      border-radius: 3px;
+      background: rgba(0, 0, 0, 0.82);
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    .display-inner.is-paused .pause-badge { display: block; }
+
+    .timer-badge {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 26;
+      display: none;
+      font-family: 'Digital-7 Mono', 'Digital-7', monospace;
+      font-size: calc(var(--hdr-font) * 1.05);
+      letter-spacing: 0.1em;
+      color: #ff7171;
+      padding: 0.3em 0.6em;
+      border: 1.5px solid #ff7171;
+      border-radius: 3px;
+      background: rgba(0, 0, 0, 0.82);
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    @keyframes timer-pulse {
+      0%, 100% { transform: translate(-50%, -50%) scale(1); }
+      50%       { transform: translate(-50%, -50%) scale(1.15); }
+    }
+    .display-inner.timer-alarming .timer-badge {
+      display: block;
+      animation: timer-pulse 1s ease-in-out infinite;
+    }
+
+    /* ── Screen root ────────────────────────────────────── */
+    .screen {
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      color: #ff7171;
+      display: flex;
+      flex-direction: column;
+      padding: 3.8% 2.7%;
+      transition: opacity 0.3s ease;
+    }
+    /* screen content fades out (background stays) during a transition */
+    .screen.fade-out { opacity: 0; }
+
+    /* ── Shared header ──────────────────────────────────── */
+    :root { --hdr-font: clamp(9px, 2.9vw, 16px); }
+
+    .screen-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      font-family: 'Digital-7 Mono', 'Digital-7', monospace;
+      font-size: var(--hdr-font);
+      letter-spacing: 0.06em;
+      flex-shrink: 0;
+      /* match the divider/grid width so header text aligns with the bar edges */
+      width: 93.5%;
+      margin: 0 auto;
+    }
+
+    /* home hint: centered text flanked by up-arrows sized to the text */
+    .home-hint {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5em;
+      white-space: nowrap;
+      font-size: clamp(8px, 2.55vw, 14px);
+    }
+    .home-up-arrow {
+      height: 1em;
+      width: auto;
+      display: block;
+      flex-shrink: 0;
+      animation: arrow-float 2s ease-in-out infinite;
+    }
+    @keyframes arrow-float {
+      0%, 100% { transform: translateY(0.18em); }
+      50%      { transform: translateY(-0.18em); }
+    }
+
+    .screen-divider {
+      height: 1.56px;
+      background: #ff7171;
+      /* width matches the 6-button grid so the bar lines up with the buttons' edges */
+      width: 93.5%;
+      margin: 1.5% auto;
+      flex-shrink: 0;
+    }
+
+    /* ── HOME screen ────────────────────────────────────── */
+    .home-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 0;
+    }
+
+    .home-time {
+      font-family: 'Digital-7 Mono', 'Digital-7', monospace;
+      font-style: oblique 10deg;
+      font-size: clamp(26px, 7.5vw, 48px);
+      letter-spacing: 0.08em;
+      color: #ff7171;
+      margin-bottom: 5%;
+    }
+
+    .home-bars {
+      display: flex;
+      gap: clamp(10px, 4vw, 26px);
+      justify-content: center;
+      align-items: flex-start;
+      margin-bottom: 2%;
+    }
+
+    .home-bar-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: clamp(6px, 2.2vw, 13px);
+    }
+
+    /* vertical segmented bar (home screen) — mirrors ip-track/ip-segs rotated */
+    .hbar {
+      position: relative;
+      width: clamp(22px, 6.2vw, 40px);
+      height: clamp(86px, 25vw, 142px);
+      border-radius: clamp(2px, 0.6vw, 3.5px);
+      padding: clamp(4px, 1.4vw, 8px);
+      display: flex;
+      flex-direction: column-reverse;
+      gap: clamp(3px, 1.1vw, 7px);
+      overflow: hidden;
+    }
+    .hstripe {
+      flex: 1;
+      width: 100%;
+      border-radius: clamp(0.5px, 0.25vw, 1.5px);
+      background: #ff7171;
+      flex-shrink: 0;
+    }
+    .hstripe.unlit { background: transparent; }
+
+    .hbar-icon { flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+    .hbar-svg {
+      height: clamp(16px, 4.8vw, 30px);
+      width: auto;
+      display: block;
+    }
+
+    .home-footer {
+      flex-shrink: 0;
+      text-align: center;
+      font-family: 'Digital-7 Mono', 'Digital-7', monospace;
+      font-size: clamp(12px, 3.6vw, 20px);
+      letter-spacing: 0.06em;
+      color: #ff7171;
+      margin-bottom: 20px;
+    }
+
+    /* ── GRID layout ────────────────────────────────────── */
+    .screen-grid {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr 1fr;
+      gap: clamp(3px, 1.9vw, 9px);
+      min-height: 0;
+      aspect-ratio: 2 / 3;
+      width: auto;
+      max-height: 100%;
+      margin: 0 auto;
+      transform: scale(0.9765); /* 0.93 + 5% */
+      transform-origin: center;
+    }
+    /* sd-grid keeps its hook for any select-drink-only tweaks, but must share the
+       exact geometry of every other grid so the six buttons line up everywhere */
+
+    .grid-cell {
+      border: none;
+      /* segmented frame is painted by paintBorders(); this radius only
+         shapes the :active highlight (frame corners set in JS) */
+      border-radius: 12%;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8%;
+      padding: 6%;
+    }
+    /* Favourite cells: star-shaped frame. No aspect-ratio — they must fill the
+       grid track exactly like every other cell so all six buttons stay uniform. */
+    .grid-cell.fav-cell {
+      border-radius: 0;
+      padding: 6%;
+    }
+
+    .grid-cell:active { background: rgba(255,113,113,0.07); }
+    .grid-cell.empty { }
+    .grid-cell.no-border { border: none; box-shadow: none; }
+    /* persistent "selected" highlight (favorites panel slot picking) */
+    .grid-cell.selected { background: transparent; isolation: isolate; }
+    .grid-cell.selected::before {
+      content: '';
+      position: absolute;
+      inset: 4px;
+      border-radius: 12%;
+      background: #ff7171;
+      z-index: -1;
+    }
+    .grid-cell.fav-cell.selected::before {
+      clip-path: polygon(50% -1.94%, 68.02% 31.98%, 101.94% 50%, 68.02% 68.02%, 50% 101.94%, 31.98% 68.02%, -1.94% 50%, 31.98% 31.98%);
+      border-radius: 0;
+    }
+
+    .grid-cell.selected .cell-name,
+    .grid-cell.selected .cell-label { color: #000; }
+    .grid-cell.selected .seg-border rect { stroke: #000; }
+    .grid-cell.selected .star-svg,
+    .grid-cell.selected .bev-dot,
+    .grid-cell.selected .cell-arrow-svg { fill: #000; filter: none; }
+    .grid-cell.selected .set-tri-svg { stroke: #000; filter: none; }
+
+    /* ── Button press flash: dark → light mode (Figma 253:330) ──
+       On click the cell fills with the light-red surface and all
+       foreground (text, frame, icons) flips to dark for 0.3s before
+       the screen switches. */
+    /* the lit panel is inset so it sits inside the rim rather than over it */
+    .grid-cell.btn-light { background: transparent; isolation: isolate; }
+    .grid-cell.btn-light::before {
+      content: '';
+      position: absolute;
+      inset: 4px;
+      border-radius: 12%;
+      background: #ff7171;
+      z-index: -1;
+    }
+    .grid-cell.fav-cell.btn-light::before {
+      clip-path: polygon(50% -1.94%, 68.02% 31.98%, 101.94% 50%, 68.02% 68.02%, 50% 101.94%, 31.98% 68.02%, -1.94% 50%, 31.98% 31.98%);
+      border-radius: 0;
+    }
+
+    .grid-cell.btn-light .cell-name,
+    .grid-cell.btn-light .cell-label { color: #000; }
+    .grid-cell.btn-light .seg-border rect { stroke: #000; }
+    .grid-cell.btn-light .star-svg,
+    .grid-cell.btn-light .bev-dot,
+    .grid-cell.btn-light .cell-arrow-svg { fill: #000; filter: none; }
+    .grid-cell.btn-light .set-tri-svg { stroke: #000; filter: none; }
+
+    /* fade-out phase: 0.15s after the light snaps on, foreground eases back */
+    .grid-cell.btn-light.btn-fading::before {
+      opacity: 0;
+      transition: opacity 0.15s ease;
+    }
+    .grid-cell.btn-light.btn-fading .cell-name,
+    .grid-cell.btn-light.btn-fading .cell-label { color: #ff7171; transition: color 0.15s ease; }
+    .grid-cell.btn-light.btn-fading .seg-border rect { stroke: #ff7171; transition: stroke 0.15s ease; }
+    .grid-cell.btn-light.btn-fading .star-svg,
+    .grid-cell.btn-light.btn-fading .bev-dot,
+    .grid-cell.btn-light.btn-fading .cell-arrow-svg { fill: #ff7171; transition: fill 0.15s ease; }
+    .grid-cell.btn-light.btn-fading .set-tri-svg { stroke: #ff7171; transition: stroke 0.15s ease; }
+
+    /* physical side-button press: scale down 10% for 0.2s */
+    .phys-btn { transition: transform 0.06s ease; }
+    .phys-btn.phys-pressed { transform: scale(0.9); }
+
+    /* segmented dashed border, painted in real px by paintBorders() */
+    .seg-border {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+      pointer-events: none;
+      z-index: 1;
+    }
+    .seg-border rect, .seg-border circle { fill: none; stroke: #ff7171; }
+
+    /* ── Cell content atoms ─────────────────────────────── */
+    .cell-name {
+      font-family: 'Digital-7 Mono', 'Digital-7', monospace;
+      font-style: oblique 10deg;
+      font-size: var(--hdr-font);
+      letter-spacing: 0.04em;
+      color: #ff7171;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .cell-star {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
+    .cell-star .star-svg {
+      width: clamp(17px, 5vw, 30px);
+      height: auto;
+      display: block;
+      filter: drop-shadow(0 0 1.6px rgba(255,113,113,0.6));
+    }
+
+    .cell-dots {
+      display: flex;
+      gap: clamp(2px, 0.7vw, 4px);
+      align-items: center;
+    }
+    .bev-dot {
+      width: clamp(9px, 2.6vw, 14px);
+      height: auto;
+      display: block;
+      filter: drop-shadow(0 0 1.6px rgba(255,113,113,0.65));
+    }
+
+    .cell-arrow-svg {
+      width: 64%;
+      height: auto;
+      display: block;
+      filter: drop-shadow(0 0 2px rgba(255,113,113,0.6));
+    }
+
+    .cell-label {
+      font-family: 'Digital-7 Mono', 'Digital-7', monospace;
+      font-style: oblique 10deg;
+      font-size: var(--hdr-font);
+      color: #ff7171;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    /* ── Config screen icons ──────────────────────────────── */
+    .cfg-icon {
+      width: clamp(19.6px, 5.95vw, 33.6px);
+      height: auto;
+      display: block;
+      filter: drop-shadow(0 0 3px rgba(225,0,0,0.6));
+    }
+
+    /* ── CONFIRM SELECTION screen ───────────────────────── */
+    .cfm {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+    .cfm-title {
+      font-family: 'Digital-7 Mono', 'Digital-7', monospace;
+      font-style: oblique 10deg;
+      font-size: clamp(24px, 8vw, 46px);
+      color: #ff7171;
+      text-align: center;
+      letter-spacing: 0.05em;
+      margin-top: 11%;
+      margin-bottom: 9%;
+      flex-shrink: 0;
+    }
+    .cfm-rows {
+      display: flex;
+      flex-direction: column;
+      gap: clamp(8px, 3vw, 18px);
+      width: 74%;
+      margin: 0 auto;
+      flex-shrink: 0;
+    }
+    .cfm-row {
+      display: flex;
+      align-items: center;
+      gap: 4%;
+      font-family: 'Digital-7 Mono', 'Digital-7', monospace;
+      font-size: var(--hdr-font);
+      color: #ff7171;
+      letter-spacing: 0.05em;
+    }
+    .cfm-label { flex-shrink: 0; white-space: nowrap; }
+    .cfm-lead {
+      flex: 1;
+      height: 2px;
+      background: repeating-linear-gradient(
+        90deg, #ff7171 0px, #ff7171 5px, transparent 5px, transparent 9px
+      );
+      opacity: 0.8;
+    }
+    .cfm-sq { display: flex; gap: clamp(3px, 1vw, 6px); align-items: center; flex-shrink: 0; }
+    .cfm-sq .bev-dot { width: clamp(12px, 3.4vw, 19px); }
+
+    /* top 2/3 of the grid holds the title + rows/progress; the two
+       buttons sit in the bottom grid row so they match the other screens */
+    .cfm-head {
+      grid-column: 1 / 3;
+      grid-row: 1 / 3;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    /* ── IN PREPARATION progress bar ────────────────────── */
+    .ip-progress {
+      width: 78%;
+      margin: 2% auto 0;
+      flex-shrink: 0;
+    }
+    .ip-track {
+      position: relative;
+      width: 100%;
+      height: clamp(30px, 9.5vw, 56px);
+      border-radius: clamp(2px, 0.6vw, 3.5px);
+      padding: clamp(5px, 1.6vw, 9px);
+      overflow: hidden;
+    }
+    .ip-segs {
+      display: flex;
+      gap: clamp(1.5px, 0.55vw, 3.5px);
+      height: 100%;
+      width: 100%;
+    }
+    .ip-seg {
+      flex: 1;
+      border-radius: clamp(0.5px, 0.25vw, 1.5px);
+      background: transparent;
+    }
+    .ip-seg.lit {
+      background: #ff7171;
+    }
+    .prep-error {
+      font-family: 'Digital-7 Mono', 'Digital-7', monospace;
+      font-size: var(--hdr-font);
+      letter-spacing: 0.1em;
+      color: #ff7171;
+      text-align: center;
+      margin-top: clamp(4px, 1.2vw, 7px);
+      opacity: 0;
+      transition: opacity 0.4s ease;
+      min-height: 1.3em;
+    }
+    .prep-error.visible { opacity: 1; }
+
+    /* ── SETTINGS clock / timer screens ─────────────────── */
+    /* head spans the top two rows of the standard screen-grid so the bottom
+       back-arrow + action cells line up exactly with the configuration screen */
+    .set-head {
+      grid-column: 1 / 3;
+      grid-row: 1 / 3;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      justify-content: center;
+      gap: clamp(6px, 2vw, 12px);
+      min-height: 0;
+      padding: 0;
+    }
+    .set-time-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: clamp(3px, 1.9vw, 9px);
+      height: clamp(34px, 10vw, 56px);
+      flex-shrink: 0;
+    }
+    .set-tri-svg {
+      height: clamp(13px, 4vw, 24px);
+      width: auto;
+      display: block;
+    }
+    .set-time-display {
+      font-family: 'Digital-7 Mono', 'Digital-7', monospace;
+      font-style: oblique 10deg;
+      font-size: clamp(30px, 11vw, 60px);
+      color: #ff7171;
+      text-align: center;
+      letter-spacing: 0.08em;
+      flex-shrink: 0;
+      padding: 1% 0;
+    }
+    .set-time-spacer { flex: 1; min-height: 0; }
+    .set-time-btns {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: clamp(5px, 2.4vw, 13px);
+      height: clamp(44px, 13vw, 72px);
+      flex-shrink: 0;
+      margin-bottom: 1%;
+    }
+
+    /* ── SET TIMER running ──────────────────────────────── */
+    .set-run {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      padding-top: 9%;
+    }
+    .set-run-box {
+      width: 80%;
+      height: clamp(46px, 14vw, 84px);
+      margin: 0 auto;
+      flex-shrink: 0;
+      padding-left: 17px;
+      padding-right: 17px;
+    }
+    .set-run-num {
+      font-family: 'Digital-7 Mono', 'Digital-7', monospace;
+      font-style: oblique 10deg;
+      font-size: clamp(28px, 10vw, 56px);
+      color: #ff7171;
+      letter-spacing: 0.08em;
+      white-space: nowrap;
+    }
+    .set-run-row { display: flex; align-items: baseline; }
+    .set-run-l   { transform: translateX(6px); }
+    .set-run-r   { transform: translateX(-6px); }
+
+    /* ── MESSAGE screen (drink-ready, favorite-saved) ───── */
+    .msg-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10%;
+    }
+
+    .msg-title {
+      font-family: 'Digital-7 Mono', 'Digital-7', monospace;
+      font-style: oblique 10deg;
+      font-size: clamp(20px, 7vw, 40px);
+      color: #ff7171;
+      text-align: center;
+      letter-spacing: 0.06em;
+      line-height: 1.2;
+    }
+
+    .msg-star {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .msg-star .star-svg {
+      width: clamp(95px, 29.7vw, 186px);
+      height: auto;
+      display: block;
+    }
+
+    .msg-star-num {
+      position: absolute;
+      font-family: 'Digital-7 Mono', 'Digital-7', monospace;
+      font-style: oblique 10deg;
+      font-size: clamp(18px, 6vw, 36px);
+      color: #ff7171;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    /* ── TIMER SET confirmation ─────────────────────────── */
+    .tset-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(16px, 6vw, 38px);
+    }
+    .tset-block { text-align: center; }
+    .tset-label {
+      font-family: 'Digital-7 Mono', 'Digital-7', monospace;
+      font-size: clamp(14px, 4.4vw, 26px);
+      color: #ff7171;
+      letter-spacing: 0.1em;
+      margin-bottom: clamp(3px, 1.2vw, 8px);
+    }
+    .tset-value {
+      font-family: 'Digital-7 Mono', 'Digital-7', monospace;
+      font-style: oblique 10deg;
+      font-size: clamp(21px, 7.35vw, 40.6px);
+      color: #ff7171;
+      letter-spacing: 0.06em;
+    }
+
+    /* ── TIMER VIEW (existing scheduled timer) ──────────── */
+    /* spans the top two grid rows, like .cfm-head, but centers its content
+       since there's no fixed-height title sitting above it */
+    .timer-view-head {
+      grid-column: 1 / 3;
+      grid-row: 1 / 3;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(14px, 5vw, 34px);
+      min-height: 0;
+    }
+
+  </style>
+</head>
+<body>
+
+<div class="machine">
+
+  <!-- Egg body: exact silhouette traced from Figma "new egg shape" (398:1156), viewBox = 969×1344 frame -->
+  <svg class="egg-body" viewBox="0 0 969 1344" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <defs>
+      <linearGradient id="egg-grad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#A8A8A8"/>
+        <stop offset="0.55" stop-color="#A8A8A8"/>
+        <stop offset="1" stop-color="#C9C9C9"/>
+      </linearGradient>
+      <filter id="egg-fi" x="-5%" y="-5%" width="110%" height="110%" color-interpolation-filters="sRGB">
+        <feFlood flood-opacity="0" result="bg"/>
+        <feBlend mode="normal" in="SourceGraphic" in2="bg" result="shape"/>
+        <!-- dark inner shadow rising from the bottom edge -->
+        <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+        <feOffset dy="-26"/>
+        <feGaussianBlur stdDeviation="20"/>
+        <feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1"/>
+        <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.40 0"/>
+        <feBlend mode="normal" in2="shape" result="e1"/>
+        <!-- white highlight along the top edge -->
+        <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+        <feOffset dy="24"/>
+        <feGaussianBlur stdDeviation="14"/>
+        <feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1"/>
+        <feColorMatrix type="matrix" values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.85 0"/>
+        <feBlend mode="normal" in2="e1" result="e2"/>
+      </filter>
+    </defs>
+    <g filter="url(#egg-fi)"><path d="M486.00 91.54C498.92 91.54 512.91 92.09 525.00 93.75C535.72 95.22 544.68 97.60 555.00 100.35C566.28 103.34 578.45 106.99 590.00 111.28C601.78 115.67 613.67 120.73 625.00 126.47C636.34 132.23 646.94 138.88 658.00 145.79C669.60 153.04 681.95 160.63 693.00 169.08C703.94 177.44 713.69 186.73 724.00 196.16C734.69 205.94 745.85 216.06 756.00 226.80C766.19 237.59 775.59 249.06 785.00 260.77C794.60 272.70 804.19 285.03 813.00 297.78C821.86 310.61 829.90 324.00 838.00 337.55C846.24 351.31 854.52 365.36 862.00 379.74C869.52 394.18 876.51 409.00 883.00 424.02C889.52 439.10 895.51 454.50 901.00 470.04C906.51 485.63 911.50 501.47 916.00 517.42C920.50 533.38 924.50 549.55 928.00 565.78C931.50 581.99 934.50 598.36 937.00 614.73C939.50 631.06 941.50 647.49 943.00 663.88C944.49 680.19 945.50 696.56 946.00 712.83C946.49 728.99 946.51 745.16 946.00 761.19C945.50 777.08 944.35 792.91 943.00 808.57C941.67 824.04 940.19 839.44 938.00 854.59C935.84 869.53 933.03 884.33 930.00 898.87C927.02 913.15 923.71 927.26 920.00 941.06C916.36 954.57 912.40 967.88 908.00 980.83C903.71 993.46 898.92 1005.83 894.00 1017.84C889.24 1029.47 884.57 1040.93 879.00 1051.81C873.55 1062.45 866.99 1072.60 861.00 1082.45C855.32 1091.80 850.11 1101.02 844.00 1109.53C838.08 1117.78 831.51 1125.56 825.00 1132.82C818.82 1139.71 812.39 1146.22 806.00 1152.14C800.05 1157.65 794.29 1162.92 788.00 1167.33C781.93 1171.58 774.91 1175.18 769.00 1178.26C764.03 1180.86 762.93 1183.05 755.00 1184.86C721.89 1192.41 574.92 1187.07 485.00 1187.07C395.25 1187.06 248.03 1192.66 216.00 1184.86C208.54 1183.04 207.55 1180.87 203.00 1178.26C197.64 1175.19 191.61 1171.47 186.00 1167.33C179.94 1162.85 173.95 1157.65 168.00 1152.14C161.61 1146.22 155.18 1139.71 149.00 1132.82C142.49 1125.56 136.06 1117.74 130.00 1109.53C123.70 1100.99 117.87 1091.84 112.00 1082.45C105.86 1072.64 99.75 1062.39 94.00 1051.81C88.06 1040.87 82.12 1029.54 77.00 1017.84C71.77 1005.90 67.44 993.44 63.00 980.83C58.43 967.86 53.97 954.58 50.00 941.06C45.95 927.27 42.15 913.17 39.00 898.87C35.80 884.35 33.16 869.53 31.00 854.59C28.81 839.44 27.33 824.04 26.00 808.57C24.65 792.91 23.67 777.07 23.00 761.19C22.33 745.16 21.51 728.99 22.00 712.83C22.50 696.55 24.34 680.20 26.00 663.88C27.67 647.50 29.18 631.03 32.00 614.73C34.84 598.33 39.00 582.00 43.00 565.78C47.00 549.57 51.01 533.35 56.00 517.42C61.00 501.44 66.98 485.65 73.00 470.04C78.99 454.52 85.15 439.10 92.00 424.02C98.82 409.00 106.15 394.18 114.00 379.74C121.82 365.36 130.43 351.31 139.00 337.55C147.44 324.00 155.94 310.65 165.00 297.78C173.95 285.07 183.27 272.66 193.00 260.77C202.61 249.01 212.73 237.67 223.00 226.80C233.07 216.15 243.51 205.90 254.00 196.16C264.19 186.69 274.17 177.47 285.00 169.08C295.84 160.68 307.62 153.00 319.00 145.79C329.96 138.84 340.86 132.28 352.00 126.47C362.86 120.81 373.78 115.65 385.00 111.28C396.12 106.95 408.05 103.35 419.00 100.35C428.99 97.61 437.62 95.22 448.00 93.75C459.75 92.08 473.25 91.55 486.00 91.54Z" fill="url(#egg-grad)"/></g>
+  </svg>
+
+  <!-- Top logo button (Figma "new egg shape" frame 398:1272) -->
+  <button class="logo-btn" onclick="pressButton('LOGO')" aria-label="RLB">
+    <img src="logo.png" alt="RLB">
+  </button>
+
+  <!-- LEFT buttons (exact Figma vectors 384:1144/1142/1143, oriented for left side) -->
+  <button class="phys-btn btn-L1" onclick="pressButton('L1')" aria-label="L1">
+    <svg class="phys-chev" viewBox="0 0 24 40" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 8 L17 20 L8 32" stroke="#939393" stroke-width="4.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <svg preserveAspectRatio="none" viewBox="0 0 114.793 292" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <g filter="url(#fi-L1)"><path d="M114.793 6.708L114.793 279C114.793 286.18 108.973 292 101.793 292L12.755 292C5.211 292 -0.766 285.625 0.08 278.128C9.963 190.564 55.112 69.341 102.709 2.729C103.953 0.989 105.947 0 108.085 0C111.79 0 114.793 3.003 114.793 6.708Z" fill="#E6E6E6"/></g>
+      <defs><filter id="fi-L1" x="0" y="-8" width="114.793" height="303" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB"><feFlood flood-opacity="0" result="bg"/><feBlend mode="normal" in="SourceGraphic" in2="bg" result="shape"/><feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/><feOffset dy="-8"/><feGaussianBlur stdDeviation="5.2"/><feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1"/><feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.42 0"/><feBlend mode="normal" in2="shape" result="e1"/><feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/><feOffset dy="7"/><feGaussianBlur stdDeviation="1.5"/><feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1"/><feColorMatrix type="matrix" values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.98 0"/><feBlend mode="normal" in2="e1" result="e2"/></filter></defs>
+    </svg>
+  </button>
+  <button class="phys-btn btn-L2" onclick="pressButton('L2')" aria-label="L2">
+    <svg class="phys-chev" viewBox="0 0 24 40" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 8 L17 20 L8 32" stroke="#939393" stroke-width="4.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <svg preserveAspectRatio="none" viewBox="0 0 131 218" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <g filter="url(#fi-L2)"><path d="M131 205L131 13C131 5.82 125.18 0 118 0L21.75 0C15.654 0 10.358 4.223 9.199 10.207C-4.638 81.598 -1.274 166.448 8.815 208.815C10.131 214.342 15.183 218 20.864 218L118 218C125.18 218 131 212.18 131 205Z" fill="#E6E6E6"/></g>
+      <defs><filter id="fi-L2" x="0" y="-8" width="131" height="229" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB"><feFlood flood-opacity="0" result="bg"/><feBlend mode="normal" in="SourceGraphic" in2="bg" result="shape"/><feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/><feOffset dy="-8"/><feGaussianBlur stdDeviation="5.2"/><feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1"/><feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.42 0"/><feBlend mode="normal" in2="shape" result="e1"/><feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/><feOffset dy="7"/><feGaussianBlur stdDeviation="1.5"/><feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1"/><feColorMatrix type="matrix" values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.98 0"/><feBlend mode="normal" in2="e1" result="e2"/></filter></defs>
+    </svg>
+  </button>
+  <button class="phys-btn btn-L3" onclick="pressButton('L3')" aria-label="L3">
+    <svg class="phys-chev" viewBox="0 0 24 40" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 8 L17 20 L8 32" stroke="#939393" stroke-width="4.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <svg preserveAspectRatio="none" viewBox="0 0 113.418 249" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <g filter="url(#fi-L3)"><path d="M113.418 242.539L113.418 13C113.418 5.82 107.598 0 100.418 0L12.543 0C4.939 0 -1.056 6.495 0.156 14.002C12.241 88.822 70.554 196.371 101.53 246.027C102.703 247.909 104.74 249 106.957 249C110.525 249 113.418 246.107 113.418 242.539Z" fill="#E6E6E6"/></g>
+      <defs><filter id="fi-L3" x="0" y="-8" width="113.418" height="260" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB"><feFlood flood-opacity="0" result="bg"/><feBlend mode="normal" in="SourceGraphic" in2="bg" result="shape"/><feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/><feOffset dy="-8"/><feGaussianBlur stdDeviation="5.2"/><feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1"/><feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.42 0"/><feBlend mode="normal" in2="shape" result="e1"/><feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/><feOffset dy="7"/><feGaussianBlur stdDeviation="1.5"/><feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1"/><feColorMatrix type="matrix" values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.98 0"/><feBlend mode="normal" in2="e1" result="e2"/></filter></defs>
+    </svg>
+  </button>
+
+  <!-- Display -->
+  <div class="display">
+    <div class="display-inner">
+      <img class="screen-bg" src="screen.png" alt="">
+      <div class="screen" id="screen-root"></div>
+      <div class="pause-badge" id="pause-badge">&#10073;&#10073; PAUSED</div>
+      <div class="timer-badge" id="timer-badge">TIMER</div>
+    </div>
+  </div>
+
+  <!-- RIGHT buttons (exact Figma vectors, mirrored from the left side) -->
+  <button class="phys-btn btn-R1" onclick="pressButton('R1')" aria-label="R1">
+    <svg class="phys-chev flip" viewBox="0 0 24 40" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 8 L17 20 L8 32" stroke="#939393" stroke-width="4.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <svg preserveAspectRatio="none" viewBox="0 0 114.793 292" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <g filter="url(#fi-R1)"><path d="M0 6.708L0 279C0 286.18 5.82 292 13 292L102.038 292C109.582 292 115.559 285.625 114.713 278.128C104.83 190.564 59.681 69.341 12.084 2.729C10.84 0.989 8.846 0 6.708 0C3.003 0 0 3.003 0 6.708Z" fill="#E6E6E6"/></g>
+      <defs><filter id="fi-R1" x="0" y="-8" width="114.793" height="303" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB"><feFlood flood-opacity="0" result="bg"/><feBlend mode="normal" in="SourceGraphic" in2="bg" result="shape"/><feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/><feOffset dy="-8"/><feGaussianBlur stdDeviation="5.2"/><feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1"/><feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.42 0"/><feBlend mode="normal" in2="shape" result="e1"/><feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/><feOffset dy="7"/><feGaussianBlur stdDeviation="1.5"/><feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1"/><feColorMatrix type="matrix" values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.98 0"/><feBlend mode="normal" in2="e1" result="e2"/></filter></defs>
+    </svg>
+  </button>
+  <button class="phys-btn btn-R2" onclick="pressButton('R2')" aria-label="R2">
+    <svg class="phys-chev flip" viewBox="0 0 24 40" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 8 L17 20 L8 32" stroke="#939393" stroke-width="4.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <svg preserveAspectRatio="none" viewBox="0 0 131 218" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <g filter="url(#fi-R2)"><path d="M0 205L0 13C0 5.82 5.82 0 13 0L109.25 0C115.346 0 120.642 4.223 121.801 10.207C135.638 81.598 132.274 166.448 122.185 208.815C120.869 214.342 115.817 218 110.136 218L13 218C5.82 218 0 212.18 0 205Z" fill="#E6E6E6"/></g>
+      <defs><filter id="fi-R2" x="0" y="-8" width="131" height="229" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB"><feFlood flood-opacity="0" result="bg"/><feBlend mode="normal" in="SourceGraphic" in2="bg" result="shape"/><feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/><feOffset dy="-8"/><feGaussianBlur stdDeviation="5.2"/><feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1"/><feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.42 0"/><feBlend mode="normal" in2="shape" result="e1"/><feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/><feOffset dy="7"/><feGaussianBlur stdDeviation="1.5"/><feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1"/><feColorMatrix type="matrix" values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.98 0"/><feBlend mode="normal" in2="e1" result="e2"/></filter></defs>
+    </svg>
+  </button>
+  <button class="phys-btn btn-R3" onclick="pressButton('R3')" aria-label="R3">
+    <svg class="phys-chev flip" viewBox="0 0 24 40" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 8 L17 20 L8 32" stroke="#939393" stroke-width="4.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <svg preserveAspectRatio="none" viewBox="0 0 113.418 249" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <g filter="url(#fi-R3)"><path d="M0 242.539L0 13C0 5.82 5.82 0 13 0L100.875 0C108.479 0 114.474 6.495 113.262 14.002C101.177 88.822 42.864 196.371 11.888 246.027C10.715 247.909 8.678 249 6.461 249C2.893 249 0 246.107 0 242.539Z" fill="#E6E6E6"/></g>
+      <defs><filter id="fi-R3" x="0" y="-8" width="113.418" height="260" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB"><feFlood flood-opacity="0" result="bg"/><feBlend mode="normal" in="SourceGraphic" in2="bg" result="shape"/><feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/><feOffset dy="-8"/><feGaussianBlur stdDeviation="5.2"/><feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1"/><feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.42 0"/><feBlend mode="normal" in2="shape" result="e1"/><feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/><feOffset dy="7"/><feGaussianBlur stdDeviation="1.5"/><feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1"/><feColorMatrix type="matrix" values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.98 0"/><feBlend mode="normal" in2="e1" result="e2"/></filter></defs>
+    </svg>
+  </button>
+
+</div>
+
+<script>
+  // ── State ────────────────────────────────────────────────
+  const STATE = {
+    screen: 'home',
+    selectedDrink: 'CAPPUCCINO',
+    selectedConfig: 0,
+    // which item (MILK/BEANS/SIZE) step 3 currently adjusts
+    selectedItem: 'BEANS',
+    // per-item amounts (1–3) shown in the confirm screen
+    amounts: { MILK: 2, BEANS: 1, SIZE: 2 },
+    selectedFavSlot: 1,
+    // Favorite slots: each is a full preset {drink, amounts} or null when empty.
+    favorites: [
+      { drink: 'CAPPUCCINO', amounts: { MILK: 2, BEANS: 2, SIZE: 2 } },
+      { drink: 'ESPRESSO',   amounts: { MILK: 2, BEANS: 2, SIZE: 2 } },
+      { drink: 'LATTE',      amounts: { MILK: 2, BEANS: 2, SIZE: 2 } },
+    ],
+    creatingFavSlot: null,   // slot (1–3) being built via the manual flow, else null
+    favTargetSlot: 1,        // slot highlighted in the ADD-TO-PRESET panel
+    drinks: ['CAPPUCCINO', 'ESPRESSO', 'LATTE'],
+    prepTimer: null,
+    prepSeg: 0,              // lit segments in IN PREPARATION (preserved across detours)
+    prepStartTime: null,     // timestamp when current brew began (null = not brewing)
+    cancelExpired: false,    // true once the 3-second cancel window has closed
+    cancelHideTimer: null,
+    replaceDone: false,      // true once the preset has been replaced this brew
+    drinkPending: false,
+    paused: false,
+    // settings
+    language: 'ENGLISH',
+    clockH: 15, clockM: 4,     // editor values for the CHANGE CLOCK screen
+    clockOffsetMs: 0,          // displayed clock = real time + this offset (0 = real time)
+    // Scheduled brew ("wake up to coffee"): a time of day + a chosen preset.
+    timerH: 7, timerM: 0,    // editor values for the SET TIMER screen (time of day)
+    timerDrink: 'LATTE',     // preset the scheduled brew will make
+    timerSet: false,         // true once a timer is scheduled (shown on the home footer)
+  };
+
+  // Home footer: the scheduled brew ("LATTE AT:07:00") once set, else a placeholder.
+  function timerText() {
+    if (!STATE.timerSet) return T('TIMER') + ' : --:--';
+    return STATE.timerDrink + ' ' + T('AT') + ':' + pad(STATE.timerH) + ':' + pad(STATE.timerM);
+  }
+  function updateHomeFooter() {
+    document.querySelectorAll('.home-footer').forEach(el => el.textContent = timerText());
+  }
+
+  // ── Sound (Web Audio, fully synthesized — no audio files) ────────────────
+  // The AudioContext starts suspended until the first user gesture; since every
+  // sound is triggered by a button press, the first click unlocks it (and the
+  // timer alarm reuses that already-unlocked context).
+  const Sound = (() => {
+    let ctx = null;
+    let muted = false;
+    let _alarmIv = null;
+    function ac() {
+      if (!ctx) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return null;
+        ctx = new AC();
+      }
+      if (ctx.state === 'suspended') ctx.resume();
+      return ctx;
+    }
+    // One enveloped oscillator note. `when` = delay in seconds from now.
+    function tone({ freq = 440, type = 'sine', dur = 0.1, gain = 0.15, attack = 0.004, when = 0 }) {
+      const c = ac();
+      if (!c || muted) return;
+      const t0 = c.currentTime + when;
+      const osc = c.createOscillator();
+      const g = c.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, t0);
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(gain, t0 + attack);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      osc.connect(g).connect(c.destination);
+      osc.start(t0);
+      osc.stop(t0 + dur + 0.03);
+    }
+    return {
+      toggleMute() { muted = !muted; return muted; },
+      // soft, short blip on a valid press
+      click() { tone({ freq: 900, type: 'triangle', dur: 0.035, gain: 0.05 }); },
+      // low detuned buzz to pair with the wrong-button shake
+      error() {
+        tone({ freq: 96, type: 'sawtooth', dur: 0.24, gain: 0.039 });
+        tone({ freq: 90, type: 'sawtooth', dur: 0.24, gain: 0.03 });
+      },
+      // pleasant rising two-note chime for CONFIRM / START
+      confirm() {
+        tone({ freq: 660, type: 'sine', dur: 0.13, gain: 0.13, when: 0 });
+        tone({ freq: 990, type: 'sine', dur: 0.20, gain: 0.13, when: 0.10 });
+      },
+      // repeated beeps when the timer reaches 00:00
+      alarm() {
+        for (let i = 0; i < 4; i++) {
+          tone({ freq: 880, type: 'square', dur: 0.13, gain: 0.11, when: i * 0.24 });
+        }
+      },
+      startAlarm() {
+        this.alarm();
+        if (_alarmIv) clearInterval(_alarmIv);
+        _alarmIv = setInterval(() => this.alarm(), 1200);
+      },
+      stopAlarm() {
+        if (_alarmIv) { clearInterval(_alarmIv); _alarmIv = null; }
+      },
+    };
+  })();
+
+  // ── Helpers ──────────────────────────────────────────────
+  // Displayed clock = real device time shifted by the user-set offset (ms).
+  // Default offset 0 → shows real time; setting the clock re-anchors it and it
+  // keeps ticking forward from there.
+  function clockNowMs() {
+    const n = new Date();
+    const ms = ((n.getHours() * 3600 + n.getMinutes() * 60 + n.getSeconds()) * 1000 + n.getMilliseconds()) + STATE.clockOffsetMs;
+    return ((ms % 86400000) + 86400000) % 86400000;
+  }
+  function currentClockHM() {
+    const totalMin = Math.floor(clockNowMs() / 60000);
+    return [Math.floor(totalMin / 60) % 24, totalMin % 60];
+  }
+  function getTime() {
+    const [h, m] = currentClockHM();
+    return pad(h) + ':' + pad(m);
+  }
+  // Re-anchor the displayed clock so it reads clockH:clockM right now, then ticks on.
+  function applyClockSetting() {
+    const n = new Date();
+    const realMs = (n.getHours() * 3600 + n.getMinutes() * 60 + n.getSeconds()) * 1000 + n.getMilliseconds();
+    const setMs = (STATE.clockH * 3600 + STATE.clockM * 60) * 1000;
+    STATE.clockOffsetMs = setMs - realMs;
+  }
+
+  function pad(n) { return String(n).padStart(2, '0'); }
+
+  function getDateStr() {
+    const days = ['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY'];
+    const months = ['JANUARY','FEBRUARY','MARCH','APRIL','MAY','JUNE','JULY','AUGUST','SEPTEMBER','OCTOBER','NOVEMBER','DECEMBER'];
+    const n = new Date();
+    return `${days[n.getDay()]}, ${n.getDate()}. ${months[n.getMonth()]}`;
+  }
+
+  // Step progress shown in the top bar as "(current/total)"
+  const STEP_ORDER = ['select-drink', 'configure-drink', 'adjust-beans', 'confirm-selection'];
+
+  // Number of bars in the IN PREPARATION progress track
+  const IP_SEGS = 13;
+  function stepLabel() {
+    const i = STEP_ORDER.indexOf(STATE.screen);
+    return i >= 0 ? ` (${i + 1}/${STEP_ORDER.length})` : '';
+  }
+
+  function hdr(title) {
+    const i = STEP_ORDER.indexOf(STATE.screen);
+    const stepNum = i >= 0 ? `${i + 1}/${STEP_ORDER.length}` : '';
+    return `<div class="screen-header"><span>${title}</span>${stepNum ? `<span>${stepNum}</span>` : ''}</div><div class="screen-divider"></div>`;
+  }
+
+  // Beveled square indicator (from Figma): chamfered frame + inner fill.
+  // Beveled square indicator — exact geometry from Figma component 34:2278.
+  // Frame = 4 filled pointed-bar segments (gaps left open at corners);
+  // center square (Rectangle 10) is drawn only in the "on" state.
+  function dotSvg(on) {
+    return `<svg class="bev-dot" viewBox="0 0 24.21 23.41" fill="#ff7171" xmlns="http://www.w3.org/2000/svg">`
+      + `<path d="M20.227 0 L4.023 0 L2.01 1.308 L4.023 2.471 L20.227 2.471 L21.636 1.062 Z"/>`
+      + `<path d="M20.227 20.93 L4.023 20.93 L2.01 22.238 L4.023 23.401 L20.227 23.401 L21.636 21.992 Z"/>`
+      + `<path d="M0 3.823 L0 20.027 L1.062 21.436 L2.471 20.027 L2.471 3.823 L1.308 1.81 Z"/>`
+      + `<path d="M21.74 3.823 L21.74 20.027 L22.802 21.436 L24.211 20.027 L24.211 3.823 L23.048 1.81 Z"/>`
+      + (on ? `<rect x="4.63" y="4.23" width="14.9" height="14.9"/>` : '')
+      + `</svg>`;
+  }
+
+  function dots(count, filled) {
+    let h = '<div class="cell-dots">';
+    for (let i = 0; i < count; i++) h += dotSvg(i < filled);
+    return h + '</div>';
+  }
+
+  function cell(content, btn, cls = '') {
+    return `<div class="grid-cell ${cls}" onclick="pressButton('${btn}')">${content}</div>`;
+  }
+
+  // SET TIMER / CHANGE CLOCK body: uses the standard 6-button screen-grid so the
+  // bottom back-arrow + action cells match the configuration screen exactly. The
+  // up/down adjusters + HH:MM display live in a head spanning the top two rows.
+  function setAdjustGrid(display, actionLabel) {
+    return `
+      <div class="screen-grid">
+        <div class="grid-cell no-border set-head">
+          <div class="set-time-row">
+            ${cell(UP_SVG, 'L1')}
+            ${cell(UP_SVG, 'R1')}
+          </div>
+          <div class="set-time-display">${display}</div>
+          <div class="set-time-row">
+            ${cell(DOWN_SVG, 'L2')}
+            ${cell(DOWN_SVG, 'R2')}
+          </div>
+        </div>
+        ${cell(ARROW_SVG, 'L3')}
+        ${cell(`<span class="cell-label">${actionLabel}</span>`, 'R3')}
+      </div>`;
+  }
+
+  const ARROW_SVG = `<svg class="cell-arrow-svg" viewBox="78 94 90 56" fill="#ff7171" xmlns="http://www.w3.org/2000/svg"><path d="M88.76 119.951H123.489L125.169 122.114L123.489 124.366H88.76L83.1586 122.393L88.76 119.951Z"/><path d="M127.596 119.77H162.325L166.059 122.213L162.325 124.186H127.596L125.916 121.753L127.596 119.77Z"/><path d="M85.3992 124.818L104.444 142.306L107.304 147.44L101.27 145.551L82.9719 128.785L79.753 122.716L85.3992 124.818Z"/><path d="M82.7852 115.984L101.27 98.8572L106.844 96.228L104.817 101.381L85.3992 119.23L79.9885 121.656L82.7852 115.984Z"/></svg>`;
+
+  // Up-arrow flanking the home "CLICK LOGO FOR SETTINGS" hint (sized to the text)
+  const HOME_UP_ARROW = `<svg class="home-up-arrow" viewBox="0 0 24 24" fill="none" stroke="#ff7171" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M12 20 L12 5 M5.5 11.5 L12 5 L18.5 11.5"/></svg>`;
+
+  const UP_SVG = `<svg class="set-tri-svg" viewBox="0 0 44 30" fill="none" stroke="#ff7171" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" xmlns="http://www.w3.org/2000/svg"><path d="M22 5 L39 25 L5 25 Z"/></svg>`;
+  const DOWN_SVG = `<svg class="set-tri-svg" viewBox="0 0 44 30" fill="none" stroke="#ff7171" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" xmlns="http://www.w3.org/2000/svg"><path d="M22 25 L39 5 L5 5 Z"/></svg>`;
+
+  // ── Home status icons (from Figma) ───────────────────────
+  const ICON_DROP = `<svg class="hbar-svg" viewBox="0 0 50 56" fill="#ff7171" xmlns="http://www.w3.org/2000/svg"><path d="M24.779 0H25.2417C25.3765 0.0703894 25.6663 0.200023 25.7583 0.303578C26.1355 0.728842 26.5207 1.27713 26.863 1.73676C27.5127 2.61347 28.1709 3.48209 28.8379 4.34243C31.2544 7.49227 33.6296 10.5663 35.9021 13.8447C38.9495 18.2102 41.8303 22.8686 43.5203 28.1129C44.7295 31.8659 44.845 35.7093 43.9119 39.5574C43.6504 40.6358 43.3586 41.7312 42.9504 42.758C42.468 43.9715 41.8957 45.156 41.2417 46.2654C39.1133 49.8009 36.1233 52.5777 32.6272 54.2656C31.1763 54.9645 29.6582 55.4118 28.1116 55.7386C27.7051 55.8245 26.5566 55.8655 26.2578 56H23.789C23.6027 55.9226 23.2088 55.9002 22.9997 55.8775C20.7975 55.6369 18.59 54.9153 16.6012 53.8398C12.8716 51.8533 9.79735 48.5986 7.81715 44.5394C5.56317 39.8986 4.7236 33.9855 6.24403 28.8876C6.63102 27.5898 7.06517 26.2804 7.6057 25.0522C10.9031 17.5598 16.1048 10.9163 20.9232 4.64242C21.6156 3.75156 22.3001 2.85294 22.9764 1.94667C23.3697 1.41884 23.7808 0.826252 24.209 0.335729C24.3268 0.200741 24.6011 0.110051 24.7612 0.0111804L24.779 0ZM25.0449 53.2908C26.198 53.2232 27.249 53.171 28.3884 52.9052C32.0044 52.0622 35.2278 49.9546 37.7004 46.8847C39.9617 44.0822 41.4319 40.5929 41.9263 36.8566C42.2898 34.1912 42.1179 31.6654 41.3164 29.1219C39.7117 24.0294 36.832 19.4796 33.8745 15.2655C32.2739 12.9839 30.6218 10.7481 28.9197 8.5604L26.2502 5.07005L25.4587 4.03391C25.3418 3.88142 25.1072 3.54233 24.9643 3.45855C24.605 4.00493 23.9671 4.79634 23.5616 5.3331C22.6388 6.56595 21.7078 7.791 20.7685 9.00815C16.4591 14.6291 9.73776 23.6334 8.24454 30.8829C7.83907 32.8232 7.77523 34.8335 8.05658 36.8009C8.5786 40.9199 10.2782 44.7385 12.9007 47.6848C16.1735 51.3146 20.4547 53.2353 25.0449 53.2908Z"/><path d="M13.3216 33.2319C13.6069 33.2388 13.8268 33.3055 14.0657 33.4922C14.1984 33.5962 14.3723 33.8075 14.4256 33.9825C14.5845 34.5037 14.5498 35.0861 14.593 35.6289C14.6173 35.9349 14.6576 36.2291 14.7006 36.5277C15.4103 41.3328 18.699 45.1459 22.9622 46.1065C23.2777 46.1784 23.6857 46.2459 24.0106 46.2861C24.5976 46.3556 25.3239 46.2413 25.8266 46.6533C26.3146 47.0534 26.4047 47.9647 26.0165 48.484C25.7587 48.8288 25.538 48.9404 25.1525 48.9907C24.592 49.0407 23.9153 48.9458 23.3564 48.8687C17.2476 48.0271 12.4941 42.2034 12.2101 35.3336C12.1673 34.2978 12.1384 33.3889 13.3216 33.2319Z"/></svg>`;
+
+  const ICON_MILK = `<svg class="hbar-svg" viewBox="0 0 62 62" fill="none" stroke="#ff7171" stroke-width="3.98519" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M15.5 36.115L25.5492 36.1667C27.435 36.1667 29.295 36.6058 31 37.4583C32.705 38.3108 34.565 38.75 36.4767 38.75H46.5V49.0833C46.5 53.3458 43.0125 56.8333 38.75 56.8333H23.25C18.9875 56.8333 15.5 53.3458 15.5 49.0833V46.4742"/><path d="M46.5 27.9776V38.7501H36.4767C34.565 38.7501 32.705 38.3109 31 37.4584C29.295 36.6059 27.435 36.1667 25.5492 36.1667L15.5 36.1151V27.9776C15.5 26.7892 16.1717 25.1617 17.0242 24.3092L22.5009 18.8326C22.9659 18.3676 23.25 17.6959 23.25 17.0242V12.9167H38.75V17.0242C38.75 17.6959 39.0342 18.3676 39.4992 18.8326L44.9758 24.3092C45.8283 25.1617 46.5 26.7892 46.5 27.9776Z"/><path d="M46.5 41.3333V38.75"/><path d="M37.4584 12.9167H24.5417C22.3976 12.9167 20.6667 11.1601 20.6667 9.04175C20.6667 6.92341 22.3976 5.16675 24.5417 5.16675H37.4584C39.6026 5.16675 41.3334 6.92341 41.3334 9.04175C41.3334 11.1601 39.6026 12.9167 37.4584 12.9167Z"/></svg>`;
+
+  const ICON_BEANS = `<svg class="hbar-svg" viewBox="0 0 55 58" fill="#ff7171" xmlns="http://www.w3.org/2000/svg"><path d="M0 21.656C0.112199 21.2777 0.133672 20.5448 0.17999 20.1295C0.260327 19.4299 0.37078 18.7352 0.510947 18.048C1.41152 13.629 3.58461 9.50689 7.17003 7.34321C10.0369 5.61314 13.2983 5.36676 16.3764 6.45862C21.1828 8.16363 25.0376 12.5797 27.3413 17.5776C28.2375 19.5224 29.0622 21.9025 29.4873 24.0515L29.5268 24.031C29.9476 23.8113 30.4584 23.4531 30.8806 23.1987C31.5082 22.8266 32.15 22.4869 32.8042 22.1808C37.2434 20.1004 42.3393 19.4625 46.924 21.3527C49.9947 22.6186 52.5212 25.0575 53.9048 28.4631C54.3157 29.4695 54.6133 30.5312 54.7908 31.6226C54.8437 31.9625 54.9275 32.8706 55 33.1201V35.3074C54.8689 35.8211 54.8585 36.5186 54.7634 37.0632C52.4901 50.0874 38.2833 59.438 27.2905 54.9098C24.7472 53.8623 22.3839 51.7822 21.0035 49.1204C20.7004 48.5363 20.4682 47.9883 20.2212 47.3716C16.9734 48.1434 14.0613 47.5629 11.1363 45.793C5.8792 42.6117 2.2667 36.4043 0.775602 29.9493C0.541573 28.9299 0.357366 27.8965 0.223835 26.8538C0.166479 26.3737 0.12346 25.2119 0 24.8179V21.656ZM15.5158 43.7601C16.8802 44.1104 18.0334 44.0822 19.3952 43.7978C19.3373 43.122 19.3141 42.4432 19.3257 41.7643C19.3426 40.6803 19.4153 39.8608 19.3811 38.7268C19.2626 35.0674 17.7962 31.6352 15.3429 29.2749C14.4568 28.4295 13.5089 27.816 12.6188 26.9388C9.74418 24.1136 7.94677 20.1217 7.6077 15.8095C7.49786 14.4396 7.55458 12.9205 7.56285 11.5308C7.51553 11.4941 7.5375 11.5021 7.50167 11.4939C6.53077 12.2888 5.54834 13.6735 4.98032 14.8797C1.74356 21.7523 3.2736 30.7047 7.09771 36.8508C9.05658 39.999 12.1399 42.9357 15.5158 43.7601ZM12.5796 9.4942C11.9856 9.49957 11.3938 9.57916 10.815 9.73157C10.7716 10.5904 10.787 11.5753 10.775 12.4456C10.7634 13.2898 10.7393 14.3093 10.7933 15.1388C10.9598 18.0503 11.9787 20.8135 13.6865 22.9849C14.1907 23.6246 14.7486 24.2064 15.3523 24.7218C15.7976 25.0966 16.2777 25.4362 16.7162 25.8137C19.0504 27.823 20.437 30.0228 21.5951 33.0346C21.7213 32.8697 21.8472 32.6122 21.9463 32.421C22.2445 31.846 22.5867 31.3186 22.9222 30.773C23.6437 29.7296 24.2934 28.8515 25.1275 27.9102C25.6134 27.3619 26.1611 26.8881 26.6312 26.3816C26.537 25.9122 26.4643 25.441 26.3645 24.9723C25.2265 19.6302 22.5044 14.5141 18.376 11.54C16.6207 10.2754 14.6663 9.50205 12.5796 9.4942ZM23.1817 45.8929C23.7936 45.8362 24.5849 45.6505 25.2065 45.5349C26.7234 45.2533 28.0006 45.0602 29.4406 44.4058C31.9333 43.1885 33.8959 41.2712 35.1997 38.531C35.7355 37.4049 36.0296 36.4248 36.6416 35.2835C38.5282 31.7072 41.5317 29.0795 45.0479 27.9292C46.1103 27.5742 47.2082 27.3919 48.2982 27.184C48.5552 27.1349 48.831 27.0733 49.0888 27.0505C46.761 24.7145 43.9283 23.8721 40.8638 23.9293C35.6541 24.0448 30.5282 26.8303 26.9274 31.078C24.4193 34.0367 22.4572 38.1831 22.5513 42.3849C22.5776 43.5551 22.7756 44.8113 23.1817 45.8929ZM51.0262 30.4234C50.8353 30.4466 50.6322 30.4797 50.4434 30.5223C49.0201 30.8445 47.4958 30.9931 46.0977 31.424C43.8134 32.1338 41.782 33.6448 40.291 35.7435C39.7883 36.4509 39.3513 37.2158 38.9866 38.0262C38.5451 39.0173 38.2739 39.8562 37.7515 40.8507C35.851 44.5036 32.8074 47.1985 29.2349 48.3916C28.1652 48.7502 27.0526 48.9264 25.9556 49.1391C25.7997 49.1695 25.6428 49.1964 25.4856 49.216C25.4003 49.2265 25.3148 49.2338 25.2291 49.2381C25.9421 49.9988 26.5054 50.4187 27.3606 50.9335C35.5655 55.3766 46.8107 49.0527 50.5189 40.0919C51.7113 37.21 52.2266 33.8575 51.2641 30.7899C51.2204 30.6498 51.1849 30.4935 51.0802 30.4169L51.0262 30.4234Z"/></svg>`;
+
+  function hbar(filled) {
+    let s = '';
+    for (let i = 0; i < IP_SEGS; i++)
+      s += `<div class="hstripe${i < filled ? '' : ' unlit'}"></div>`;
+    return `<div class="hbar">${s}</div>`;
+  }
+
+  // ── Favorites star (4-point sparkle outline, gap at each tip, from Figma) ──
+  const STAR_SVG = `<svg class="star-svg" viewBox="0 0 100 100" fill="none" stroke="#ff7171" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M51.63 6.07 L66.26 33.74 L93.93 48.37"/><path d="M93.93 51.63 L66.26 66.26 L51.63 93.93"/><path d="M48.37 93.93 L33.74 66.26 L6.07 51.63"/><path d="M6.07 48.37 L33.74 33.74 L48.37 6.07"/></svg>`;
+
+  // ── Translations ─────────────────────────────────────────
+  const STRINGS = {
+    ENGLISH: {
+      'SELECT YOUR DRINK':'SELECT DRINK','CONFIGURATION':'CONFIGURATION',
+      'CHANGE MILK AMOUNT':'CHANGE MILK AMOUNT','CHANGE BEANS AMOUNT':'CHANGE BEANS AMOUNT','CHANGE WATER AMOUNT':'CHANGE SIZE AMOUNT','CHANGE AMOUNT':'CHANGE AMOUNT',
+      'CONFIRM SELECTION':'CONFIRM DRINK','IN PREPARATION':'IN PREPARATION',
+      'ADD TO PRESET':'ADD TO PRESET','ADDED TO PRESET':'ADDED TO PRESET','ADDED TO':'ADDED TO','UPDATED':'UPDATED',
+      'ENJOY YOUR DRINK':'ENJOY YOUR DRINK',"HERE'S YOUR COFFEE":"HERE'S YOUR<br>COFFEE",
+      'SETTINGS':'SETTINGS','CHANGE LANGUAGE':'CHANGE LANGUAGE','CHANGE CLOCK':'CHANGE CLOCK','SET TIMER':'SET TIMER',
+      'CHOOSE PRESET':'CHOOSE PRESET','TIMER SET':'TIMER SET','AT':'AT','BREW':'BREW',
+      'TIMER':'TIMER','LANGUAGE':'LANGUAGE','CLOCK':'CLOCK','CLICK LOGO FOR SETTINGS':'CLICK LOGO FOR SETTINGS',
+      'OK':'OK','START':'START','CONFIRM':'CONFIRM','NEXT':'NEXT','START BREWING':'START BREWING','CANCEL':'CANCEL','REPLACE':'REPLACE','ADD':'ADD','STOP':'STOP','BACK':'BACK',
+      'FAVORITE':'FAVORITE','MILK':'MILK','BEANS':'BEANS','WATER':'SIZE',
+      'COFFEE ALREADY IN PREPARATION':'COFFEE ALREADY IN PREPARATION',
+      'ENGLISH':'ENGLISH','FRENCH':'FRENCH','GERMAN':'GERMAN',
+    },
+    GERMAN: {
+      'SELECT YOUR DRINK':'GETRAENK WAEHLEN','CONFIGURATION':'KONFIGURATION',
+      'CHANGE MILK AMOUNT':'MILCH MENGE AENDERN','CHANGE BEANS AMOUNT':'BOHNEN MENGE AENDERN','CHANGE WATER AMOUNT':'GROESSE AENDERN','CHANGE AMOUNT':'MENGE AENDERN',
+      'CONFIRM SELECTION':'BESTAETIGEN','IN PREPARATION':'IN ZUBEREITUNG',
+      'ADD TO PRESET':'ZU FAVORITEN','ADDED TO PRESET':'ZU FAVORITEN GESPEICHERT','ADDED TO':'GESPEICHERT IN','UPDATED':'AKTUALISIERT',
+      'ENJOY YOUR DRINK':'GENIESSE DEIN GETRAENK',"HERE'S YOUR COFFEE":'HIER IST<br>DEIN KAFFEE',
+      'SETTINGS':'EINSTELLUNGEN','CHANGE LANGUAGE':'SPRACHE AENDERN','CHANGE CLOCK':'UHR EINSTELLEN','SET TIMER':'TIMER EINSTELLEN',
+      'CHOOSE PRESET':'PRESET WAEHLEN','TIMER SET':'TIMER GESTELLT','AT':'UM','BREW':'GETRAENK',
+      'TIMER':'TIMER','LANGUAGE':'SPRACHE','CLOCK':'UHR','CLICK LOGO FOR SETTINGS':'LOGO FUER EINSTELLUNGEN',
+      'OK':'OK','START':'START','CONFIRM':'BESTAETIGEN','NEXT':'WEITER','START BREWING':'ZUBEREITEN','CANCEL':'ABBRECHEN','REPLACE':'ERSETZEN','ADD':'HINZUFUEGEN','STOP':'STOP','BACK':'ZURUECK',
+      'FAVORITE':'FAVORIT','MILK':'MILCH','BEANS':'BOHNEN','WATER':'GROESSE',
+      'COFFEE ALREADY IN PREPARATION':'KAFFEE BEREITS IN ZUBEREITUNG',
+      'ENGLISH':'ENGLISCH','FRENCH':'FRANZOESISCH','GERMAN':'DEUTSCH',
+    },
+    FRENCH: {
+      'SELECT YOUR DRINK':'CHOISIR VOTRE BOISSON','CONFIGURATION':'CONFIGURATION',
+      'CHANGE MILK AMOUNT':'QUANTITE DE LAIT','CHANGE BEANS AMOUNT':'QUANTITE DE CAFE','CHANGE WATER AMOUNT':'CHANGER TAILLE',
+      'CONFIRM SELECTION':'CONFIRMER','IN PREPARATION':'EN PREPARATION',
+      'ADD TO PRESET':'AJOUTER AUX FAVORIS','ADDED TO PRESET':'AJOUTE AUX FAVORIS','ADDED TO':'AJOUTE AU FAVORI','UPDATED':'MIS A JOUR',
+      'ENJOY YOUR DRINK':'PROFITEZ DE VOTRE BOISSON',"HERE'S YOUR COFFEE":'VOICI VOTRE<br>CAFE',
+      'SETTINGS':'PARAMETRES','CHANGE LANGUAGE':'CHANGER LA LANGUE','CHANGE CLOCK':'REGLER L HEURE','SET TIMER':'REGLER LE MINUTEUR',
+      'CHOOSE PRESET':'CHOISIR PRESET','TIMER SET':'MINUTEUR REGLE','AT':'A','BREW':'BOISSON',
+      'TIMER':'MINUTEUR','LANGUAGE':'LANGUE','CLOCK':'HORLOGE','CLICK LOGO FOR SETTINGS':'LOGO POUR PARAMETRES',
+      'OK':'OK','START':'DEMARRER','CONFIRM':'CONFIRMER','NEXT':'SUIVANT','START BREWING':'PREPARER','CANCEL':'ANNULER','REPLACE':'REMPLACER','ADD':'AJOUTER','STOP':'ARRETER','BACK':'RETOUR',
+      'FAVORITE':'FAVORI','MILK':'LAIT','BEANS':'CAFE','WATER':'TAILLE',
+      'COFFEE ALREADY IN PREPARATION':'CAFE DEJA EN PREPARATION',
+      'ENGLISH':'ANGLAIS','FRENCH':'FRANCAIS','GERMAN':'ALLEMAND',
+    },
+  };
+  function T(key) { return (STRINGS[STATE.language] || STRINGS.ENGLISH)[key] || key; }
+
+  // ── Screen definitions ───────────────────────────────────
+  const SCREENS = {
+
+    // 1 ─ HOME
+    home: {
+      render() {
+        const t = getTime();
+        return `
+          <div class="screen-header">
+            <span class="home-hint">${HOME_UP_ARROW}${T('CLICK LOGO FOR SETTINGS')}${HOME_UP_ARROW}</span>
+          </div>
+          <div class="screen-divider"></div>
+          <div class="home-body">
+            <div class="home-time live-home-time">${t}</div>
+            <div class="home-bars">
+              <div class="home-bar-col">
+                ${hbar(9)}
+                <div class="hbar-icon">${ICON_DROP}</div>
+              </div>
+              <div class="home-bar-col">
+                ${hbar(11)}
+                <div class="hbar-icon">${ICON_MILK}</div>
+              </div>
+              <div class="home-bar-col">
+                ${hbar(7)}
+                <div class="hbar-icon">${ICON_BEANS}</div>
+              </div>
+            </div>
+          </div>
+          <div class="home-footer">${timerText()}</div>`;
+      },
+      handleBtn() { navigate('select-drink'); }
+    },
+
+    // 2 ─ SELECT DRINK
+    'select-drink': {
+      render() {
+        const { favorites, drinks, creatingFavSlot } = STATE;
+        // Collapsed view: an empty favorite was chosen — show only that slot
+        // at the top, a back arrow at the bottom, drink types on the right.
+        if (creatingFavSlot) {
+          const sdHdr2 = `<div class="screen-header" style="justify-content:space-around;font-size:calc(var(--hdr-font) * 1.2);"><span style="flex:1;text-align:center;">PRESET</span><span style="flex:1;text-align:center;">MANUAL</span></div><div class="screen-divider" style="visibility:hidden;"></div>`;
+          return sdHdr2 + `
+            <div class="screen-grid sd-grid">
+              <div class="grid-cell no-border" onclick="pressButton('L1')"><span class="cell-name">${T('FAVORITE')} ${creatingFavSlot}</span></div>
+              <div class="grid-cell" onclick="pressButton('R1')"><span class="cell-name">${drinks[0]}</span></div>
+              <div class="grid-cell empty"></div>
+              <div class="grid-cell" onclick="pressButton('R2')"><span class="cell-name">${drinks[1]}</span></div>
+              <div class="grid-cell" onclick="pressButton('L3')">${ARROW_SVG}</div>
+              <div class="grid-cell" onclick="pressButton('R3')"><span class="cell-name">${drinks[2]}</span></div>
+            </div>`;
+        }
+        // Full view: left column = favorite slots, right column = drink types.
+        const L = ['L1','L2','L3'], R = ['R1','R2','R3'];
+        let cells = '';
+        for (let i = 0; i < 3; i++) {
+          const fav = favorites[i];
+          const isBottomLeft = L[i] === 'L3';
+          const favInner = fav
+            ? `<span class="cell-name">${fav.drink}</span>`
+            : `<span class="cell-name">EMPTY</span>`;
+          cells += `
+            <div class="grid-cell fav-cell" onclick="pressButton('${L[i]}')">${favInner}</div>
+            <div class="grid-cell" onclick="pressButton('${R[i]}')">
+              <span class="cell-name">${drinks[i]}</span>
+            </div>`;
+        }
+        const sdHdr = `<div class="screen-header" style="justify-content:space-around;font-size:calc(var(--hdr-font) * 1.2);"><span style="flex:1;text-align:center;">PRESET</span><span style="flex:1;text-align:center;">MANUAL</span></div><div class="screen-divider" style="visibility:hidden;"></div>`;
+        return sdHdr + `<div class="screen-grid sd-grid">${cells}</div>`;
+      },
+      handleBtn(btn) {
+        const drinkMap = { R1: STATE.drinks[0], R2: STATE.drinks[1], R3: STATE.drinks[2] };
+
+        // Collapsed (building a new favorite): pick a drink type, or cancel.
+        if (STATE.creatingFavSlot) {
+          if (btn === 'L1' || btn === 'L3') { STATE.creatingFavSlot = null; navigate('select-drink'); return; }
+          if (btn in drinkMap) { STATE.selectedDrink = drinkMap[btn]; navigate('configure-drink'); }
+          return;
+        }
+
+        // Full view — favorite slots on the left.
+        const favIdx = { L1: 0, L2: 1, L3: 2 }[btn];
+        if (favIdx !== undefined) {
+          const fav = STATE.favorites[favIdx];
+          if (fav) {                                   // configured → jump to confirm
+            STATE.selectedDrink = fav.drink;
+            STATE.amounts = { ...fav.amounts };
+            navigate('confirm-selection');
+          } else {                                     // empty → start building it
+            STATE.creatingFavSlot = favIdx + 1;
+            navigate('select-drink');
+          }
+          return;
+        }
+        // Drink types on the right → normal manual flow.
+        if (btn in drinkMap) { STATE.selectedDrink = drinkMap[btn]; navigate('configure-drink'); }
+      }
+    },
+
+    // 3 ─ CONFIGURE DRINK
+    'configure-drink': {
+      render() {
+        const a = STATE.amounts;
+        return hdr(T('CONFIGURATION')) + `
+          <div class="screen-grid">
+            ${cell(`<img class="cfg-icon" src="milk.png" alt="milk">${dots(3,a.MILK)}`, 'L1')}
+            ${cell(`<img class="cfg-icon" src="beans.png" alt="beans">${dots(3,a.BEANS)}`, 'R1')}
+            <div class="grid-cell empty"></div>
+            ${cell(`<img class="cfg-icon" src="size.png" alt="size">${dots(3,a.SIZE)}`, 'R2')}
+            ${cell(ARROW_SVG, 'L3')}
+            ${cell(`<span class="cell-label">${T('NEXT')}</span>`, 'R3')}
+          </div>`;
+      },
+      handleBtn(btn) {
+        if (btn === 'L3') { navigate('select-drink'); return; }
+        // pick the item to adjust in step 3, then go there
+        const itemMap = { L1: 'MILK', R1: 'BEANS', R2: 'SIZE' };
+        if (btn in itemMap) { STATE.selectedItem = itemMap[btn]; navigate('adjust-beans'); return; }
+        if (btn === 'R3') { navigate('confirm-selection'); }   // skip optional step 3
+      }
+    },
+
+    // 4 ─ ADJUST BEANS
+    'adjust-beans': {
+      render() {
+        const item = STATE.selectedItem;
+        const noMilkCell = item === 'MILK'
+          ? cell(`<span class="cell-label">NO MILK</span>`, 'L2')
+          : '<div class="grid-cell empty"></div>';
+        return hdr(T('CHANGE AMOUNT')) + `
+          <div class="screen-grid">
+            ${cell(`<img class="cfg-icon" src="${item.toLowerCase()}.png" alt="${item.toLowerCase()}"><span class="cell-name">${T(item)}</span>`, 'L1', 'no-border')}
+            ${cell(dots(3,1), 'R1')}
+            ${noMilkCell}
+            ${cell(dots(3,2), 'R2')}
+            ${cell(ARROW_SVG, 'L3')}
+            ${cell(dots(3,3), 'R3')}
+          </div>`;
+      },
+      handleBtn(btn) {
+        if (btn === 'L3') { navigate('configure-drink'); return; }
+        if (btn === 'L2' && STATE.selectedItem === 'MILK') { STATE.amounts.MILK = 0; navigate('configure-drink'); return; }
+        const amtMap = { R1: 1, R2: 2, R3: 3 };
+        if (btn in amtMap) { STATE.amounts[STATE.selectedItem] = amtMap[btn]; navigate('configure-drink'); }
+      }
+    },
+
+    // 5 ─ CONFIRM SELECTION
+    'confirm-selection': {
+      render() {
+        const sq = (n) => {
+          let s = '<span class="cfm-sq">';
+          for (let i = 0; i < 3; i++) s += dotSvg(i < n);
+          return s + '</span>';
+        };
+        const row = (label) => `<div class="cfm-row"><span class="cfm-label">${T(label)}</span><i class="cfm-lead"></i>${sq(STATE.amounts[label])}</div>`;
+        return hdr(T('CONFIRM SELECTION')) + `
+          <div class="screen-grid cfm-grid">
+            <div class="cfm-head">
+              <div class="cfm-title">${STATE.selectedDrink}</div>
+              <div class="cfm-rows">
+                ${row('MILK')}
+                ${row('BEANS')}
+                ${row('SIZE')}
+              </div>
+            </div>
+            <div class="grid-cell" onclick="pressButton('L3')">${ARROW_SVG}</div>
+            <div class="grid-cell" onclick="pressButton('R3')"><span class="cell-label">START<br>BREWING</span></div>
+          </div>`;
+      },
+      handleBtn(btn) {
+        if (btn === 'L3') { navigate('select-drink'); return; }   // back to step 1
+        if (btn === 'R3') { STATE.prepSeg = 0; STATE.prepStartTime = null; navigate('in-preparation'); }   // start a fresh brew
+      }
+    },
+
+    // 6 ─ IN PREPARATION
+    'in-preparation': {
+      render() {
+        const d = STATE.selectedDrink;
+        return hdr(T('IN PREPARATION')) + `
+          <div class="screen-grid cfm-grid">
+            <div class="cfm-head">
+              <div class="cfm-title">${d}</div>
+              <div class="ip-progress">
+                <div class="ip-track">
+                  <div class="ip-segs" id="prog-segs">
+                    ${'<div class="ip-seg"></div>'.repeat(IP_SEGS)}
+                  </div>
+                </div>
+              </div>
+              <div class="prep-error" id="prep-error"></div>
+            </div>
+            <div class="grid-cell" onclick="pressButton('L3')"><span class="cell-label">${T('CANCEL')}</span></div>
+            <div class="grid-cell fav-cell" onclick="pressButton('R3')"><span class="cell-label">REPLACE</span></div>
+          </div>`;
+      },
+      handleBtn(btn) {
+        if (btn === 'L3') {
+          if (STATE.cancelExpired) {
+            rejectButton('L3');
+            showPrepError('drink already in progress, cant be cancelled');
+            return;
+          }
+          STATE.prepSeg = 0;
+          STATE.prepStartTime = null;
+          if (STATE.cancelHideTimer) { clearTimeout(STATE.cancelHideTimer); STATE.cancelHideTimer = null; }
+          STATE.cancelExpired = false;
+          navigate('home');
+          return;
+        }
+        if (btn === 'R3' && STATE.replaceDone) {
+          rejectButton('R3');
+          showPrepError('favorit has already been updated');
+          return;
+        }
+        if (btn === 'R3') {                                                   // replace this drink's preset directly
+          const drinkIdx = STATE.drinks.indexOf(STATE.selectedDrink);
+          STATE.selectedFavSlot = drinkIdx + 1;
+          STATE.favorites[drinkIdx] = { drink: STATE.selectedDrink, amounts: { ...STATE.amounts } };
+          STATE.replaceDone = true;
+          navigate('favorite-saved');
+        }
+      },
+      onEnter() {
+        // Record brew start time only on the first entry (not on return from favorites).
+        if (!STATE.prepStartTime) { STATE.prepStartTime = Date.now(); STATE.replaceDone = false; }
+
+        // Cancel button disappears 3 s after brew start. On re-entry (e.g. returning
+        // from the favorites panel) recalculate the remaining delay from brew start.
+        if (STATE.cancelHideTimer) { clearTimeout(STATE.cancelHideTimer); STATE.cancelHideTimer = null; }
+        const cancelDelay = Math.max(0, 3000 - (Date.now() - STATE.prepStartTime));
+        const fadeBtn = (side) => {
+          document.querySelectorAll('.grid-cell').forEach(c => {
+            if ((c.getAttribute('onclick') || '').includes("'" + side + "'")) c.style.opacity = '0.33';
+          });
+          const chev = document.querySelector('.btn-' + side);
+          if (chev) chev.classList.remove('chev-active');
+        };
+
+        if (cancelDelay === 0) {
+          STATE.cancelExpired = true;
+          fadeBtn('L3');
+        } else {
+          STATE.cancelExpired = false;
+          STATE.cancelHideTimer = setTimeout(() => {
+            STATE.cancelExpired = true;
+            STATE.cancelHideTimer = null;
+            fadeBtn('L3');
+          }, cancelDelay);
+        }
+
+        // Fade REPLACE button once the preset has already been replaced this brew.
+        if (STATE.replaceDone) fadeBtn('R3');
+
+        // If we got here while building a favorite, save the preset now.
+        if (STATE.creatingFavSlot) {
+          STATE.favorites[STATE.creatingFavSlot - 1] = {
+            drink: STATE.selectedDrink,
+            amounts: { ...STATE.amounts },
+          };
+          STATE.creatingFavSlot = null;
+        }
+        // Re-light progress already made (so detours to the panel don't reset it).
+        const segs = document.querySelectorAll('#prog-segs .ip-seg');
+        let seg = STATE.prepSeg || 0;
+        for (let i = 0; i < seg && segs[i]; i++) segs[i].classList.add('lit');
+        STATE.prepTimer = setInterval(() => {
+          if (STATE.paused) return;
+          if (segs[seg]) segs[seg].classList.add('lit');
+          seg++;
+          STATE.prepSeg = seg;
+          if (seg >= IP_SEGS) {
+            clearInterval(STATE.prepTimer);
+            STATE.prepTimer = null;
+            STATE.prepSeg = 0;
+            STATE.prepStartTime = null;
+            STATE.drinkPending = true;
+            if (STATE.screen !== 'add-to-favorites' && STATE.screen !== 'favorite-saved') {
+              setTimeout(() => fadeOutThen(() => navigate('drink-ready')), 500);
+            }
+          }
+        }, 1042);
+      }
+    },
+
+    // 7 ─ ADD TO PRESET
+    'add-to-favorites': {
+      render() {
+        const slot = (btn, idx) => {
+          const fav = STATE.favorites[idx];
+          const label = fav ? fav.drink : 'EMPTY';
+          return `<div class="grid-cell fav-cell" onclick="pressButton('${btn}')"><span class="cell-name">${label}</span></div>`;
+        };
+        return hdr(T('ADD TO PRESET')) + `
+          <div class="screen-grid">
+            <div class="grid-cell empty"></div>
+            ${slot('R1', 0)}
+            <div class="grid-cell empty"></div>
+            ${slot('R2', 1)}
+            ${cell(ARROW_SVG, 'L3')}
+            ${slot('R3', 2)}
+          </div>`;
+      },
+      handleBtn(btn) {
+        const slotMap = { R1: 1, R2: 2, R3: 3 };
+        if (btn in slotMap) {
+          const slotIdx = slotMap[btn] - 1;
+          STATE.favorites[slotIdx] = {
+            drink: STATE.selectedDrink,
+            amounts: { ...STATE.amounts },
+          };
+          STATE.selectedFavSlot = slotMap[btn];
+          navigate('favorite-saved');
+          return;
+        }
+        if (btn === 'L3') navigate('in-preparation');
+      }
+    },
+
+    // 8 ─ FAVORITE SAVED
+    'favorite-saved': {
+      render() {
+        return hdr(T('ADDED TO PRESET')) + `
+          <div class="msg-body">
+            <div class="msg-title">${T('UPDATED')}</div>
+            <div class="msg-star">
+              ${STAR_SVG}
+              <span class="msg-star-num" style="font-size:var(--hdr-font);letter-spacing:0.04em;">${STATE.selectedDrink}</span>
+            </div>
+          </div>`;
+      },
+      handleBtn() {
+        const dest = STATE.drinkPending ? 'drink-ready' : 'home';
+        STATE.drinkPending = false;
+        navigate(dest);
+      },
+      onEnter() {
+        setTimeout(() => {
+          if (STATE.screen !== 'favorite-saved') return;
+          const dest = STATE.drinkPending ? 'drink-ready' : 'in-preparation';
+          STATE.drinkPending = false;
+          fadeOutThen(() => navigate(dest));
+        }, 2000);
+      }
+    },
+
+    // 9 ─ DRINK READY
+    'drink-ready': {
+      render() {
+        return hdr(T('ENJOY YOUR DRINK')) + `
+          <div class="msg-body">
+            <div class="msg-title">${T("HERE'S YOUR COFFEE")}</div>
+          </div>`;
+      },
+      handleBtn() { navigate('home'); },
+      onEnter() {
+        setTimeout(() => {
+          if (STATE.screen === 'drink-ready') fadeOutThen(() => navigate('home'));
+        }, 5000);
+      }
+    },
+
+    // 10 ─ SETTINGS (menu)
+    settings: {
+      render() {
+        return hdr(T('SETTINGS')) + `
+          <div class="screen-grid">
+            <div class="grid-cell empty"></div>
+            ${cell(`<span class="cell-label">${T('TIMER')}</span>`, 'R1')}
+            <div class="grid-cell empty"></div>
+            ${cell(`<span class="cell-label">${T('LANGUAGE')}</span>`, 'R2')}
+            ${cell(ARROW_SVG, 'L3')}
+            ${cell(`<span class="cell-label">${T('CLOCK')}</span>`, 'R3')}
+          </div>`;
+      },
+      handleBtn(btn) {
+        if (btn === 'R1') {
+          // A timer is already scheduled → show it (cancel or go back) instead
+          // of jumping straight into the editor.
+          if (STATE.timerSet) { navigate('timer-view'); return; }
+          // Otherwise pre-fill the timer editor with the time currently on the clock.
+          const [h, m] = currentClockHM();
+          STATE.timerH = h; STATE.timerM = m;
+          navigate('settings-timer'); return;
+        }
+        if (btn === 'R2') { navigate('settings-language'); return; }
+        if (btn === 'R3') {
+          // Start the clock editor from the time currently shown on screen.
+          const [h, m] = currentClockHM();
+          STATE.clockH = h; STATE.clockM = m;
+          navigate('settings-clock'); return;
+        }
+        if (btn === 'L3') { navigate('home'); return; }
+      }
+    },
+
+    // 11 ─ CHANGE LANGUAGE
+    'settings-language': {
+      render() {
+        return hdr(T('CHANGE LANGUAGE')) + `
+          <div class="screen-grid">
+            <div class="grid-cell empty"></div>
+            ${cell(`<span class="cell-label">${T('ENGLISH')}</span>`, 'R1')}
+            <div class="grid-cell empty"></div>
+            ${cell(`<span class="cell-label">${T('FRENCH')}</span>`, 'R2')}
+            ${cell(ARROW_SVG, 'L3')}
+            ${cell(`<span class="cell-label">${T('GERMAN')}</span>`, 'R3')}
+          </div>`;
+      },
+      handleBtn(btn) {
+        const map = { R1: 'ENGLISH', R2: 'FRENCH', R3: 'GERMAN' };
+        if (btn in map) { STATE.language = map[btn]; navigate('settings'); return; }
+        if (btn === 'L3') { navigate('settings'); return; }
+      }
+    },
+
+    // 12 ─ CHANGE CLOCK
+    'settings-clock': {
+      render() {
+        return hdr(T('CHANGE CLOCK')) + setAdjustGrid(`${pad(STATE.clockH)} : ${pad(STATE.clockM)}`, T('CONFIRM'));
+      },
+      handleBtn(btn) {
+        if (btn === 'L1') STATE.clockH = (STATE.clockH + 1) % 24;
+        else if (btn === 'L2') STATE.clockH = (STATE.clockH + 23) % 24;
+        else if (btn === 'R1') STATE.clockM = (STATE.clockM + 1) % 60;
+        else if (btn === 'R2') STATE.clockM = (STATE.clockM + 59) % 60;
+        else if (btn === 'L3') { navigate('settings'); return; }            // cancel: discard
+        else if (btn === 'R3') { applyClockSetting(); Sound.confirm(); navigate('settings'); return; }  // confirm: re-anchor clock
+        navigate('settings-clock');
+      }
+      // Note: the editor is pre-filled from the live clock when entering from the
+      // settings menu (see settings.handleBtn), NOT in onEnter — otherwise every
+      // up/down re-render would reset the value being edited.
+    },
+
+    // 13 ─ SET TIMER (pick the time of day the brew should run at)
+    'settings-timer': {
+      render() {
+        return hdr(T('SET TIMER'))
+          + setAdjustGrid(`${pad(STATE.timerH)} : ${pad(STATE.timerM)}`, T('CHOOSE PRESET').replace(' ', '<br>'));
+      },
+      handleBtn(btn) {
+        if (btn === 'L1') STATE.timerH = (STATE.timerH + 1) % 24;
+        else if (btn === 'L2') STATE.timerH = (STATE.timerH + 23) % 24;
+        else if (btn === 'R1') STATE.timerM = (STATE.timerM + 1) % 60;
+        else if (btn === 'R2') STATE.timerM = (STATE.timerM + 59) % 60;
+        else if (btn === 'L3') { navigate('settings'); return; }         // back
+        else if (btn === 'R3') { navigate('choose-preset'); return; }    // pick the drink
+        navigate('settings-timer');
+      }
+      // The editor is pre-filled from the live clock when entering from the
+      // settings menu (see settings.handleBtn), NOT in onEnter — otherwise every
+      // up/down re-render would reset the value being edited.
+    },
+
+    // 14 ─ CHOOSE PRESET (which drink the scheduled brew makes)
+    // Presets on the right (R1/R2/R3), back arrow on the left (L3) — same layout
+    // as the ADD TO PRESET screen.
+    'choose-preset': {
+      render() {
+        const opt = (btn, i) =>
+          `<div class="grid-cell fav-cell" onclick="pressButton('${btn}')"><span class="cell-name">${STATE.drinks[i]}</span></div>`;
+        return hdr(T('CHOOSE PRESET')) + `
+          <div class="screen-grid">
+            <div class="grid-cell empty"></div>
+            ${opt('R1', 0)}
+            <div class="grid-cell empty"></div>
+            ${opt('R2', 1)}
+            ${cell(ARROW_SVG, 'L3')}
+            ${opt('R3', 2)}
+          </div>`;
+      },
+      handleBtn(btn) {
+        if (btn === 'L3') { navigate('settings-timer'); return; }    // back to the time editor
+        const idx = { R1: 0, R2: 1, R3: 2 }[btn];
+        if (idx !== undefined) { STATE.timerDrink = STATE.drinks[idx]; navigate('timer-set'); }
+      }
+    },
+
+    // 15 ─ TIMER SET (confirmation — auto-returns to the home screen)
+    'timer-set': {
+      render() {
+        // Same layout as the TIMER VIEW screen (BREW above AT), just without
+        // the back/cancel buttons — this one auto-dismisses on its own.
+        return hdr(T('TIMER SET')) + `
+          <div class="tset-body">
+            <div class="tset-block">
+              <div class="tset-label">${T('BREW')}:</div>
+              <div class="tset-value">${STATE.timerDrink}</div>
+            </div>
+            <div class="tset-block">
+              <div class="tset-label">${T('AT')}:</div>
+              <div class="tset-value">${pad(STATE.timerH)}:${pad(STATE.timerM)}</div>
+            </div>
+          </div>`;
+      },
+      handleBtn() { /* no active buttons — auto-dismisses */ },
+      onEnter() {
+        STATE.timerSet = true;
+        Sound.confirm();
+        updateHomeFooter();
+        setTimeout(() => {
+          if (STATE.screen !== 'timer-set') return;
+          fadeOutThen(() => navigate('home'));
+        }, 2600);
+      }
+    },
+
+    // 16 ─ TIMER VIEW (an already-scheduled timer — cancel it or go back)
+    'timer-view': {
+      render() {
+        return hdr(T('TIMER SET')) + `
+          <div class="screen-grid cfm-grid">
+            <div class="timer-view-head">
+              <div class="tset-block">
+                <div class="tset-label">${T('BREW')}:</div>
+                <div class="tset-value">${STATE.timerDrink}</div>
+              </div>
+              <div class="tset-block">
+                <div class="tset-label">${T('AT')}:</div>
+                <div class="tset-value">${pad(STATE.timerH)}:${pad(STATE.timerM)}</div>
+              </div>
+            </div>
+            ${cell(ARROW_SVG, 'L3')}
+            ${cell(`<span class="cell-label">${T('CANCEL')}</span>`, 'R3')}
+          </div>`;
+      },
+      handleBtn(btn) {
+        if (btn === 'L3') { navigate('settings'); return; }         // back, timer left untouched
+        if (btn === 'R3') {                                          // cancel the scheduled brew
+          STATE.timerSet = false;
+          updateHomeFooter();
+          const [h, m] = currentClockHM();
+          STATE.timerH = h; STATE.timerM = m;
+          navigate('settings-timer');
+          return;
+        }
+      }
+    },
+
+  };
+
+  // ── Segmented border painter ─────────────────────────────
+  // Draws the dashed frame in real pixels so stroke width, corner
+  // radius and the centered gap on each side stay uniform on any
+  // aspect ratio (no SVG stretching => no "squashed" edges).
+  const SVGNS = 'http://www.w3.org/2000/svg';
+  function paintBorders() {
+    // single unified stroke width for every frame, scaled to the display
+    const root = document.getElementById('screen-root');
+    const baseW = root ? root.clientWidth : 300;
+    const sw = Math.max(2.2, Math.min(3.4, baseW * 0.011));
+    const els = document.querySelectorAll('.grid-cell:not(.empty):not(.no-border), .ip-track, .hbar');
+    els.forEach(el => {
+      let svg = el.querySelector(':scope > svg.seg-border');
+      if (!svg) {
+        svg = document.createElementNS(SVGNS, 'svg');
+        svg.setAttribute('class', 'seg-border');
+        svg.appendChild(document.createElementNS(SVGNS, 'rect'));
+        el.appendChild(svg);
+      }
+      const w = el.clientWidth, h = el.clientHeight;
+      if (!w || !h) return;
+      const inset = sw / 2 + 0.5;
+      const isCell = el.classList.contains('grid-cell');
+      const isFav = el.classList.contains('fav-cell');
+      if (isFav) {
+        // Use a star-shaped path for fav-cells with gaps at each point.
+        let path = svg.querySelector(':scope > path');
+        if (!path) {
+          while (svg.firstChild) svg.removeChild(svg.firstChild);
+          path = document.createElementNS(SVGNS, 'path');
+          svg.appendChild(path);
+        }
+        // 4-point sparkle star: tips at N/E/S/W, inner vertices on the
+        // diagonals at ~0.49 of the outer radius, with a small gap at each tip.
+        const cx = w / 2, cy = h / 2;
+        const outerR = (Math.min(cx, cy) - inset - 1) * 1.06;
+        const innerR = outerR * 0.49;
+        const diag = innerR * Math.SQRT1_2; // 45° component for inner vertices
+        const T = [cx, cy - outerR], R = [cx + outerR, cy],
+              B = [cx, cy + outerR], L = [cx - outerR, cy];
+        const NE = [cx + diag, cy - diag], SE = [cx + diag, cy + diag],
+              SW = [cx - diag, cy + diag], NW = [cx - diag, cy - diag];
+        // gap at each tip → pull the polyline ends back along the edges
+        const g = Math.max(4, Math.min(w, h) * 0.0647);
+        const edgeLen = Math.hypot(NE[0] - T[0], NE[1] - T[1]);
+        const f = Math.min(0.4, (g / 2) / edgeLen);
+        const lerp = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+        const P = p => `${p[0]} ${p[1]}`;
+        const d =
+          `M ${P(lerp(T, NE, f))} L ${P(NE)} L ${P(lerp(R, NE, f))} ` +
+          `M ${P(lerp(R, SE, f))} L ${P(SE)} L ${P(lerp(B, SE, f))} ` +
+          `M ${P(lerp(B, SW, f))} L ${P(SW)} L ${P(lerp(L, SW, f))} ` +
+          `M ${P(lerp(L, NW, f))} L ${P(NW)} L ${P(lerp(T, NW, f))}`;
+        path.setAttribute('d', d);
+        path.setAttribute('stroke-width', sw);
+        path.setAttribute('fill', 'none');
+        path.setAttribute('stroke', '#ff7171');
+        path.removeAttribute('stroke-dasharray');
+        path.setAttribute('stroke-linejoin', 'round');
+        path.setAttribute('stroke-linecap', 'round');
+      } else {
+        let rect = svg.querySelector(':scope > rect');
+        if (!rect) {
+          while (svg.firstChild) svg.removeChild(svg.firstChild);
+          rect = document.createElementNS(SVGNS, 'rect');
+          svg.appendChild(rect);
+        }
+        const radCss = isCell
+          ? Math.min(w, h) * 0.12
+          : (parseFloat(getComputedStyle(el).borderTopLeftRadius) || 10);
+        const r = Math.max(0, Math.min(radCss, Math.min(w, h) / 2 - inset - 1));
+        const rw = w - 2 * inset, rh = h - 2 * inset;
+        rect.setAttribute('x', inset);
+        rect.setAttribute('y', inset);
+        rect.setAttribute('width', rw);
+        rect.setAttribute('height', rh);
+        rect.setAttribute('rx', r);
+        rect.setAttribute('ry', r);
+        rect.setAttribute('stroke-width', sw);
+        // one gap centered on each side, corners always solid
+        const topLen = rw - 2 * r, sideLen = rh - 2 * r, arc = Math.PI * r / 2;
+        // grid cells match Figma ref 341:1222 (gap 13 / side 201 ≈ 6.5%);
+        // the progress-bar frames keep their own proportional gap
+        const g = isCell
+          ? Math.max(4, Math.min(w, h) * 0.0647)
+          : Math.max(5, Math.min(13, Math.min(topLen, sideLen) * 0.45));
+        const t = Math.max(0, (topLen - g) / 2), s = Math.max(0, (sideLen - g) / 2);
+        rect.setAttribute('stroke-dasharray',
+          [t, g, t + arc + s, g, s + arc + t, g, t + arc + s, g, s + arc].join(' '));
+        rect.setAttribute('stroke-dashoffset', 0);
+      }
+    });
+  }
+
+  // ── Navigation ───────────────────────────────────────────
+  // When true, navigate() only records the destination and returns without rendering.
+  // Used by pressButton to detect same-screen vs. cross-screen transitions.
+  let _navCapture = false;
+  let _capturedDest = null;
+
+  // Which side buttons actually do something on the current screen. Mirrors each
+  // screen's handleBtn() — keep in sync if a screen's wiring changes. Active
+  // buttons get a green chevron (see .chev-active).
+  const ALL_BTNS = ['L1','L2','L3','R1','R2','R3'];
+  function activeButtons() {
+    switch (STATE.screen) {
+      // any side button advances / adjusts these screens
+      case 'home':
+      case 'favorite-saved':
+      case 'drink-ready':
+      case 'settings-clock':                 // L1/L2/R1/R2 adjust, L3 back, R3 confirm
+      case 'settings-timer':
+        return ALL_BTNS.slice();
+      case 'select-drink':
+        return STATE.creatingFavSlot
+          ? ['L1','L3','R1','R2','R3']        // L2 unused in the collapsed view
+          : ALL_BTNS.slice();                 // favorites (L) + drink types (R)
+      case 'configure-drink':
+        return ['L1','R1','R2','L3','R3'];     // L2 unused
+      case 'adjust-beans':
+        return STATE.selectedItem === 'MILK'
+          ? ['R1','R2','R3','L3','L2']
+          : ['R1','R2','R3','L3'];             // L1 label; L2 = no-milk only when adjusting milk
+      case 'confirm-selection':
+      case 'timer-view':
+        return ['L3','R3'];
+      case 'in-preparation':
+        return ['L3','R3'];
+      case 'choose-preset':                  // three presets on the right, back on the left
+      case 'add-to-favorites':
+        return ['R1','R2','R3','L3'];
+      case 'settings':
+      case 'settings-language':
+        return ['R1','R2','R3','L3'];          // L1/L2 unused
+      default:
+        return [];
+    }
+  }
+
+  function updateChevrons() {
+    const active = new Set(activeButtons());
+    ALL_BTNS.forEach(b => {
+      const el = document.querySelector('.btn-' + b);
+      if (el) el.classList.toggle('chev-active', active.has(b));
+    });
+  }
+
+  function navigate(id) {
+    if (_navCapture) { _capturedDest = id; return; }
+    // Don't clear prepTimer when navigating to the favorites overlay —
+    // the brew should keep running in the background.
+    if (id !== 'add-to-favorites' && id !== 'favorite-saved') {
+      if (STATE.prepTimer) { clearInterval(STATE.prepTimer); STATE.prepTimer = null; }
+    }
+    // The run timer keeps counting in the background (so the home footer stays
+    // in sync); it's stopped explicitly on cancel / when re-entering SET TIMER.
+    setPaused(false);
+    STATE.screen = id;
+    const scr = SCREENS[id];
+    document.getElementById('screen-root').innerHTML = scr ? scr.render() : '';
+    paintBorders();
+    updateChevrons();
+    if (scr && scr.onEnter) scr.onEnter();
+    resetIdleTimer();
+  }
+
+  // ── Idle timeout: 30s with no button press returns to the home screen ────
+  // (skipped on 'home' itself and 'in-preparation', which already navigates
+  // on its own once the brew finishes).
+  const IDLE_MS = 30000;
+  let _idleTimer = null;
+  function resetIdleTimer() {
+    if (_idleTimer) { clearTimeout(_idleTimer); _idleTimer = null; }
+    if (STATE.screen === 'home' || STATE.screen === 'in-preparation') return;
+    _idleTimer = setTimeout(() => {
+      fadeOutThen(() => navigate('home'));
+    }, IDLE_MS);
+  }
+  let _rsz;
+  window.addEventListener('resize', () => {
+    clearTimeout(_rsz);
+    _rsz = setTimeout(paintBorders, 120);
+  });
+
+  // The button-press flash and the screen fade-out share this duration so
+  // they play together; content swaps while hidden, then fades back in.
+  const FADE_MS = 300;
+  let _flashing = false;
+
+  // Fade the screen content out, run cb() (the content swap) while invisible,
+  // then fade the new content back in. Background stays put (it's a sibling).
+  function fadeOutThen(cb) {
+    const el = document.getElementById('screen-root');
+    if (!el) { cb(); return; }
+    el.classList.add('fade-out');         // opacity 1 → 0 over FADE_MS
+    setTimeout(() => {
+      cb();                               // swap content while fully hidden
+      el.classList.remove('fade-out');    // opacity 0 → 1 (fade the new screen in)
+    }, FADE_MS);
+  }
+
+  // Timer alarm overlay
+  function showTimerAlarm() {
+    const di = document.querySelector('.display-inner');
+    if (di) di.classList.add('timer-alarming');
+    Sound.startAlarm();
+  }
+  function dismissTimerAlarm() {
+    const di = document.querySelector('.display-inner');
+    if (di) di.classList.remove('timer-alarming');
+    Sound.stopAlarm();
+  }
+
+  // A physical side button with no action on the current screen: shake the
+  // screen to reject the press (still animate the button so it feels pressed).
+  function rejectButton(btn) {
+    const physBtn = document.querySelector('.btn-' + btn);
+    if (physBtn) {
+      physBtn.classList.add('phys-pressed');
+      setTimeout(() => physBtn.classList.remove('phys-pressed'), 200);
+    }
+    const sc = document.getElementById('screen-root');
+    if (sc) {
+      sc.classList.remove('shake');
+      void sc.offsetWidth;                 // force reflow so the animation can replay
+      sc.classList.add('shake');
+      setTimeout(() => sc.classList.remove('shake'), 340);
+    }
+    Sound.error();                         // buzz paired with the shake
+  }
+
+  let _prepErrorTimer = null;
+  function showPrepError(msg) {
+    const el = document.getElementById('prep-error');
+    if (!el) return;
+    if (_prepErrorTimer) { clearTimeout(_prepErrorTimer); _prepErrorTimer = null; }
+    el.textContent = msg;
+    el.classList.add('visible');
+    _prepErrorTimer = setTimeout(() => { el.classList.remove('visible'); _prepErrorTimer = null; }, 2800);
+  }
+
+  function pressButton(btn) {
+    resetIdleTimer();
+    const _di = document.querySelector('.display-inner');
+    if (_di && _di.classList.contains('timer-alarming')) { dismissTimerAlarm(); return; }
+    if (_flashing) return;                 // ignore presses mid-transition
+    if (ALL_BTNS.includes(btn) && !activeButtons().includes(btn)) {
+      rejectButton(btn);                   // dead button on this screen → shake
+      return;
+    }
+    _flashing = true;
+    Sound.click();                         // soft click on every valid press
+    if (btn === 'SETTINGS') {
+      fadeOutThen(() => { _flashing = false; navigate('settings'); });
+      return;
+    }
+    // Logo button: shrink like a side button, then go home — or, if already
+    // home, open settings.
+    if (btn === 'LOGO') {
+      const lb = document.querySelector('.logo-btn');
+      if (lb) { lb.classList.add('phys-pressed'); setTimeout(() => lb.classList.remove('phys-pressed'), 200); }
+      const dest = STATE.screen === 'home' ? 'settings' : 'home';
+      fadeOutThen(() => { _flashing = false; navigate(dest); });
+      return;
+    }
+    const scr = SCREENS[STATE.screen];
+    if (!scr) { _flashing = false; return; }
+
+    // light up the on-screen cell wired to this button (if any)
+    let target = null;
+    document.querySelectorAll('.grid-cell:not(.empty):not(.no-border)').forEach(c => {
+      if ((c.getAttribute('onclick') || '').includes(`'${btn}'`)) target = c;
+    });
+    if (target) target.classList.add('btn-light');
+
+    // animate the physical side-button (shrink 10% for 0.2s)
+    const physBtn = document.querySelector(`.btn-${btn}`);
+    if (physBtn) {
+      physBtn.classList.add('phys-pressed');
+      setTimeout(() => physBtn.classList.remove('phys-pressed'), 200);
+    }
+
+    // hold the bright state for 150ms, then route based on destination
+    setTimeout(() => {
+      if (target) target.classList.add('btn-fading');
+
+      // Dry-run handleBtn to capture the navigation destination without side effects
+      // on the DOM. State mutations (e.g. STATE.selectedDrink) are intentional.
+      _navCapture = true; _capturedDest = null;
+      try { scr.handleBtn(btn); } finally { _navCapture = false; }
+      const dest = _capturedDest;
+
+      if (!dest) {
+        // No navigation (e.g. error shown in-place): let fading finish, then clean up
+        setTimeout(() => {
+          if (target) target.classList.remove('btn-light', 'btn-fading');
+          _flashing = false;
+        }, 150);
+      } else if (dest === STATE.screen) {
+        // Same screen: re-render inline without the full screen fade
+        navigate(dest);
+        setTimeout(() => { _flashing = false; }, 80);
+      } else {
+        // Different screen: fade out, navigate, fade in
+        fadeOutThen(() => { _flashing = false; navigate(dest); });
+      }
+    }, 150);
+  }
+
+  // ── Live clock ───────────────────────────────────────────
+  setInterval(() => {
+    const t = getTime();
+    document.querySelectorAll('.live-clock').forEach(el => el.textContent = t);
+    document.querySelectorAll('.live-home-time').forEach(el => el.textContent = t);
+    updateHomeFooter();
+    maybeStartScheduledBrew();
+  }, 10000);
+
+  // Scheduled brew: once the clock reaches the set time while sitting idle on the
+  // home screen, start the chosen preset automatically, then disarm so it fires
+  // once. (Only fires from home so it never interrupts another flow.)
+  function maybeStartScheduledBrew() {
+    if (!STATE.timerSet || STATE.paused || STATE.screen !== 'home') return;
+    const [h, m] = currentClockHM();
+    if (h !== STATE.timerH || m !== STATE.timerM) return;
+    STATE.timerSet = false;
+    updateHomeFooter();
+    const idx = STATE.drinks.indexOf(STATE.timerDrink);
+    STATE.selectedDrink = STATE.timerDrink;
+    if (idx >= 0 && STATE.favorites[idx]) STATE.amounts = { ...STATE.favorites[idx].amounts };
+    STATE.prepSeg = 0;
+    STATE.prepStartTime = null;
+    fadeOutThen(() => navigate('in-preparation'));
+  }
+
+  // ── Pause / step navigation ──────────────────────────────
+  // Linear order used by the left/right arrow keys.
+  const NAV_ORDER = ['home', 'select-drink', 'configure-drink', 'adjust-beans',
+    'confirm-selection', 'in-preparation', 'add-to-favorites', 'favorite-saved',
+    'drink-ready'];
+
+  function setPaused(p) {
+    STATE.paused = p;
+    const di = document.querySelector('.display-inner');
+    if (di) di.classList.toggle('is-paused', p);
+  }
+
+  function navStep(dir) {
+    const i = NAV_ORDER.indexOf(STATE.screen);
+    if (i === -1) { if (dir < 0) fadeOutThen(() => navigate('home')); return; }
+    const j = Math.min(NAV_ORDER.length - 1, Math.max(0, i + dir));
+    if (j !== i) fadeOutThen(() => navigate(NAV_ORDER[j]));
+  }
+
+  // ── Keyboard ─────────────────────────────────────────────
+  document.addEventListener('keydown', e => {
+    resetIdleTimer();
+    if (e.key === 'ArrowLeft')       { e.preventDefault(); navStep(-1); }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); navStep(1); }
+    else if (e.key === ' ' || e.code === 'Space') { e.preventDefault(); setPaused(!STATE.paused); }
+  });
+
+  // ── Boot ─────────────────────────────────────────────────
+  navigate('home');
+</script>
+
+<!-- Hidden SVG defs: chevron gradient + inlaid inner-shadow filter -->
+<svg aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden">
+  <defs>
+    <!-- Top-to-bottom green gradient for active chevron strokes -->
+    <linearGradient id="chev-gn" x1="0" y1="0" x2="0" y2="1" gradientUnits="objectBoundingBox">
+      <stop offset="0%"   stop-color="#A8FFD2"/>
+      <stop offset="38%"  stop-color="#3DFF88"/>
+      <stop offset="100%" stop-color="#1A8040"/>
+    </linearGradient>
+    <!-- Inlaid inner-shadow filter — dark at bottom of stroke, white rim at top -->
+    <filter id="chev-fi" x="-60%" y="-60%" width="220%" height="220%" color-interpolation-filters="sRGB">
+      <!-- ① capture the stroke alpha -->
+      <feColorMatrix in="SourceAlpha" type="matrix"
+        values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 127 0" result="a"/>
+      <!-- ② dark inner shadow at bottom: shift alpha UP, blur, clip to original -->
+      <feOffset    in="a"    dy="-2"   result="sha"/>
+      <feGaussianBlur stdDeviation="1.3" in="sha" result="shab"/>
+      <feComposite in="shab" in2="a" operator="arithmetic" k2="-1" k3="1" result="ishadow"/>
+      <feColorMatrix in="ishadow" type="matrix"
+        values="0 0 0 0 0.0  0 0 0 0 0.22  0 0 0 0 0.06  0 0 0 0.90 0" result="dark"/>
+      <!-- ③ bright rim at top: shift alpha DOWN, blur, clip to original -->
+      <feOffset    in="a"    dy="2"    result="hla"/>
+      <feGaussianBlur stdDeviation="0.9" in="hla" result="hlab"/>
+      <feComposite in="hlab" in2="a" operator="arithmetic" k2="-1" k3="1" result="ilight"/>
+      <feColorMatrix in="ilight" type="matrix"
+        values="0 0 0 0 0.65  0 0 0 0 1  0 0 0 0 0.72  0 0 0 0.78 0" result="light"/>
+      <!-- ④ composite: base stroke → dark overlay → light rim -->
+      <feMerge>
+        <feMergeNode in="SourceGraphic"/>
+        <feMergeNode in="dark"/>
+        <feMergeNode in="light"/>
+      </feMerge>
+    </filter>
+  </defs>
+</svg>
+
+</body>
+</html>

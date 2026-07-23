@@ -716,8 +716,10 @@
     <!-- Project 06 -->
     <div class="project-section" style="align-items: stretch;">
       <a href="/unify2d.html" style="display:block;">
-        <div class="project-tile" style="box-shadow: none; overflow: hidden; cursor: pointer; display: flex; align-items: center; justify-content: center; background: #D8D7DC;">
-          <video autoplay loop muted playsinline style="height: 100%; width: auto; max-width: 100%; object-fit: contain; display: block;">
+        <div class="project-tile" style="box-shadow: none; overflow: hidden; cursor: pointer; display: flex; align-items: center; justify-content: center; background: transparent;">
+          <!-- clip-path matches homepage.mov's measured phone bounds on unify2d.html,
+               so the grey baked into the video never shows against the page. -->
+          <video autoplay loop muted playsinline style="height: 100%; width: auto; max-width: 100%; object-fit: contain; display: block; clip-path: inset(0.50% 1.46% 0.29% 1.75% round 15.9% / 7.8%);">
             <source src="/videos/unify/homepage.mov" type="video/mp4">
           </video>
         </div>

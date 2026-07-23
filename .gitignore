@@ -23,6 +23,3 @@ dist-ssr
 *.sln
 *.sw?
 **/.DS_Store
-
-# Kafeemaschine lives here as a sibling repo, not tracked by this repo
-public/kaffeemaschine/
