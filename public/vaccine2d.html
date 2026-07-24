@@ -185,12 +185,18 @@
       color: var(--text-primary);
     }
 
-    /* ── Overview ─────────────────────────────────────────────── */
-    .overview {
+    /* ── Guide section (At a Glance / Overview / Process) ────────
+       Same wrapper as mac-lamp/virtual-cooking: own padding rhythm,
+       distinct from the wider Header/Meta .section padding above. */
+    .guide-section {
+      padding: clamp(32px, 5vw, 56px) clamp(40px, 8vw, 80px);
+      border-bottom: 1px solid var(--border-color);
       display: flex;
       flex-direction: column;
-      gap: 20px;
+      gap: clamp(20px, 3vw, 28px);
     }
+
+    .guide-section:last-child { border-bottom: none; }
 
     .section-heading-row {
       display: flex;
@@ -222,23 +228,20 @@
       transition: transform 260ms var(--ease), box-shadow 260ms var(--ease);
     }
 
-
-    .overview-text {
-      background: var(--bg-surface);
-      border-radius: 16px;
-      padding: 24px 28px;
-      box-shadow: none;
-      font-size: 15px;
+    .guide-text {
+      font-size: 14.4px;
       line-height: 1.7;
       color: var(--text-secondary);
     }
 
-    /* ── Static image ─────────────────────────────────────────── */
-    .static-image {
-      width: 100%;
-      border-radius: 16px;
-      box-shadow: var(--shadow-raised);
-      display: block;
+    /* At a glance lead paragraph (big, light) */
+    .glance-lead {
+      font-family: 'Roboto Flex', sans-serif;
+      font-weight: 300;
+      font-size: clamp(18px, 2.2vw, 24px);
+      line-height: 1.4;
+      letter-spacing: -0.01em;
+      color: var(--text-primary);
     }
 
     /* ── Process header ───────────────────────────────────────── */
@@ -256,127 +259,83 @@
       color: var(--text-secondary);
     }
 
-    /* ── Process step layouts ─────────────────────────────────── */
-
-    /* Row 1: big left (672fr) + small right (492fr) */
-    .specs-row {
-      display: grid;
-      grid-template-columns: 672fr 492fr;
-      gap: clamp(20px, 3vw, 40px);
-      align-items: stretch;
-    }
-
-    /* Row 2: vertical left (619fr) + stacked right (545fr) */
-    .frame2 {
-      display: grid;
-      grid-template-columns: 619fr 545fr;
-      gap: clamp(20px, 3vw, 40px);
-      align-items: stretch;
-    }
-
-    .stack {
-      display: grid;
-      grid-template-rows: 1fr 1fr;
-      gap: clamp(20px, 3vw, 40px);
-    }
-
-    /* ── Step tile base ───────────────────────────────────────── */
-    .step-tile {
-      background: var(--bg-surface);
-      border-radius: 24px;
-      box-shadow: var(--shadow-raised);
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      transition: transform 260ms var(--ease), box-shadow 260ms var(--ease);
-    }
-
-
-    /* Split: image + text side by side */
-    .step-tile.split {
-      display: grid;
-      grid-template-columns: 342fr 281fr;
-      gap: 16px;
-    }
-
-    .step-tile.split .img-cell {
-      aspect-ratio: 342 / 431;
-    }
-
-    /* Compact: image on top, caption below */
-    .step-tile.compact .img-cell {
-      aspect-ratio: 444 / 331;
-    }
-
-    /* Vertical: taller image, text below */
-    .step-tile.vertical .img-cell {
-      aspect-ratio: 587 / 820;
-    }
-
-    /* ── Image cell (inset-shadow frame) ──────────────────────── */
-    .img-cell {
-      background: var(--bg-surface);
-      border-radius: 16px;
-      overflow: hidden;
-      box-shadow: var(--shadow-pressed);
-    }
-
-    .img-cell img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-    }
-
-    /* ── Text areas inside tiles ──────────────────────────────── */
-    .step-tile .text-inset {
-      background: var(--bg-surface);
-      border-radius: 16px;
-      padding: 24px;
-      box-shadow: var(--shadow-pressed);
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
-
-    .caption {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .step-heading-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
+    /* Small VT323 heading used above each step's caption — reused from
+       the site's step-heading style so real step names (Modeling,
+       Topology, ...) stay visible inside the alternating blocks. */
     .step-heading {
       font-family: 'VT323', monospace;
-      font-size: 32px;
+      font-size: 26px;
       color: var(--text-primary);
       text-transform: uppercase;
       line-height: 1;
     }
 
-    .step-heading--sm {
-      font-size: 28px;
+    /* ── Process steps — alternating stagger-row / process-shot,
+       ported from Virtual Cooking, natural image aspect ratios ── */
+    .process-steps {
+      display: flex;
+      flex-direction: column;
+      /* Fluid centring (same approach as Unify's .character-list): grows
+         slower than the viewport, so it's full-width on a MacBook and
+         progressively narrows + centres on wider screens. */
+      width: calc(520px + 40vw);
+      max-width: 100%;
+      margin-left: auto;
+      margin-right: auto;
     }
 
-    .step-tile p,
-    .caption p {
-      font-size: 14px;
-      line-height: 1.6;
-      color: var(--text-secondary);
+    .process-steps > * + * { margin-top: clamp(64px, 9vw, 120px); }
+
+    .stagger-row {
+      display: flex;
+      align-items: center;
+      gap: clamp(28px, 5vw, 72px);
+      max-width: 860px;
     }
 
-    /* ── Mid layout ────────────────────────────────────────── */
+    /* image right, text left — pushed to the right side */
+    .stagger-row.right {
+      flex-direction: row-reverse;
+      margin-left: auto;
+    }
+
+    .stagger-figure {
+      flex: 0 0 auto;
+      width: clamp(220px, 32vw, 380px);
+    }
+
+    .stagger-figure img { width: 100%; height: auto; display: block; }
+
+    .stagger-copy {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .stagger-row .stagger-copy { max-width: 440px; }
+
+    /* Process stills — constrained + staggered, caption above image,
+       natural aspect ratio (no crop, no forced aspect-ratio box) */
+    .process-shot {
+      display: flex;
+      flex-direction: column;
+      gap: clamp(14px, 1.6vw, 20px);
+    }
+
+    .process-shot.shift-right { width: 66%; margin-left: 27%; }
+    .process-shot.shift-left  { width: 80%; }
+
+    .process-shot img { width: 100%; height: auto; display: block; }
+
     @media (max-width: 860px) {
       .meta-grid { grid-template-columns: 1fr 1fr; }
-      .specs-row, .frame2 { grid-template-columns: 1fr; }
-      .stack { grid-template-rows: auto; gap: 16px; }
-      .step-tile.split { grid-template-columns: 1fr; }
+      .stagger-row,
+      .stagger-row.right {
+        margin-left: 0; max-width: none; flex-direction: row;
+      }
+      .stagger-figure { width: clamp(160px, 34vw, 240px); }
+      .process-shot.shift-right,
+      .process-shot.shift-left { width: 100%; margin-left: 0; }
     }
 
     /* ── Mobile layout ─────────────────────────────────────── */
@@ -386,13 +345,14 @@
       #top-bar { height: 108px; }
       #top-bar.hide { transform: translateY(-90px); }
       .section { padding: 24px 20px; }
+      .guide-section { padding: 24px 20px; }
       .project-title { font-size: clamp(32px, 9vw, 56px); }
       .meta-grid { grid-template-columns: 1fr 1fr; gap: 11px; }
       .meta-tile { padding: 8px; gap: 8px; height: 155px; min-height: 0; }
       .meta-inset { padding: 8px 10px; }
-      .specs-row, .frame2 { grid-template-columns: 1fr; }
-      .stack { grid-template-rows: auto; gap: 16px; }
-      .step-tile.split { grid-template-columns: 1fr; }
+      .stagger-row,
+      .stagger-row.right { flex-direction: column; align-items: flex-start; gap: 18px; }
+      .stagger-figure { width: clamp(180px, 60vw, 280px); }
     }
 
     /* ── Project nav ──────────────────────────────────────── */
@@ -569,6 +529,12 @@
       </div>
     </div>
 
+    <!-- At a Glance -->
+    <div class="guide-section" style="border-bottom: none; padding-bottom: 0;">
+      <h2 class="section-title" data-i18n="section-glance">At a Glance</h2>
+      <p class="glance-lead" style="margin-top: clamp(20px, 3vw, 32px);" data-i18n="glance-lead">[ Placeholder ] A short, punchy summary of the Double Packaging concept — one or two lines that frame the project before the details begin.</p>
+    </div>
+
     <!-- Meta -->
     <div class="section">
       <div class="meta-grid">
@@ -592,87 +558,73 @@
     </div>
 
     <!-- Overview -->
-    <div class="section" style="border-bottom: none;">
-      <div class="overview">
-        <div class="section-heading-row">
-          <h2 class="section-title" data-i18n="section-overview">Overview / Concept</h2>
-          <span class="step-badge">0</span>
-        </div>
-        <div class="dot-divider"></div>
-        <div class="overview-text" data-i18n="overview-text">
-          Vacuum-sealed packaging is usually photographed flat — real-world gravity and suction don't leave many options. That constraint was part of why this felt worth building: in CGI the pack can stand upright, rotate freely, and be lit from any angle. The object itself was a deliberate choice too, inspired by intranetgirl's tutorial — I wanted something unconventional, a pairing you wouldn't normally see merchandised. A pharmaceutical vial sealed inside a zip bag ticks that box. It also made for a useful technical challenge: two materials with opposite physical behaviour, which pushed me into cloth simulation, Cycles rendering, and transparent shading for the first time.
-        </div>
+    <div class="guide-section">
+      <div class="section-heading-row">
+        <h2 class="section-title" data-i18n="section-overview">Overview / Concept</h2>
+        <span class="step-badge">0</span>
       </div>
+      <div class="dot-divider"></div>
+      <p class="guide-text" data-i18n="overview-text">
+        Vacuum-sealed packaging is usually photographed flat — real-world gravity and suction don't leave many options. That constraint was part of why this felt worth building: in CGI the pack can stand upright, rotate freely, and be lit from any angle. The object itself was a deliberate choice too, inspired by intranetgirl's tutorial — I wanted something unconventional, a pairing you wouldn't normally see merchandised. A pharmaceutical vial sealed inside a zip bag ticks that box. It also made for a useful technical challenge: two materials with opposite physical behaviour, which pushed me into cloth simulation, Cycles rendering, and transparent shading for the first time.
+      </p>
     </div>
 
-    <!-- Process header -->
-    <div class="section" style="border-bottom: none; margin-top: -60px;">
+    <!-- Process -->
+    <div class="guide-section" style="border-bottom: none;">
       <div class="process-header-row">
         <h2 class="section-title" data-i18n="section-process">Process</h2>
         <span class="process-sub" data-i18n="process-sub">5 Steps &nbsp;·&nbsp; Modeling → Render</span>
       </div>
-      <div class="dot-divider" style="margin-top: 20px;"></div>
-    </div>
+      <div class="dot-divider"></div>
 
-    <!-- Steps 1 & 2 -->
-    <div class="section" style="border-bottom: none; margin-top: -70px;">
-      <div class="specs-row">
-        <div class="step-tile split">
-          <div class="img-cell"><img src="/images/vaccine/step1_bottle.png" alt="Modeling — base bottle mesh" /></div>
-          <div class="text-inset">
-            <div class="step-heading-row">
-              <span class="step-heading" data-i18n="step1-heading">Modeling</span>
-              <span class="step-badge">1</span>
-            </div>
-            <p data-i18n="step1-text">The vial body modeled from a single profile, lathed and edge-loop-tightened around the cap. Cap separated as its own object so it could be UV-unwrapped cleanly for the label band. Subdivision surface kept on for the final render to round the silhouette without losing the printed-grade ribs at the base.</p>
+      <div class="process-steps">
+        <div class="stagger-row">
+          <div class="stagger-figure">
+            <img src="/images/vaccine/step1_bottle.png" alt="Modeling — base bottle mesh" />
+          </div>
+          <div class="stagger-copy">
+            <span class="step-heading" data-i18n="step1-heading">Modeling</span>
+            <p class="guide-text" data-i18n="step1-text">The vial body modeled from a single profile, lathed and edge-loop-tightened around the cap. Cap separated as its own object so it could be UV-unwrapped cleanly for the label band. Subdivision surface kept on for the final render to round the silhouette without losing the printed-grade ribs at the base.</p>
           </div>
         </div>
-        <div class="step-tile compact">
-          <div class="img-cell"><img src="/images/vaccine/step2_wireframe.png" alt="Topology — vacuum bag wireframe" /></div>
-          <div class="caption">
-            <div class="step-heading-row">
-              <span class="step-heading step-heading--sm" data-i18n="step2-heading">Topology</span>
-              <span class="step-badge">2</span>
-            </div>
-            <p data-i18n="step2-text">Bag subdivided to ~250k tris — enough resolution for the cloth sim to resolve fine wrinkles where the plastic suctions onto the bottle without exploding into noise.</p>
-          </div>
-        </div>
-      </div>
-    </div>
 
-    <!-- Steps 3, 4 & 5 -->
-    <div class="section" style="border-bottom: none; padding-top: 0;">
-      <div class="frame2">
-        <div class="step-tile vertical">
-          <div class="img-cell"><img src="/images/vaccine/step3_shaded_mesh.png" alt="Vacuum Sim — collapsed bag mesh" /></div>
-          <div class="text-inset">
-            <div class="step-heading-row">
-              <span class="step-heading" data-i18n="step3-heading">Vacuum Sim</span>
-              <span class="step-badge">3</span>
-            </div>
-            <p data-i18n="step3-text">Cloth simulation with negative pressure — the bag actively sucks down onto the rigid bottle. 192 baked frames, with frame 90 picked as the hero.</p>
+        <div class="process-shot shift-right">
+          <div class="guide-media">
+            <img src="/images/vaccine/step2_wireframe.png" alt="Topology — vacuum bag wireframe" />
+          </div>
+          <div class="stagger-copy">
+            <span class="step-heading" data-i18n="step2-heading">Topology</span>
+            <p class="guide-text" data-i18n="step2-text">Bag subdivided to ~250k tris — enough resolution for the cloth sim to resolve fine wrinkles where the plastic suctions onto the bottle without exploding into noise.</p>
           </div>
         </div>
-        <div class="stack">
-          <div class="step-tile compact">
-            <div class="img-cell"><img src="/images/vaccine/step4_shader_nodes.png" alt="Shading — Cycles node graph" /></div>
-            <div class="caption">
-              <div class="step-heading-row">
-                <span class="step-heading step-heading--sm" data-i18n="step4-heading">Shading</span>
-                <span class="step-badge">4</span>
-              </div>
-              <p data-i18n="step4-text">Bag mixes Transparent BSDF for clarity, Translucent BSDF for the milky scatter on the bunched areas, and Glossy with IOR-driven Fresnel for the wet plastic highlights.</p>
-            </div>
+
+        <div class="stagger-row">
+          <div class="stagger-figure">
+            <img src="/images/vaccine/step3_shaded_mesh.png" alt="Vacuum Sim — collapsed bag mesh" />
           </div>
-          <div class="step-tile compact">
-            <div class="img-cell"><img src="/images/vaccine/step5_viewport.png" alt="Final Render — viewport preview" /></div>
-            <div class="caption">
-              <div class="step-heading-row">
-                <span class="step-heading step-heading--sm" data-i18n="step5-heading">Final Render</span>
-                <span class="step-badge">5</span>
-              </div>
-              <p data-i18n="step5-text">Cycles output at 1920×1400, single key light at 6500K, denoised in compositor. Two hero passes shipped — a cool blue clinical front-on, and a rose-tinted angle used as the portfolio cover.</p>
-            </div>
+          <div class="stagger-copy">
+            <span class="step-heading" data-i18n="step3-heading">Vacuum Sim</span>
+            <p class="guide-text" data-i18n="step3-text">Cloth simulation with negative pressure — the bag actively sucks down onto the rigid bottle. 192 baked frames, with frame 90 picked as the hero.</p>
+          </div>
+        </div>
+
+        <div class="process-shot shift-right">
+          <div class="guide-media">
+            <img src="/images/vaccine/step4_shader_nodes.png" alt="Shading — Cycles node graph" />
+          </div>
+          <div class="stagger-copy">
+            <span class="step-heading" data-i18n="step4-heading">Shading</span>
+            <p class="guide-text" data-i18n="step4-text">Bag mixes Transparent BSDF for clarity, Translucent BSDF for the milky scatter on the bunched areas, and Glossy with IOR-driven Fresnel for the wet plastic highlights.</p>
+          </div>
+        </div>
+
+        <div class="process-shot shift-left">
+          <div class="guide-media">
+            <img src="/images/vaccine/step5_viewport.png" alt="Final Render — viewport preview" />
+          </div>
+          <div class="stagger-copy">
+            <span class="step-heading" data-i18n="step5-heading">Final Render</span>
+            <p class="guide-text" data-i18n="step5-text">Cycles output at 1920×1400, single key light at 6500K, denoised in compositor. Two hero passes shipped — a cool blue clinical front-on, and a rose-tinted angle used as the portfolio cover.</p>
           </div>
         </div>
       </div>
@@ -809,6 +761,8 @@
         'label-team': 'Team', 'val-team': 'Just Me',
         'label-role': 'Role', 'val-role': '3D Designer',
         'label-skills': 'Skills', 'val-skills': 'Blender · Cycles<br/>Cloth Simulation<br/>Material Shading',
+        'section-glance': 'At a Glance',
+        'glance-lead': '[ Placeholder ] A short, punchy summary of the Double Packaging concept — one or two lines that frame the project before the details begin.',
         'section-overview': 'Overview / Concept',
         'overview-text': 'Vacuum-sealed packaging is usually photographed flat — real-world gravity and suction don\'t leave many options. That constraint was part of why this felt worth building: in CGI the pack can stand upright, rotate freely, and be lit from any angle. The object itself was a deliberate choice too, inspired by intranetgirl\'s tutorial — I wanted something unconventional, a pairing you wouldn\'t normally see merchandised. A pharmaceutical vial sealed inside a zip bag ticks that box. It also made for a useful technical challenge: two materials with opposite physical behaviour, which pushed me into cloth simulation, Cycles rendering, and transparent shading for the first time.',
         'section-process': 'Process', 'process-sub': '5 Steps · Modeling → Render',
@@ -824,6 +778,8 @@
         'label-team': 'Team', 'val-team': 'Nur ich',
         'label-role': 'Rolle', 'val-role': '3D-Designer',
         'label-skills': 'Werkzeuge', 'val-skills': 'Blender · Cycles<br/>Tuchsimulation<br/>Material-Shading',
+        'section-glance': 'Auf einen Blick',
+        'glance-lead': '[ Placeholder ] Eine kurze, prägnante Zusammenfassung des Double-Packaging-Konzepts — ein bis zwei Sätze, die das Projekt einleiten.',
         'section-overview': 'Überblick / Konzept',
         'overview-text': 'Vakuumversiegelte Verpackungen werden normalerweise flach fotografiert — Schwerkraft und Unterdruck lassen in der echten Welt wenig Spielraum. Diese Einschränkung war Teil dessen, was dieses Projekt lohnenswert machte: In CGI kann die Verpackung aufrecht stehen, sich frei drehen und aus jedem Winkel beleuchtet werden. Das Objekt selbst war ebenfalls eine bewusste Wahl, inspiriert durch intranetgirls Tutorial — ich wollte etwas Unkonventionelles, eine Kombination, die man normalerweise nicht kommerziell sieht. Ein pharmazeutisches Fläschchen in einem Druckverschlussbeutel trifft genau das. Es war auch eine hilfreiche technische Herausforderung: zwei Materialien mit gegensätzlichem physikalischen Verhalten, was mich zum ersten Mal in die Tuchsimulation, Cycles-Rendering und transparentes Shading eingeführt hat.',
         'section-process': 'Prozess', 'process-sub': '5 Schritte · Modellierung → Rendering',

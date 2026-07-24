@@ -32,7 +32,10 @@
 
     html, body {
       width: 100%;
-      overflow-x: hidden;
+      /* clip (not hidden): still prevents horizontal scroll, but unlike
+         hidden it does NOT create a scroll container — hidden here silently
+         breaks position:sticky for the .lamp-scrolly pin. */
+      overflow-x: clip;
       background: var(--bg-surface);
       color: var(--text-primary);
       font-family: 'Roboto Flex', sans-serif;
@@ -60,7 +63,10 @@
       padding-bottom: 12px;
       border: 1px solid var(--border-color);
       margin: 12px auto;
-      overflow: hidden;
+      /* clip (not hidden): clips content to the bordered card without
+         becoming a scroll container, which hidden does — and a scroll-
+         container ancestor breaks the .lamp-scrolly sticky pin. */
+      overflow: clip;
     }
 
     /* ── Hero ── */
@@ -179,6 +185,16 @@
       letter-spacing: -0.04em;
     }
 
+    /* ── At a glance lead paragraph (big, light) ── */
+    .glance-lead {
+      font-family: 'Roboto Flex', sans-serif;
+      font-weight: 300;
+      font-size: clamp(18px, 2.2vw, 24px);
+      line-height: 1.4;
+      letter-spacing: -0.01em;
+      color: var(--text-primary);
+    }
+
     .step-badge {
       width: 38px; height: 38px;
       background: var(--accent-orange);
@@ -228,19 +244,6 @@
       display: flex;
       flex-direction: column;
       gap: 20px;
-    }
-
-    .overview-text {
-      background: var(--bg-surface);
-      border-radius: 16px;
-      padding: 24px 28px;
-      box-shadow: var(--shadow-pressed);
-      font-size: 14.4px;
-      line-height: 1.7;
-      color: var(--text-secondary);
-      align-self: start;
-      margin-top: 27px;
-      height: calc(clamp(288px, 41.6vw, 416px) + clamp(12px, 2vw, 20px) + clamp(37px, 4.9vw, 52px));
     }
 
     .text-inset {
@@ -499,7 +502,7 @@
     /* ── Gallery / Diashow ─────────────────────────────────── */
     .gallery-with-text {
       display: grid;
-      grid-template-columns: 65fr 35fr;
+      grid-template-columns: 1fr;
       gap: clamp(20px, 3vw, 40px);
       align-items: start;
     }
@@ -514,8 +517,14 @@
     .gallery-main-wrap {
       display: flex;
       flex-direction: column;
+      width: 100%;
+      max-width: min(988px, 100%);
+      margin: 0;
     }
 
+    /* Frame matches the photos' own ~4:3 aspect so the full image always
+       shows — no cropping — instead of forcing a wide box and letting
+       object-fit: cover cut the top/bottom off taller-than-box images. */
     .gallery-main {
       background: var(--bg-surface);
       border-radius: 0;
@@ -525,12 +534,14 @@
       align-items: center;
       justify-content: center;
       transition: opacity 180ms ease;
+      width: 100%;
+      aspect-ratio: 4 / 3;
     }
     .gallery-main.fading { opacity: 0; }
     .gallery-main img,
     .gallery-main video {
       width: 100%;
-      height: clamp(288px, 41.6vw, 416px);
+      height: 100%;
       object-fit: contain;
       display: block;
     }
@@ -538,7 +549,8 @@
     .gallery-thumbs {
       display: flex;
       flex-direction: row;
-      justify-content: space-between;
+      justify-content: flex-start;
+      gap: clamp(10px, 1.6vw, 18px);
       overflow: visible;
       padding: 4px 2px;
     }
@@ -571,8 +583,6 @@
     .gallery-thumb.is-video { position: relative; }
 
     @media (max-width: 640px) {
-      .gallery-with-text { grid-template-columns: 1fr; }
-      .gallery-main img, .gallery-main video { height: clamp(260px, 68vw, 380px); }
       .gallery-thumb { width: clamp(32px, 9vw, 41px); }
     }
 
@@ -590,6 +600,136 @@
     .scroll-dot {
       width: 5px; height: 5px; border-radius: 50%;
       background: var(--accent-orange, #FF5C00); display: block; flex-shrink: 0;
+    }
+
+    /* ── Process — staggered stills + text ── */
+    .guide-text {
+      font-size: 14.4px;
+      line-height: 1.7;
+      color: var(--text-secondary);
+    }
+
+    .guide-media {
+      width: 100%;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: var(--shadow-pressed);
+      background: #111;
+    }
+
+    .guide-media img,
+    .guide-media video {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    /* Process stills — constrained + staggered, caption above image */
+    .process-shot {
+      display: flex;
+      flex-direction: column;
+      gap: clamp(14px, 1.6vw, 20px);
+    }
+
+    /* centre at the 2/3 mark (right-third line): 43.6% + 46.2%/2 ≈ 66.7% */
+    .process-shot.shift-right { width: 46.2%; margin-left: 43.6%; }
+    /* centre at the 1/3 mark (left-third line): 5.3% + 56%/2 ≈ 33.3% */
+    .process-shot.shift-left  { width: 64.4%; margin-left: 1.1%; }
+
+    @media (max-width: 860px) {
+      .process-shot.shift-right,
+      .process-shot.shift-left { width: 100%; margin-left: 0; }
+    }
+
+    /* ── Scroll-driven dual-video pair (ported from Unify's .scrolly) ──
+       A tall spacer pins the sticky panel; scrolling past its midpoint
+       (or clicking a video) swaps which video is full-size and which
+       text panel shows. Mirrored like Unify's timetable/socials pair:
+       text left, videos right. */
+    .lamp-scrolly {
+      position: relative;
+      height: 175vh;
+    }
+
+    .lamp-scrolly-sticky {
+      position: sticky;
+      top: 12vh;
+      height: 76vh;
+      display: flex;
+      align-items: center;
+    }
+
+    /* Centred at the right-third line (66.667%), matching the two staggered
+       process-shot images above. Absolute + translateX(-50%) self-centers
+       regardless of the pair's rendered width, which changes as the
+       active/inactive video swap animates — a fixed margin-% (the approach
+       used for the fixed-width images) can't track that. */
+    .lamp-scrolly-media {
+      position: absolute;
+      left: 66.667%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: flex-end;
+      gap: clamp(16px, 2vw, 32px);
+    }
+
+    .lamp-scrolly-vid { cursor: pointer; border-radius: 16px; overflow: hidden; box-shadow: var(--shadow-pressed); }
+
+    .lamp-scrolly-vid video {
+      display: block;
+      width: auto;
+      height: calc(clamp(538px, 75.3vh, 817px) * 0.6);
+      transition: height 480ms cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .lamp-scrolly-vid.is-active video {
+      height: clamp(538px, 75.3vh, 817px);
+    }
+
+    .lamp-scrolly-copy {
+      position: relative;
+      /* media is absolutely positioned now (out of flex flow), so this is
+         the sticky row's only flex child — cap its width to roughly the
+         left two-thirds so text never runs under the video pair. */
+      flex: 0 1 auto;
+      width: 38%;
+      min-width: 0;
+      align-self: center;
+      min-height: 140px;
+    }
+
+    .lamp-scrolly-panel {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      transform: translateY(-50%);
+      opacity: 0;
+      transition: opacity 350ms ease;
+      pointer-events: none;
+    }
+
+    .lamp-scrolly-panel.is-active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    @media (max-width: 860px) {
+      .lamp-scrolly { height: auto; }
+      .lamp-scrolly-sticky {
+        position: static; height: auto;
+        flex-direction: column; align-items: stretch;
+        gap: 28px; padding: 32px 0;
+      }
+      .lamp-scrolly-media {
+        position: static; left: auto; transform: none;
+        justify-content: center;
+      }
+      .lamp-scrolly-vid video,
+      .lamp-scrolly-vid.is-active video { height: clamp(345px, 73.6vw, 460px); }
+      .lamp-scrolly-copy { width: 100%; min-height: 0; }
+      .lamp-scrolly-panel { position: static; transform: none; opacity: 1; pointer-events: auto; }
+      .lamp-scrolly-panel + .lamp-scrolly-panel { margin-top: 24px; }
     }
   </style>
 </head>
@@ -627,6 +767,12 @@
       </div>
     </div>
 
+    <!-- At a Glance -->
+    <div class="section" style="border-bottom: none; padding-bottom: 0;">
+      <h2 class="section-title" data-i18n="section-glance">At a Glance</h2>
+      <p class="glance-lead" style="margin-top: clamp(20px, 3vw, 32px);" data-i18n="glance-lead">[ Placeholder ] A short, punchy summary of the Mac-Lamp concept — one or two lines that frame the project before the details begin.</p>
+    </div>
+
     <!-- Meta -->
     <div class="section">
       <div class="meta-grid">
@@ -649,11 +795,57 @@
       </div>
     </div>
 
+    <!-- Process -->
+    <div class="section">
+      <div class="section-heading-row">
+        <h2 class="section-title" data-i18n="section-process">Process</h2>
+        <span class="step-badge">0</span>
+      </div>
+      <div class="dot-divider" style="margin-bottom: clamp(20px, 3vw, 32px);"></div>
+
+      <div class="process-shot shift-right">
+        <div class="guide-media">
+          <img src="/images/mac-lamp/1.png" alt="CAD render of the housing" />
+        </div>
+        <p class="guide-text" data-i18n="process-cad">Every part was modeled in CAD to the salvaged MacBook's exact measurements before anything was printed.</p>
+      </div>
+
+      <div class="process-shot shift-left" style="margin-top: clamp(72px, 11vw, 96px); margin-bottom: clamp(72px, 11vw, 96px);">
+        <div class="guide-media">
+          <video src="/videos/mac-lamp/2.MOV" autoplay loop muted playsinline></video>
+        </div>
+        <p class="guide-text" data-i18n="process-print">Printed in translucent orange PLA, layer by layer.</p>
+      </div>
+
+      <div class="lamp-scrolly">
+        <div class="lamp-scrolly-sticky">
+          <div class="lamp-scrolly-media">
+            <div class="lamp-scrolly-vid is-active" data-step="cut">
+              <video autoplay loop muted playsinline>
+                <source src="/videos/mac-lamp/3.MOV" type="video/quicktime" />
+                <source src="/videos/mac-lamp/3.MOV" type="video/mp4" />
+              </video>
+            </div>
+            <div class="lamp-scrolly-vid" data-step="sand">
+              <video autoplay loop muted playsinline>
+                <source src="/videos/mac-lamp/4.MOV" type="video/quicktime" />
+                <source src="/videos/mac-lamp/4.MOV" type="video/mp4" />
+              </video>
+            </div>
+          </div>
+          <div class="lamp-scrolly-copy">
+            <p class="lamp-scrolly-panel guide-text is-active" data-step="cut" data-i18n="process-cut">The salvaged MacBook shell was cut down on a bandsaw to fit the new housing.</p>
+            <p class="lamp-scrolly-panel guide-text" data-step="sand" data-i18n="process-sand">Cut edges were sanded smooth by hand before final assembly.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Gallery + Overview -->
     <div class="section">
       <div class="section-heading-row">
         <h2 class="section-title" data-i18n="section-overview">Overview / Concept</h2>
-        <span class="step-badge">0</span>
+        <span class="step-badge">1</span>
       </div>
       <div class="dot-divider" style="margin-bottom: clamp(20px, 3vw, 32px);"></div>
       <div class="gallery-with-text">
@@ -665,9 +857,6 @@
             </div>
           </div>
           <div class="gallery-thumbs" id="gallery-thumbs"></div>
-        </div>
-        <div class="overview-text" data-i18n-html="overview-text">
-          Apple's early-2000s design language — translucent coloured plastic, playful forms, hardware you wanted to look at — has mostly disappeared from the company's lineup. This project brought some of that energy back, using a broken 2012 MacBook heading for a drawer.<br>The MacBook was deconstructed and its shell combined with a 3D-printed housing in translucent orange PLA — chosen to echo the colourful, see-through aesthetic of that era.<br>It was also a first exercise in precision CAD work — modeling to real measurements so that printed parts would fit salvaged hardware without play or gap.
         </div>
       </div>
     </div>
@@ -809,9 +998,14 @@
         'label-team': 'Team', 'val-team': 'Just Me',
         'label-role': 'Role', 'val-role': 'Designer & Maker',
         'label-tools': 'Tools', 'val-tools': 'CAD Modeling<br>3D Printing<br>Metal Tooling',
+        'section-glance': 'At a Glance',
+        'glance-lead': '[ Placeholder ] A short, punchy summary of the Mac-Lamp concept — one or two lines that frame the project before the details begin.',
         'section-overview': 'Overview / Concept',
-        'overview-text': 'Apple\'s early-2000s design language — translucent coloured plastic, playful forms, hardware you wanted to look at — has mostly disappeared from the company\'s lineup. This project brought some of that energy back, using a broken 2012 MacBook heading for a drawer.<br>The MacBook was deconstructed and its shell combined with a 3D-printed housing in translucent orange PLA — chosen to echo the colourful, see-through aesthetic of that era.<br>It was also a first exercise in precision CAD work — modeling to real measurements so that printed parts would fit salvaged hardware without play or gap.',
         'section-process': 'Process', 'process-sub': '6 Steps · Concept → Render',
+        'process-cut': 'The salvaged MacBook shell was cut down on a bandsaw to fit the new housing.',
+        'process-sand': 'Cut edges were sanded smooth by hand before final assembly.',
+        'process-cad': 'Every part was modeled in CAD to the salvaged MacBook\'s exact measurements before anything was printed.',
+        'process-print': 'Printed in translucent orange PLA, layer by layer.',
         'section-gallery': 'Gallery', 'gallery-meta': '3 Videos · 6 Photos',
         'nav-prev': '<< PREVIOUS', 'nav-next': 'NEXT >>',
         'nav-double-packaging': 'Double Packaging', 'nav-this-website': 'This Website',
@@ -821,9 +1015,14 @@
         'label-team': 'Team', 'val-team': 'Nur ich',
         'label-role': 'Rolle', 'val-role': 'Designer & Hersteller',
         'label-tools': 'Werkzeuge', 'val-tools': 'CAD-Modellierung<br>3D-Druck<br>Metallbearbeitung',
+        'section-glance': 'Auf einen Blick',
+        'glance-lead': '[ Placeholder ] Eine kurze, prägnante Zusammenfassung des Mac-Lamp-Konzepts — ein bis zwei Sätze, die das Projekt einleiten.',
         'section-overview': 'Überblick / Konzept',
-        'overview-text': 'Apples Designsprache der frühen 2000er — durchsichtiger, farbiger Kunststoff, verspielte Formen, Hardware, die man ansehen wollte — ist weitgehend verschwunden. Dieses Projekt brachte etwas von dieser Energie zurück, mit einem kaputten MacBook von 2012, das in einer Schublade gelandet wäre.<br>Das MacBook wurde zerlegt und sein Gehäuse mit einem 3D-gedruckten Gehäuse aus transparentem orangem PLA kombiniert — um die bunte, durchsichtige Ästhetik jener Zeit widerzuspiegeln.<br>Es war auch eine erste Übung in präziser CAD-Arbeit — Modellierung nach realen Maßen, damit gedruckte Teile ohne Spiel oder Lücke passen.',
         'section-process': 'Prozess', 'process-sub': '6 Schritte · Konzept → Rendering',
+        'process-cut': 'Das gerettete MacBook-Gehäuse wurde mit einer Bandsäge auf das neue Gehäuse zugeschnitten.',
+        'process-sand': 'Die Schnittkanten wurden vor der Endmontage von Hand glatt geschliffen.',
+        'process-cad': 'Jedes Teil wurde nach den exakten Maßen des geretteten MacBooks in CAD modelliert, bevor etwas gedruckt wurde.',
+        'process-print': 'Gedruckt in transparentem orangem PLA, Schicht für Schicht.',
         'section-gallery': 'Galerie', 'gallery-meta': '3 Videos · 6 Fotos',
         'nav-prev': '<< ZURÜCK', 'nav-next': 'WEITER >>',
         'nav-double-packaging': 'Double Packaging', 'nav-this-website': 'Diese Website',
@@ -843,18 +1042,79 @@
       if (e.data.type === 'lang-change') applyLang(e.data.lang);
     });
 
+    // ── Scroll-driven dual-video pair (ported from Unify's initScrolly) ──
+    // The sticky panel is pinned; crossing the section's midpoint (or
+    // clicking a video) swaps which video is full-size and which text
+    // panel is shown.
+    (function initLampScrolly() {
+      const scrolly = document.querySelector('.lamp-scrolly');
+      if (!scrolly) return;
+      const vids   = scrolly.querySelectorAll('.lamp-scrolly-vid');
+      const panels = scrolly.querySelectorAll('.lamp-scrolly-panel');
+      const steps  = Array.from(vids).map(v => v.dataset.step);
+      if (steps.length < 2) return;
+      let current = steps[0];
+
+      function setActive(step) {
+        if (step === current) return;
+        current = step;
+        vids.forEach(v => {
+          const on = v.dataset.step === step;
+          v.classList.toggle('is-active', on);
+          const video = v.querySelector('video');
+          if (video) {
+            if (on) { video.play().catch(() => {}); }
+            else { video.pause(); }
+          }
+        });
+        panels.forEach(p => p.classList.toggle('is-active', p.dataset.step === step));
+      }
+
+      vids.forEach(v => {
+        if (!v.classList.contains('is-active')) {
+          const video = v.querySelector('video');
+          if (video) video.pause();
+        }
+      });
+
+      function metrics() {
+        const rect = scrolly.getBoundingClientRect();
+        const top = rect.top + window.scrollY;
+        const total = Math.max(scrolly.offsetHeight - window.innerHeight, 1);
+        return { top, total };
+      }
+      let ticking = false;
+      function onScroll() {
+        if (ticking) return;
+        ticking = true;
+        requestAnimationFrame(() => {
+          const { top, total } = metrics();
+          const p = Math.min(Math.max((window.scrollY - top) / total, 0), 1);
+          setActive(p < 0.5 ? steps[0] : steps[1]);
+          ticking = false;
+        });
+      }
+      window.addEventListener('scroll', onScroll, { passive: true });
+      window.addEventListener('resize', onScroll);
+      onScroll();
+
+      vids.forEach(v => {
+        v.addEventListener('click', () => {
+          const { top, total } = metrics();
+          const p = v.dataset.step === steps[0] ? 0.15 : 0.85;
+          window.scrollTo({ top: Math.round(top + p * total), behavior: 'smooth' });
+        });
+      });
+    })();
+
     // ── Gallery ──────────────────────────────────────────────
     (function() {
       const ITEMS = [
-        { type: 'img',   src: '/images/mac-lamp/1.png',  contain: false, pos: 'center bottom' },
-        { type: 'video', src: '/videos/mac-lamp/2.MOV',  contain: false },
-        { type: 'video', src: '/videos/mac-lamp/3.MOV',  contain: true  },
-        { type: 'video', src: '/videos/mac-lamp/4.MOV',  contain: true  },
-        { type: 'img',   src: '/images/mac-lamp/5.HEIC', contain: false },
-        { type: 'img',   src: '/images/mac-lamp/6.HEIC', contain: false },
-        { type: 'img',   src: '/images/mac-lamp/7.HEIC', contain: false },
-        { type: 'img',   src: '/images/mac-lamp/8.HEIC', contain: false },
-        { type: 'img',   src: '/images/mac-lamp/9.jpg',  contain: false },
+        { type: 'img',   src: '/images/mac-lamp/5.jpg', contain: true },
+        { type: 'img',   src: '/images/mac-lamp/6.jpg', contain: true },
+        { type: 'img',   src: '/images/mac-lamp/7.jpg', contain: true },
+        { type: 'img',   src: '/images/mac-lamp/8.jpg', contain: true },
+        { type: 'img',   src: '/images/mac-lamp/9.jpg', contain: true },
       ];
 
       const thumbsEl    = document.getElementById('gallery-thumbs');
