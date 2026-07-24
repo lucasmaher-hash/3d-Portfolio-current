@@ -149,13 +149,39 @@ The interactive coffee machine is a self-contained mini-app:
 
 ## 2D page layout patterns
 
-**Standard pattern** (vaccine, mac-lamp, portfolio, kaffeemaschine):
+**Standard pattern** (portfolio, kaffeemaschine — vaccine and mac-lamp have since diverged, see below):
 1. **Hero** — full-width image or split layout
 2. **Header section** — breadcrumb, OCR-A-BT title, blinking orange dot, dotted divider
 3. **Meta grid** — 4 neumorphic tiles (Timeline, Team, Role, Tools)
 4. **Overview / Concept** — multi-column section with image + text
 5. **Process** — step tiles (numbered cards with images/text)
 6. **Project nav** — bottom bar linking to next project
+
+**The current shared pattern** (mac-lamp, vaccine, virtual-cooking all follow this now; Unify is a variant of it):
+1. Hero
+2. Header (breadcrumb, title, dotted divider)
+3. **At a Glance** — `.guide-section` with heading + `.glance-lead` paragraph, no bottom border, sits directly above the meta grid
+4. Meta grid
+5. Overview/Concept and/or Process — built from a shared set of ported classes: `.guide-section` (padded/bordered wrapper), `.guide-text` (plain paragraph), `.guide-media` (image/video card), `.stagger-row` / `.stagger-row.right` (portrait or near-square figure + text beside, alternating sides), `.process-shot.shift-right` / `.shift-left` (landscape still, caption above, alternating horizontal offset). A `.process-steps` / `.stagger-list` wrapper applies fluid-width centering (`width: calc(520px + 40vw); max-width: 100%; margin: auto`) so alternating blocks stay pulled together on ultra-wide monitors instead of sprawling to opposite edges.
+6. Project nav
+
+**Mac-Lamp (02)** — rebuilt this session (see "Recent Changes"):
+1. Hero (image)
+2. Header
+3. At a Glance (placeholder)
+4. Meta grid
+5. **Process** (badge 0) — `1.png` + `2.MOV` as alternating `.process-shot` blocks, then `3.MOV`/`4.MOV` as a **scroll-driven dual-video pair** (`.lamp-scrolly*`, ported from Unify's `.scrolly` mechanism — sticky pin, scroll/click swaps active video, mirrored text-left/videos-right layout)
+6. **Overview / Concept** (badge 1) — heading + real copy, then the full-width photo diashow/gallery (`5.jpg`–`9.jpg`, `aspect-ratio: 4/3`, `object-fit: contain`)
+7. Project nav
+
+**Double Packaging (01)** — rebuilt this session (see "Recent Changes"):
+1. Hero (video)
+2. Header
+3. At a Glance (placeholder)
+4. Meta grid
+5. **Overview / Concept** (badge 0) — real copy, plain `.guide-text`
+6. **Process** (no badge, `.process-sub` meta "5 Steps · Modeling → Render") — 5 alternating blocks in original order, natural image aspect ratios, no per-step badges
+7. Project nav (no "previous" — this is Project 01, the first)
 
 **Virtual Cooking (05)** — REBUILT (this session) from a new Figma reference. Middle sections were torn out and rebuilt; hero, header and project nav were kept. Text is all `[ Placeholder ]` pending real copy (English only, not yet in `TRANSLATIONS`).
 1. **Hero** — full-width 16:10 image, now `side_v1_final_V1.png` (also used for the VC card on `2D.html`)
@@ -197,7 +223,7 @@ Organized by project for clarity:
 
 **Images** (`/public/images/`):
 - `about/` — About page hero
-- `mac-lamp/` — Mac-Lamp project images & diashow frames
+- `mac-lamp/` — Mac-Lamp project images & diashow frames. Diashow items are `5.jpg`–`9.jpg` (converted from `.HEIC` this session — HEIC only renders in Safari, so gallery images must be JPG/PNG; the original `5.HEIC`–`8.HEIC` are still on disk but unused). Process-section stills: `1.png` (CAD render) + videos `2.MOV`/`3.MOV`/`4.MOV` in `videos/mac-lamp/`
 - `portfolio/` — This Website project screenshots
 - `vaccine/` — Double Packaging renders & process steps
 - `vr-cookbook/` — Virtual Cooking assets: `side_v1_final_V1.png` (hero + card), `back_final_V2.jpg`, `timer_click_V1.jpg`, silver panel renders `Panel_Left.png` / `Panel_Right.png` / `Stopwatch.png` (transparent bg), and process screenshots `blender-modeling.png` + `app-preview.png` (⚠️ renamed from Figma exports that had spaces in the filename — keep filenames URL-safe)
@@ -235,32 +261,53 @@ Organized by project for clarity:
 - ✅ **Restored and committed.** Copied from `~/Documents/creative-work/ongoing/GitHub/kaffeemaschine_external_copy/` (the 5 Jul version) and verified working in the iframe on `kaffeemaschine2d.html`.
 - It had never been tracked by git in this repo, which is why it went missing with no way to recover it here. It **is** tracked now — keep it that way.
 
+**Mac-Lamp (02):**
+- ✅ Rebuilt this session — At a Glance, fixed gallery cropping, HEIC→JPG, new Process section with scrolly mechanism (see layout above)
+- ⏳ At a Glance lead is `[ Placeholder ]`, not yet in `TRANSLATIONS` (EN+DE keys exist — `section-glance`/`glance-lead` — but text itself is placeholder)
+
+**Double Packaging (01):**
+- ✅ Rebuilt this session to match the shared pattern (see layout above); all real copy preserved
+- ⏳ At a Glance lead is `[ Placeholder ]`; same `section-glance`/`glance-lead` keys pattern
+
 **3D mode:**
 - Index.html and Three.js scene stable; no recent changes
 
+**Deployment:**
+- ✅ Live at `https://lucasmaher.com` (custom domain, HTTPS working) and `https://lucasmaher-hash.github.io/3d-Portfolio-current/` — see "Deployment" section below
+
 ## Recent Changes (This Session)
 
-1. **French removed site-wide** — see "Languages / i18n" section. EN + DE only now.
+Previous session's work (French removal, Unify design-story sections, hero blob, Virtual Cooking rebuild, nav dropdown, `2D.html` divider fix) is folded into the structural sections above rather than listed here — see "Languages / i18n," "Unify Page: Hero Blob Implementation," and the layout-pattern entries below.
 
-2. **Unify — new design-story sections** (between meta grid and Feature 1): Design Process + color palette, Typography (Nunito pills), Character based design (3 staggered SVG characters w/ idle float), Final Product header (with `border-top` divider). Characters extracted from Figma → `/images/unify/characters/*.svg`.
+1. **Virtual Cooking — Final result reordered.** `.result-image-pair` moved out from under "Instruction manual" to sit directly beneath the "Timer & ingredients" heading; that block now reads heading → images → caption → video.
 
-3. **Unify — all copy filled** (project context supplied by user): overview, color/typography/character text, all 6 feature copy (EN+DE), meta tiles. Feature titles rewritten. Features renumbered to scroll order 1–6; Friends/Navigation swapped in `#nav-friends-scrolly` (see feature-numbering note in the Unify layout section).
+2. **Unify — video backgrounds clipped away.** All 6 phone videos clipped to the phone bezel via per-file `clip-path` (see "Unify Page: Video Details"). Files unchanged; render-time only. Removed the constraint that the page background had to match the videos' baked-in grey.
 
-4. **Unify hero blob** — centered at 2/3 (`left: 66.667%` + `translateX(-50%)`), bounce-in on load (`blobDrop`), 35% larger + more hero height on true widescreen.
+3. **Unify — page background unified** to `var(--bg-surface)` (`#DCDCE3`), same as every other 2D page. Only possible because of change 2.
 
-5. **Unify character centering** — fluid, no breakpoint: `.character-list { width: calc(520px + 40vw); max-width: 100%; margin-inline: auto }` — full-width on MacBook, progressively centers on wider screens. (Tune the `520px` base to move figures in/out.)
+4. **`2D.html` landing card (Project 06 / Unify)** — `homepage.mov` clipped to the same phone-bezel `clip-path` used on `unify2d.html`; tile background dropped from `#D8D7DC` to `transparent` (no longer needed once the video is clipped).
 
-6. **Virtual Cooking — full middle rebuild** from new Figma (see layout section). Hero image → `side_v1_final_V1.png` (also the VC card on `2D.html`).
+5. **Kaffeemaschine app restored.** It had never been tracked by git in this repo — root cause was `public/kaffeemaschine/` being explicitly excluded in `.gitignore`. Removed that rule, copied the app (HTML + 7 assets) in from a working backup copy on disk, committed. See "Current Status" and "Assets" for details.
 
-7. **Nav Craft dropdown** (`top_row_permanent_V3.html`) — items darkened to solid `#111114` (was `white` + `mix-blend-mode: difference`, which read faint/variable); hover → accent orange.
+6. **Mac-Lamp (02) — substantially rebuilt.** No longer matches the generic "Standard pattern" below:
+   - New "At a Glance" section added (placeholder copy, EN+DE) above the meta grid
+   - Overview/Concept's side-by-side text panel removed; the diashow/gallery is now full-width
+   - Gallery cropping bug fixed: frame was forced to a wide box with `object-fit: cover`, cutting the top/bottom off the photos' actual ~4:3 aspect. Now `aspect-ratio: 4/3` + `object-fit: contain`, frame capped at `min(988px, 100%)`, docked left (not centered); thumbnail row left-aligned under it
+   - Gallery images 5–8 converted **HEIC → JPG** — HEIC only renders in Safari; Chrome/Firefox showed them blank. Files `5.jpg`–`8.jpg` added, `ITEMS` array updated, `.HEIC` originals left on disk unused
+   - First 4 diashow items (`1.png` CAD render, `2.MOV` 3D-printing, `3.MOV` bandsaw, `4.MOV` sanding) pulled out of the gallery into a new **Process** section, ordered before Overview/Concept (badges renumbered: Process=0, Overview/Concept=1)
+   - `1.png`/`2.MOV` laid out as alternating `.process-shot` blocks (caption above image, natural aspect ratio); `1.png` centered on the right-third line, `2.MOV` on the left-third line
+   - `3.MOV`/`4.MOV` (the two portrait videos) rebuilt into a full **scroll-driven dual-video mechanism ported from Unify's `.scrolly`** — sticky-pinned pair, scroll-past-midpoint or click swaps which video is full-size, mirrored layout (text left, videos right). Namespaced `.lamp-scrolly*` to avoid colliding with Unify's own classes. Centered on the right-third line via `position: absolute; left: 66.667%; transform: translateX(-50%)` — chosen over a fixed margin-% because the pair's rendered width changes as the active/inactive video swap, and `translateX(-50%)` self-centers regardless of width
+   - Hit the **sticky-positioning trap twice on one page**: both `html,body { overflow-x: hidden }` and `.page-wrapper { overflow: hidden }` were silently breaking `position: sticky` on the new scrolly section. Both changed to `overflow: clip`. See gotchas — this is a recurring trap because new 2D pages get bootstrapped from an older page's `<style>` block that predates the `clip` fix.
+   - `.process-steps` (mac-lamp) / `.stagger-list` wrapper uses the same fluid-width centering formula as Unify's `.character-list` (`width: calc(520px + 40vw); max-width: 100%; margin: auto`) so alternating blocks don't sprawl apart on ultra-wide monitors
 
-8. **`2D.html` divider fix** — `.project-section` `clip-path` changed `inset(0)` → `inset(0 0 -1px 0)` so the 1px `border-bottom` project dividers stop getting clipped away at fractional pixel heights (line between Project 02/03 was disappearing).
+7. **Double Packaging (01) — rebuilt to match Mac-Lamp/Unify/Virtual Cooking structure.** Previously used a bespoke `specs-row`/`frame2`/`stack`/`step-tile` grid with forced-crop image cells; that system is fully removed.
+   - New "At a Glance" placeholder section added (EN+DE)
+   - Overview/Concept's boxed, shadowed `.overview-text` card converted to a plain `.guide-text` paragraph — same treatment as the other three pages; real copy (EN+DE) unchanged
+   - Process section rebuilt as **5 alternating `.stagger-row`/`.process-shot` blocks**, same document order and exact real copy/headings as before (all i18n keys reused, nothing rewritten), each image at its **natural aspect ratio** (no crop): Modeling (portrait, stagger-row/left) → Topology (landscape, process-shot/right) → Vacuum Sim (near-square, stagger-row/left) → Shading (landscape, process-shot/right) → Final Render (landscape, process-shot/left)
+   - Per user decision: individual per-step numbered badges (1–5) dropped; the "5 Steps · Modeling → Render" meta line next to the Process heading was kept
+   - `.process-steps` wrapper uses the same fluid-width centering as Unify/Mac-Lamp
 
-9. **Unify — video backgrounds clipped away** — all 6 phone videos now clipped to the phone bezel via per-file `clip-path` (see "Unify Page: Video Details"). The video files are unchanged; this is render-time only. Removed the long-standing constraint that the page background had to match the videos' baked-in grey.
-
-10. **Unify — page background unified** — `body` background `#D8D7DC` → `var(--bg-surface)` (`#DCDCE3`), so Unify now matches every other 2D page. Only possible because of change 9.
-
-11. **Virtual Cooking — Final result reordered** — the `.result-image-pair` moved out from under "Instruction manual" to sit directly beneath the "Timer & ingredients" heading; that block now reads heading → images → caption → video.
+8. **GitHub Pages deployment configured** — see new "Deployment" section below for the full setup (workflow, custom domain, DNS).
 
 ## Tips for Next Session
 
@@ -450,6 +497,24 @@ The two standalone videos carry `data-vid="homepage"` / `data-vid="settings"` at
 
 **Transparent video files are NOT worth it for this site.** `.mov`/H.264 can't carry an alpha channel; real transparency needs WebM/VP9 (Chrome/Firefox) *plus* HEVC-with-alpha (Safari) — 12 files to replace 6, with quality loss. Only go there if the videos are needed outside the website. Requires `ffmpeg`, which is **not installed** on this machine.
 
+## Deployment
+
+**Live at:** `https://lucasmaher.com` (custom domain) and `https://lucasmaher-hash.github.io/3d-Portfolio-current/` (GitHub Pages default URL, still works).
+
+**Repo:** `github.com/lucasmaher-hash/3d-Portfolio-current` — public (required for free-tier GitHub Pages on a private repo you'd need a paid plan). Was renamed from `first_3d_web_draft-main`; GitHub auto-redirects the old remote URL, but the local `origin` was updated to the new one directly.
+
+**How it deploys:** `.github/workflows/deploy.yml` — GitHub Actions builds with `npm ci && npm run build` and deploys `dist/` via `actions/deploy-pages`, triggered on every push to `main` (or manually via "Run workflow" in the Actions tab). Nothing manual needed for routine updates — commit, push, done. Pages source is set to **"GitHub Actions"** in Settings → Pages (not "Deploy from a branch").
+
+**Custom domain wiring:**
+- `public/CNAME` contains `lucasmaher.com` — lives in `public/` specifically so Vite copies it into `dist/` on every build (a repo-root-only `CNAME` would NOT reach the deployed site, since GitHub Actions deploys `dist/`, not the raw repo)
+- Domain also saved under Settings → Pages → Custom domain on GitHub's side (this is what actually triggers Let's Encrypt certificate issuance — the file alone isn't enough)
+- Domain registered via **Cloudflare Registrar** (`lucasmaher.com`)
+- DNS records at Cloudflare: 4 **A** records on `@` → GitHub Pages' IPs (`185.199.108.153`, `.109.153`, `.110.153`, `.111.153`), plus 1 **CNAME** on `www` → `lucasmaher-hash.github.io`
+- **All records set to "DNS only" (grey cloud), not "Proxied" (orange cloud).** Cloudflare's proxy sits in front of the domain and can block GitHub from validating ownership to issue the HTTPS certificate. Can revisit proxying later once HTTPS is confirmed stable — not attempted yet.
+- HTTPS certificate issued and confirmed working same-day; propagation + cert issuance together took under an hour
+
+**If the site ever needs to move off this domain/repo:** update `public/CNAME`, the Settings → Pages custom domain field, and the DNS records together — they're three independent places holding the same domain name, and Pages will misbehave if only some of them are updated.
+
 ## Known Patterns & Gotchas
 
 - **`clip-path: inset(0 0 -1px 0)` on `.project-section`** in `2D.html` — clips top/left/right to contain the neumorphic tile shadows, but the bottom edge is relaxed by 1px so the `border-bottom` divider is never clipped off at fractional device-pixel heights (was `inset(0)`, which intermittently ate the dividers)
@@ -465,8 +530,9 @@ The two standalone videos carry `data-vid="homepage"` / `data-vid="settings"` at
   - `z-index: 200` — .mobile-menu (mobile overlay)
   - `z-index: auto` (0) — page content, project grid
 - **Overflow handling:**
-  - `.page-wrapper` must be `overflow: visible` (not `hidden`) so nav dropdown doesn't get clipped
-  - Root `html` must be `overflow-x: clip` (not `hidden`) so sticky positioning doesn't break
+  - `.page-wrapper` must be `overflow: visible` (not `hidden`) so nav dropdown doesn't get clipped — EXCEPT pages using sticky scroll sections, where `.page-wrapper` needs `overflow: clip` instead (see below)
+  - Root `html`/`body` must be `overflow-x: clip` (not `hidden`) so sticky positioning doesn't break
   - `.project-section` uses `clip-path: inset(0)` to prevent shadow bleed without breaking stickiness
+  - **This trap recurs on every new page that adds a sticky/scrolly section**, because new 2D pages get bootstrapped by copying an older page's `<style>` block, and older pages predate the `clip` fix — they still have `overflow-x: hidden` on `html, body` and/or `overflow: hidden` on `.page-wrapper`. Both silently kill `position: sticky` for every descendant with zero console error; the symptom is a sticky element rendering static plus a mysterious empty gap where the pin should have held it in view. Hit this on Unify originally and again on Mac-Lamp's Process section this session. **Always check both `html,body` and `.page-wrapper` for stray `overflow: hidden` before debugging a sticky element any other way.**
 - **i18n on Unify:** Meta tiles + feature copy are filled (EN+DE) in the `TRANSLATIONS` object at the bottom of `unify2d.html`. The newer design-story sections (colors/typography/characters) are plain English in the HTML, not yet keyed into `TRANSLATIONS`. **EN + DE only — no French.**
 - **Virtual Cooking layout:** rebuilt (this session) — At a Glance lead + meta grid + Identifying the problem + Design process (staggered `.stagger-*` panels + `.process-shot` screenshots) + Final result. All text is `[ Placeholder ]`. Reuses `.guide-section` / `.guide-media` classes.
