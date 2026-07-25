@@ -44,7 +44,7 @@
       position: fixed;
       top: 0; left: 0;
       width: 100%;
-      height: 108px;
+      height: 140px;
       border: none;
       z-index: 10;
       pointer-events: auto;
@@ -63,45 +63,48 @@
       overflow: hidden;
     }
 
-    /* ── Hero split ── */
-    .hero-split {
-      display: grid;
-      grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    /* ── Hero (full-width machine render) ── */
+    .hero {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      overflow: hidden;
+      position: relative;
       border-bottom: 1px solid var(--border-color);
     }
 
-    .hero-left {
+    .hero img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center center;
+      display: block;
+    }
+
+    /* ── Final result: interactive egg + overview text ── */
+    .result-row {
+      display: grid;
+      grid-template-columns: minmax(0, 480px) minmax(0, 1fr);
+      gap: clamp(32px, 6vw, 88px);
+      align-items: center;
+      margin-top: clamp(24px, 4vw, 40px);
+    }
+
+    .result-egg {
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 12px;
-      border-right: none;
     }
 
-    .hero-right {
-      min-width: 0;
-      display: flex;
-      align-items: center;
-      padding: clamp(32px, 5vw, 56px) clamp(32px, 5vw, 64px) clamp(32px, 5vw, 56px) 0;
-      margin-left: -40px;
-    }
-
-    .hero-right .project-title {
-      font-size: clamp(28px, 4vw, 60px);
-    }
-
-    .hero-description {
-      font-size: 14px;
-      line-height: 1.7;
+    .result-copy {
+      font-size: 14.4px;
+      line-height: 1.72;
       color: var(--text-secondary);
-      margin-top: 20px;
     }
 
     .machine-frame-wrap {
-      width: min(504px, 98%);
+      width: min(480px, 100%);
       aspect-ratio: 969 / 1344;
       position: relative;
-      margin-top: 40px;
     }
 
     .machine-overlay {
@@ -261,17 +264,84 @@
       flex-shrink: 0;
     }
 
-    /* ── Overview text ── */
-    .overview-inset {
-      background: var(--bg-surface);
-      border-radius: 16px;
-      padding: 20px 24px;
-      box-shadow: var(--shadow-pressed);
-      font-size: 14px;
+    /* ── At a glance lead paragraph (big, light) ── */
+    .glance-lead {
+      font-family: 'Roboto Flex', sans-serif;
+      font-weight: 300;
+      font-size: clamp(18px, 2.2vw, 24px);
+      line-height: 1.4;
+      letter-spacing: -0.01em;
+      color: var(--text-primary);
+    }
+
+    .guide-text {
+      font-size: 14.4px;
       line-height: 1.7;
       color: var(--text-secondary);
-      margin-top: 20px;
     }
+
+    .step-heading {
+      font-family: 'VT323', monospace;
+      font-size: 26px;
+      color: var(--text-primary);
+      text-transform: uppercase;
+      line-height: 1;
+    }
+
+    /* ── Process steps — alternating stagger-row / process-shot,
+       ported from the shared pattern; natural image aspect ratios ── */
+    .process-steps {
+      display: flex;
+      flex-direction: column;
+      /* Fluid centring (same as Unify's .character-list): full-width on a
+         MacBook, progressively narrows + centres on wider screens. */
+      width: calc(520px + 40vw);
+      max-width: 100%;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .process-steps > * + * { margin-top: clamp(64px, 9vw, 120px); }
+
+    .stagger-row {
+      display: flex;
+      align-items: center;
+      gap: clamp(28px, 5vw, 72px);
+      max-width: 860px;
+    }
+
+    /* image right, text left — pushed to the right side */
+    .stagger-row.right {
+      flex-direction: row-reverse;
+      margin-left: auto;
+    }
+
+    .stagger-figure {
+      flex: 0 0 auto;
+      width: clamp(240px, 34vw, 420px);
+    }
+
+    .stagger-figure img { width: 100%; height: auto; display: block; border-radius: 12px; }
+
+    .stagger-copy {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-width: 440px;
+    }
+
+    /* Process stills — constrained + staggered, caption below image,
+       natural aspect ratio (no crop) */
+    .process-shot {
+      display: flex;
+      flex-direction: column;
+      gap: clamp(14px, 1.6vw, 20px);
+    }
+
+    .process-shot.shift-right { width: 66%; margin-left: 34%; }
+    .process-shot.shift-left  { width: 72%; }
+
+    .process-shot img { width: 100%; height: auto; display: block; border-radius: 12px; }
 
     /* ── Project nav ── */
     .project-nav {
@@ -334,23 +404,35 @@
     /* ── Responsive ── */
     @media (max-width: 860px) {
       .meta-grid { grid-template-columns: 1fr 1fr; }
-      .hero-split { grid-template-columns: 1fr; min-height: auto; }
-      .hero-left { border-right: none; border-bottom: 1px solid var(--border-color); padding: 32px 24px 24px; }
-      .hero-right { padding: 32px 24px; }
-      .machine-frame-wrap { width: min(280px, 72vw); }
+      .stagger-row,
+      .stagger-row.right {
+        margin-left: 0; max-width: none; flex-direction: row;
+      }
+      .stagger-figure { width: clamp(180px, 36vw, 260px); }
+      .process-shot.shift-right,
+      .process-shot.shift-left { width: 100%; margin-left: 0; }
+      .result-row {
+        grid-template-columns: 1fr;
+        justify-items: center;
+        gap: 32px;
+      }
+      .result-copy { order: 2; }
     }
 
     @media (max-width: 640px) {
       html, body { padding: 0; }
       .page-wrapper { margin: 0; border-left: none; border-right: none; }
-      #top-bar { height: 108px; }
+      #top-bar { height: 140px; }
       #top-bar.hide { transform: translateY(-90px); }
       .section { padding: 24px 20px; }
       .project-title { font-size: clamp(32px, 9vw, 56px); }
       .meta-grid { grid-template-columns: 1fr 1fr; gap: 11px; }
       .meta-tile { padding: 8px; gap: 8px; height: 155px; min-height: 0; }
       .meta-inset { padding: 8px 10px; }
-      .machine-frame-wrap { width: min(260px, 80vw); }
+      .stagger-row,
+      .stagger-row.right { flex-direction: column; align-items: flex-start; gap: 18px; }
+      .stagger-figure { width: min(320px, 100%); }
+      .machine-frame-wrap { width: min(300px, 82vw); }
     }
 
     /* ── Mobile menu overlay ── */
@@ -444,27 +526,27 @@
 
   <div class="page-wrapper">
 
-    <!-- Hero split: egg left, header + description right -->
-    <div class="hero-split">
-      <div class="hero-left">
-        <div class="machine-frame-wrap">
-          <iframe src="/kaffeemaschine/kaffeemaschine.html" title="Cybercoffee" loading="lazy" allowtransparency="true"></iframe>
-          <div class="machine-overlay" id="machine-overlay">
-            <button class="machine-overlay-btn"><span style="font-size: 1.6em; line-height: 1;">[</span><span style="position: relative; top: -5px;"> click me </span><span style="font-size: 1.6em; line-height: 1;">]</span></button>
-          </div>
+    <!-- Hero: full-width machine render -->
+    <div class="hero">
+      <img src="/images/cybercoffee/02_straight_on_widescreen.png" alt="Cybercoffee machine — straight-on render" />
+    </div>
+
+    <!-- Header -->
+    <div class="section" style="border-bottom: none;">
+      <div class="project-header">
+        <p class="breadcrumb">Portfolio&nbsp;&nbsp;/&nbsp;&nbsp;Projects&nbsp;&nbsp;/&nbsp;&nbsp;Cybercoffee</p>
+        <div class="title-row">
+          <h1 class="project-title">Cybercoffee</h1>
+          <span class="accent-dot"></span>
         </div>
+        <div class="dot-divider"></div>
       </div>
-      <div class="hero-right">
-        <div class="project-header">
-          <p class="breadcrumb">Portfolio&nbsp;&nbsp;/&nbsp;&nbsp;Projects&nbsp;&nbsp;/&nbsp;&nbsp;Cybercoffee</p>
-          <div class="title-row">
-            <h1 class="project-title">Cybercoffee</h1>
-            <span class="accent-dot"></span>
-          </div>
-          <div class="dot-divider"></div>
-          <p class="hero-description" data-i18n="hero-desc">Coffee machines have some of the most forgettable interfaces in the world. I wanted to take that exact mundanity and push it somewhere visually specific — a retro-futuristic 2000s aesthetic that feels like it belongs on a device pulled from a 2003 sci-fi film. The interface is fully interactive: six physical side buttons map live to whatever's on screen, wrong presses shake the display and fire a synthesized buzz, and the CRT scanlines and Digital-7 Mono readout lock in the era. Designed in Figma, then rebuilt pixel-perfect in HTML — as much a coding exercise as a design one.</p>
-        </div>
-      </div>
+    </div>
+
+    <!-- At a Glance -->
+    <div class="section" style="border-bottom: none; padding-bottom: 0;">
+      <h2 class="section-title" data-i18n="section-glance">At a Glance</h2>
+      <p class="glance-lead" style="margin-top: clamp(20px, 3vw, 32px);" data-i18n="glance-lead">[ Placeholder ] A short, punchy summary of the Cybercoffee concept — one or two lines that frame the project before the details begin.</p>
     </div>
 
     <!-- Meta tiles -->
@@ -486,6 +568,59 @@
           <div class="meta-label" data-i18n="label-skills">Skills</div>
           <div class="meta-inset" data-i18n-html="val-skills">Figma<br>Prototyping<br>Claude Code</div>
         </div>
+      </div>
+    </div>
+
+    <!-- Design process -->
+    <div class="section" style="border-bottom: none;">
+      <div class="section-heading-row" style="margin-bottom: clamp(20px, 3vw, 28px);">
+        <h2 class="section-title" data-i18n="section-process">Design process</h2>
+        <span class="step-badge">1</span>
+      </div>
+      <div class="dot-divider" style="margin-bottom: clamp(20px, 3vw, 28px);"></div>
+
+      <div class="process-steps">
+        <div class="stagger-row right">
+          <div class="stagger-figure">
+            <img src="/images/cybercoffee/01_hero_3q_duo.png" alt="Cybercoffee machine — three-quarter duo render" />
+          </div>
+          <p class="stagger-copy guide-text" data-i18n="process-1">[ Placeholder ] A short caption describing this render — the machine's form language and the retro-futuristic direction it set.</p>
+        </div>
+
+        <div class="process-shot shift-left">
+          <div class="guide-media">
+            <img src="/images/cybercoffee/03_low_hero_egg_focus.png" alt="Cybercoffee machine — low hero, egg in focus" />
+          </div>
+          <p class="guide-text" data-i18n="process-2">[ Placeholder ] A short caption for this shot — the interface egg picked out against the body of the machine.</p>
+        </div>
+
+        <div class="process-shot shift-right">
+          <div class="guide-media">
+            <img src="/images/cybercoffee/07_custom_view.png" alt="Cybercoffee machine — custom angle render" />
+          </div>
+          <p class="guide-text" data-i18n="process-3">[ Placeholder ] A short caption for this final angle — how the whole device reads as one designed object.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Final result: interactive egg + overview text -->
+    <div class="section" style="border-bottom: none;">
+      <div class="section-heading-row" style="margin-bottom: clamp(20px, 3vw, 28px);">
+        <h2 class="section-title" data-i18n="section-result">Final result</h2>
+        <span class="step-badge">2</span>
+      </div>
+      <div class="dot-divider" style="margin-bottom: clamp(20px, 3vw, 28px);"></div>
+
+      <div class="result-row">
+        <div class="result-egg">
+          <div class="machine-frame-wrap">
+            <iframe src="/kaffeemaschine/kaffeemaschine.html" title="Cybercoffee" loading="lazy" allowtransparency="true"></iframe>
+            <div class="machine-overlay" id="machine-overlay">
+              <button class="machine-overlay-btn"><span style="font-size: 1.6em; line-height: 1;">[</span><span style="position: relative; top: -5px;"> click me </span><span style="font-size: 1.6em; line-height: 1;">]</span></button>
+            </div>
+          </div>
+        </div>
+        <p class="result-copy" data-i18n="hero-desc">Coffee machines have some of the most forgettable interfaces in the world. I wanted to take that exact mundanity and push it somewhere visually specific — a retro-futuristic 2000s aesthetic that feels like it belongs on a device pulled from a 2003 sci-fi film. The interface is fully interactive: six physical side buttons map live to whatever's on screen, wrong presses shake the display and fire a synthesized buzz, and the CRT scanlines and Digital-7 Mono readout lock in the era. Designed in Figma, then rebuilt pixel-perfect in HTML — as much a coding exercise as a design one.</p>
       </div>
     </div>
 
@@ -625,18 +760,32 @@
     const TRANSLATIONS = {
       en: {
         'hero-desc': 'Coffee machines have some of the most forgettable interfaces in the world. I wanted to take that exact mundanity and push it somewhere visually specific — a retro-futuristic 2000s aesthetic that feels like it belongs on a device pulled from a 2003 sci-fi film. The interface is fully interactive: six physical side buttons map live to whatever\'s on screen, wrong presses shake the display and fire a synthesized buzz, and the CRT scanlines and Digital-7 Mono readout lock in the era. Designed in Figma, then rebuilt pixel-perfect in HTML — as much a coding exercise as a design one.',
+        'section-glance': 'At a Glance',
+        'glance-lead': '[ Placeholder ] A short, punchy summary of the Cybercoffee concept — one or two lines that frame the project before the details begin.',
         'label-timeline': 'Timeline', 'val-timeline': 'May 2026 —<br>Jun 2026',
         'label-team': 'Team', 'val-team': 'Just Me',
         'label-role': 'Role', 'val-role': 'UI/UX<br>User Testing',
         'label-skills': 'Skills', 'val-skills': 'Figma<br>Prototyping<br>Claude Code',
+        'section-process': 'Design process',
+        'process-1': '[ Placeholder ] A short caption describing this render — the machine\'s form language and the retro-futuristic direction it set.',
+        'process-2': '[ Placeholder ] A short caption for this shot — the interface egg picked out against the body of the machine.',
+        'process-3': '[ Placeholder ] A short caption for this final angle — how the whole device reads as one designed object.',
+        'section-result': 'Final result',
         'nav-prev': '<< PREVIOUS', 'nav-this-website': 'This Website', 'nav-next': 'NEXT >>',
       },
       de: {
         'hero-desc': 'Kaffeemaschinen haben einige der am meisten vergessenen Bedienoberflächen der Welt. Ich wollte genau diese Banalität nehmen und sie visuell spezifisch machen — eine retrofuturistische 2000er-Ästhetik, die sich anfühlt, als gehöre sie zu einem Gerät aus einem Sci-Fi-Film von 2003. Die Oberfläche ist vollständig interaktiv: Sechs physische Seitentasten reagieren live auf das, was auf dem Display zu sehen ist. Falsche Tastendrücke lassen das Display zittern und lösen einen synthetisierten Ton aus, und die CRT-Scanlines sowie die Digital-7 Mono-Anzeige verankern die Ära. In Figma entworfen, dann pixelgenau in HTML umgesetzt — genauso sehr eine Coding-Übung wie eine Design-Übung.',
+        'section-glance': 'Auf einen Blick',
+        'glance-lead': '[ Placeholder ] Eine kurze, prägnante Zusammenfassung des Cybercoffee-Konzepts — ein bis zwei Sätze, die das Projekt einleiten.',
         'label-timeline': 'Zeitraum', 'val-timeline': 'Mai 2026 —<br>Jun. 2026',
         'label-team': 'Team', 'val-team': 'Nur ich',
         'label-role': 'Rolle', 'val-role': 'UI/UX<br>Nutzertests',
         'label-skills': 'Werkzeuge', 'val-skills': 'Figma<br>Prototyping<br>Claude Code',
+        'section-process': 'Designprozess',
+        'process-1': '[ Placeholder ] Eine kurze Bildunterschrift zu diesem Render — die Formsprache der Maschine und die retrofuturistische Richtung.',
+        'process-2': '[ Placeholder ] Eine kurze Bildunterschrift zu dieser Aufnahme — das Interface-Ei, herausgehoben vom Korpus der Maschine.',
+        'process-3': '[ Placeholder ] Eine kurze Bildunterschrift zu diesem letzten Winkel — wie das ganze Gerät als ein gestaltetes Objekt wirkt.',
+        'section-result': 'Endergebnis',
         'nav-prev': '<< ZURÜCK', 'nav-this-website': 'Diese Website', 'nav-next': 'WEITER >>',
       }
     };

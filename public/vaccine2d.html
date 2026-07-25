@@ -47,7 +47,7 @@
       top: 0;
       left: 0;
       width: 100%;
-      height: 108px;
+      height: 140px;
       border: none;
       z-index: 10;
       pointer-events: auto;
@@ -207,22 +207,22 @@
 
     .section-title {
       font-family: 'OCR-A-BT', monospace;
-      font-size: clamp(28px, 4vw, 40px);
-      line-height: 1;
+      font-size: clamp(28px, 4vw, 44px);
+      line-height: 1.05;
       color: var(--text-primary);
-      text-transform: uppercase;
+      letter-spacing: -0.04em;
     }
 
     .step-badge {
-      width: 36px;
-      height: 36px;
+      width: 38px;
+      height: 38px;
       background: var(--accent-orange);
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       font-family: 'VT323', monospace;
-      font-size: 20px;
+      font-size: 22px;
       color: var(--text-primary);
       flex-shrink: 0;
       transition: transform 260ms var(--ease), box-shadow 260ms var(--ease);
@@ -244,20 +244,6 @@
       color: var(--text-primary);
     }
 
-    /* ── Process header ───────────────────────────────────────── */
-    .process-header-row {
-      display: flex;
-      align-items: baseline;
-      justify-content: space-between;
-    }
-
-    .process-sub {
-      font-family: 'VT323', monospace;
-      font-size: 14px;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--text-secondary);
-    }
 
     /* Small VT323 heading used above each step's caption — reused from
        the site's step-heading style so real step names (Modeling,
@@ -342,7 +328,7 @@
     @media (max-width: 640px) {
       html, body { padding: 0; }
       .page-wrapper { margin: 0; border-left: none; border-right: none; }
-      #top-bar { height: 108px; }
+      #top-bar { height: 140px; }
       #top-bar.hide { transform: translateY(-90px); }
       .section { padding: 24px 20px; }
       .guide-section { padding: 24px 20px; }
@@ -561,7 +547,7 @@
     <div class="guide-section">
       <div class="section-heading-row">
         <h2 class="section-title" data-i18n="section-overview">Overview / Concept</h2>
-        <span class="step-badge">0</span>
+        <span class="step-badge">1</span>
       </div>
       <div class="dot-divider"></div>
       <p class="guide-text" data-i18n="overview-text">
@@ -571,9 +557,9 @@
 
     <!-- Process -->
     <div class="guide-section" style="border-bottom: none;">
-      <div class="process-header-row">
+      <div class="section-heading-row">
         <h2 class="section-title" data-i18n="section-process">Process</h2>
-        <span class="process-sub" data-i18n="process-sub">5 Steps &nbsp;·&nbsp; Modeling → Render</span>
+        <span class="step-badge">2</span>
       </div>
       <div class="dot-divider"></div>
 
@@ -765,7 +751,7 @@
         'glance-lead': '[ Placeholder ] A short, punchy summary of the Double Packaging concept — one or two lines that frame the project before the details begin.',
         'section-overview': 'Overview / Concept',
         'overview-text': 'Vacuum-sealed packaging is usually photographed flat — real-world gravity and suction don\'t leave many options. That constraint was part of why this felt worth building: in CGI the pack can stand upright, rotate freely, and be lit from any angle. The object itself was a deliberate choice too, inspired by intranetgirl\'s tutorial — I wanted something unconventional, a pairing you wouldn\'t normally see merchandised. A pharmaceutical vial sealed inside a zip bag ticks that box. It also made for a useful technical challenge: two materials with opposite physical behaviour, which pushed me into cloth simulation, Cycles rendering, and transparent shading for the first time.',
-        'section-process': 'Process', 'process-sub': '5 Steps · Modeling → Render',
+        'section-process': 'Process',
         'step1-heading': 'Modeling', 'step1-text': 'The vial body modeled from a single profile, lathed and edge-loop-tightened around the cap. Cap separated as its own object so it could be UV-unwrapped cleanly for the label band. Subdivision surface kept on for the final render to round the silhouette without losing the printed-grade ribs at the base.',
         'step2-heading': 'Topology', 'step2-text': 'Bag subdivided to ~250k tris — enough resolution for the cloth sim to resolve fine wrinkles where the plastic suctions onto the bottle without exploding into noise.',
         'step3-heading': 'Vacuum Sim', 'step3-text': 'Cloth simulation with negative pressure — the bag actively sucks down onto the rigid bottle. 192 baked frames, with frame 90 picked as the hero.',
@@ -782,7 +768,7 @@
         'glance-lead': '[ Placeholder ] Eine kurze, prägnante Zusammenfassung des Double-Packaging-Konzepts — ein bis zwei Sätze, die das Projekt einleiten.',
         'section-overview': 'Überblick / Konzept',
         'overview-text': 'Vakuumversiegelte Verpackungen werden normalerweise flach fotografiert — Schwerkraft und Unterdruck lassen in der echten Welt wenig Spielraum. Diese Einschränkung war Teil dessen, was dieses Projekt lohnenswert machte: In CGI kann die Verpackung aufrecht stehen, sich frei drehen und aus jedem Winkel beleuchtet werden. Das Objekt selbst war ebenfalls eine bewusste Wahl, inspiriert durch intranetgirls Tutorial — ich wollte etwas Unkonventionelles, eine Kombination, die man normalerweise nicht kommerziell sieht. Ein pharmazeutisches Fläschchen in einem Druckverschlussbeutel trifft genau das. Es war auch eine hilfreiche technische Herausforderung: zwei Materialien mit gegensätzlichem physikalischen Verhalten, was mich zum ersten Mal in die Tuchsimulation, Cycles-Rendering und transparentes Shading eingeführt hat.',
-        'section-process': 'Prozess', 'process-sub': '5 Schritte · Modellierung → Rendering',
+        'section-process': 'Prozess',
         'step1-heading': 'Modellierung', 'step1-text': 'Der Fläschchenkörper wurde aus einem einzelnen Profil modelliert, gedreht und mit Edge Loops um den Deckel gespannt. Der Deckel wurde als eigenes Objekt getrennt, um sauber für die Etikettenbahn UV-unwrapped werden zu können. Subdivision Surface blieb für das finale Rendering aktiv, um die Silhouette abzurunden, ohne die Rippen an der Basis zu verlieren.',
         'step2-heading': 'Topologie', 'step2-text': 'Der Beutel wurde auf ~250k Tris unterteilt — ausreichend Auflösung, damit die Tuchsimulation feine Falten dort auflösen kann, wo sich der Kunststoff an die Flasche saugt, ohne in Rauschen zu eskalieren.',
         'step3-heading': 'Vakuumsimulation', 'step3-text': 'Tuchsimulation mit Unterdruck — der Beutel saugt sich aktiv an der starren Flasche fest. 192 gebackene Frames, Frame 90 als Hero ausgewählt.',

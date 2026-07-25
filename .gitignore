@@ -23,3 +23,7 @@ dist-ssr
 *.sln
 *.sw?
 **/.DS_Store
+
+# Local design source files (heavy raw video, not for the web build)
+design-sources/
+*.mkv

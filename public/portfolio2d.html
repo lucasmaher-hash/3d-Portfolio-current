@@ -44,7 +44,7 @@
       position: fixed;
       top: 0; left: 0;
       width: 100%;
-      height: 108px;
+      height: 140px;
       border: none;
       z-index: 10;
       pointer-events: auto;
@@ -273,20 +273,6 @@
       color: var(--text-secondary);
     }
 
-    /* ── Process header ── */
-    .process-header-row {
-      display: flex;
-      align-items: baseline;
-      justify-content: space-between;
-    }
-
-    .process-sub {
-      font-family: 'VT323', monospace;
-      font-size: 14px;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--text-secondary);
-    }
 
     /* ── Step tile ── */
     .step-tile {
@@ -352,7 +338,7 @@
     @media (max-width: 640px) {
       html, body { padding: 0; }
       .page-wrapper { margin: 0; border-left: none; border-right: none; }
-      #top-bar { height: 108px; }
+      #top-bar { height: 140px; }
       #top-bar.hide { transform: translateY(-90px); }
       .section { padding: 24px 20px; }
       .project-title { font-size: clamp(32px, 9vw, 56px); }
@@ -555,17 +541,13 @@
       </div>
     </div>
 
-    <!-- Overview heading -->
+    <!-- Overview heading + row 1: 3D scene left, concept text right -->
     <div class="section" style="border-bottom: none;">
-      <div class="section-heading-row">
+      <div class="section-heading-row" style="margin-bottom: clamp(20px, 3vw, 28px);">
         <h2 class="section-title" data-i18n="section-overview">Overview / Concept</h2>
-        <span class="step-badge">0</span>
+        <span class="step-badge">1</span>
       </div>
-      <div class="dot-divider" style="margin-top: 16px;"></div>
-    </div>
-
-    <!-- Overview row 1: 3D scene left, concept text right -->
-    <div class="section" style="border-bottom: none;">
+      <div class="dot-divider" style="margin-bottom: clamp(20px, 3vw, 28px);"></div>
       <div class="overview-row">
         <div class="overview-img" style="aspect-ratio: 16/10;">
           <!-- <img src="/images/portfolio-project/overview_3d.png" alt="3D portfolio view" /> -->
@@ -598,16 +580,13 @@
       </div>
     </div>
 
-    <!-- Process heading -->
-    <div class="section" style="border-bottom: none;">
-      <div class="process-header-row">
-        <h2 class="section-title" data-i18n="section-process">Process</h2>
-        <span class="process-sub" data-i18n="process-sub">5 Steps &nbsp;·&nbsp; Concept → Polish</span>
-      </div>
-    </div>
-
-    <!-- Process row 1: Blender (large horizontal) + Three.js (compact) -->
+    <!-- Process heading + row 1: Blender (large horizontal) + Three.js (compact) -->
     <div class="section" style="border-bottom: none; padding-bottom: clamp(16px, 2vw, 24px);">
+      <div class="section-heading-row" style="margin-bottom: clamp(20px, 3vw, 28px);">
+        <h2 class="section-title" data-i18n="section-process">Process</h2>
+        <span class="step-badge">2</span>
+      </div>
+      <div class="dot-divider" style="margin-bottom: clamp(20px, 3vw, 28px);"></div>
       <div class="process-row cols-65-35">
         <div class="step-tile horizontal">
           <div class="step-img" style="width: 55%; aspect-ratio: unset;">
@@ -822,7 +801,7 @@
         'concept-text': 'A portfolio that reflects how I think — spatially. The 3D mode lets visitors walk through a studio environment where each project exists in physical space. The 2D mode is a clean, editorial layout for reading. Both share the same nav, the same content, and the same design language.',
         'constraint-heading': 'The Constraint',
         'constraint-text': 'No frameworks. No React, no UI libraries — just vanilla JS, HTML, CSS, and Vite as a bundler. The constraint forced clarity: every animation, every interaction, and every layout decision was written by hand. The codebase stays readable and fast.',
-        'section-process': 'Process', 'process-sub': '5 Steps · Concept → Polish',
+        'section-process': 'Process',
         'step-blender-title': 'Blender',
         'step-blender-text': 'The 3D scene — a minimal studio with a Mac, a desk lamp, shelves, and framed work — was modeled and lit in Blender. Materials kept physically plausible for real-time rendering. Exported as a single compressed .glb loaded by Three.js at runtime.',
         'step-threejs-title': 'Three.js',
@@ -846,7 +825,7 @@
         'concept-text': 'Ein Portfolio, das widerspiegelt, wie ich denke — räumlich. Im 3D-Modus können Besucher durch eine Studioumgebung gehen, in der jedes Projekt im physischen Raum existiert. Der 2D-Modus ist ein klares, redaktionelles Layout zum Lesen. Beide teilen dieselbe Navigation, denselben Inhalt und dieselbe Designsprache.',
         'constraint-heading': 'Die Einschränkung',
         'constraint-text': 'Keine Frameworks. Kein React, keine UI-Bibliotheken — nur Vanilla JS, HTML, CSS und Vite als Bundler. Die Einschränkung erzwang Klarheit: Jede Animation, jede Interaktion und jede Layoutentscheidung wurde von Hand geschrieben. Der Code bleibt lesbar und schnell.',
-        'section-process': 'Prozess', 'process-sub': '5 Schritte · Konzept → Feinschliff',
+        'section-process': 'Prozess',
         'step-blender-title': 'Blender',
         'step-blender-text': 'Die 3D-Szene — ein minimales Studio mit einem Mac, einer Schreibtischlampe, Regalen und gerahmten Arbeiten — wurde in Blender modelliert und beleuchtet. Materialien physikalisch plausibel für Echtzeit-Rendering. Als einzelne komprimierte .glb-Datei exportiert, die von Three.js zur Laufzeit geladen wird.',
         'step-threejs-title': 'Three.js',

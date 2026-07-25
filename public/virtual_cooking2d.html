@@ -44,7 +44,7 @@
       position: fixed;
       top: 0; left: 0;
       width: 100%;
-      height: 108px;
+      height: 140px;
       border: none;
       z-index: 10;
       pointer-events: auto;
@@ -188,21 +188,21 @@
 
     .section-title {
       font-family: 'OCR-A-BT', monospace;
-      font-size: clamp(24px, 3.4vw, 36px);
+      font-size: clamp(28px, 4vw, 44px);
       line-height: 1.05;
       color: var(--text-primary);
       letter-spacing: -0.04em;
     }
 
     .step-badge {
-      width: 34px; height: 34px;
+      width: 38px; height: 38px;
       background: var(--accent-orange);
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       font-family: 'VT323', monospace;
-      font-size: 20px;
+      font-size: 22px;
       color: var(--text-primary);
       flex-shrink: 0;
     }
@@ -316,7 +316,7 @@
     @media (max-width: 640px) {
       html, body { padding: 0; }
       .page-wrapper { margin: 0; border-left: none; border-right: none; }
-      #top-bar { height: 108px; }
+      #top-bar { height: 140px; }
       #top-bar.hide { transform: translateY(-90px); }
       .section { padding: 24px 20px; }
       .project-title { font-size: clamp(32px, 9vw, 56px); }
@@ -518,22 +518,6 @@
     .process-shot.shift-right { width: 66%; margin-left: 27%; }
     .process-shot.shift-left  { width: 80%; }
 
-    /* ── Final result ── */
-    .result-heading-row {
-      display: flex;
-      align-items: baseline;
-      justify-content: space-between;
-      gap: 16px;
-      flex-wrap: wrap;
-    }
-
-    .section-meta {
-      font-family: 'VT323', monospace;
-      font-size: 16px;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--text-secondary);
-    }
 
     .result-subhead {
       font-family: 'OCR-A-BT', monospace;
@@ -653,7 +637,7 @@
     <div class="guide-section">
       <div class="section-heading-row">
         <h2 class="section-title">Identifying the problem</h2>
-        <span class="step-badge">0</span>
+        <span class="step-badge">1</span>
       </div>
       <div class="dot-divider"></div>
       <p class="guide-text">[ Placeholder ] Set out the everyday friction Virtual Cooking responds to — the moment cooking from a recipe breaks down: wet hands, flipping pages, squinting at a timer across the kitchen.</p>
@@ -664,7 +648,7 @@
     <div class="guide-section">
       <div class="section-heading-row">
         <h2 class="section-title">Design process</h2>
-        <span class="step-badge">1</span>
+        <span class="step-badge">2</span>
       </div>
       <div class="dot-divider"></div>
 
@@ -706,9 +690,9 @@
 
     <!-- Final result -->
     <div class="guide-section" style="border-bottom: none;">
-      <div class="result-heading-row">
+      <div class="section-heading-row">
         <h2 class="section-title">Final result</h2>
-        <span class="section-meta">5 Steps · Modeling → Render</span>
+        <span class="step-badge">3</span>
       </div>
       <div class="dot-divider"></div>
 

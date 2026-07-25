@@ -47,7 +47,7 @@
       position: fixed;
       top: 0; left: 0;
       width: 100%;
-      height: 108px;
+      height: 140px;
       border: none;
       z-index: 10;
       pointer-events: auto;
@@ -276,20 +276,6 @@
       color: var(--text-secondary);
     }
 
-    /* ── Process header ── */
-    .process-header-row {
-      display: flex;
-      align-items: baseline;
-      justify-content: space-between;
-    }
-
-    .process-sub {
-      font-family: 'VT323', monospace;
-      font-size: 14px;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--text-secondary);
-    }
 
     /* ── Step tile (raised card) ── */
     .step-tile {
@@ -363,7 +349,7 @@
     @media (max-width: 640px) {
       html, body { padding: 0; }
       .page-wrapper { margin: 0; border-left: none; border-right: none; }
-      #top-bar { height: 108px; }
+      #top-bar { height: 140px; }
       #top-bar.hide { transform: translateY(-90px); }
       .section { padding: 24px 20px; }
       .project-title { font-size: clamp(32px, 9vw, 56px); }
@@ -797,11 +783,11 @@
 
     <!-- Process -->
     <div class="section">
-      <div class="section-heading-row">
+      <div class="section-heading-row" style="margin-bottom: clamp(20px, 3vw, 28px);">
         <h2 class="section-title" data-i18n="section-process">Process</h2>
-        <span class="step-badge">0</span>
+        <span class="step-badge">1</span>
       </div>
-      <div class="dot-divider" style="margin-bottom: clamp(20px, 3vw, 32px);"></div>
+      <div class="dot-divider" style="margin-bottom: clamp(20px, 3vw, 28px);"></div>
 
       <div class="process-shot shift-right">
         <div class="guide-media">
@@ -843,11 +829,11 @@
 
     <!-- Gallery + Overview -->
     <div class="section">
-      <div class="section-heading-row">
+      <div class="section-heading-row" style="margin-bottom: clamp(20px, 3vw, 28px);">
         <h2 class="section-title" data-i18n="section-overview">Overview / Concept</h2>
-        <span class="step-badge">1</span>
+        <span class="step-badge">2</span>
       </div>
-      <div class="dot-divider" style="margin-bottom: clamp(20px, 3vw, 32px);"></div>
+      <div class="dot-divider" style="margin-bottom: clamp(20px, 3vw, 28px);"></div>
       <div class="gallery-with-text">
         <div class="gallery-layout">
           <div class="gallery-main-wrap">
@@ -1001,7 +987,7 @@
         'section-glance': 'At a Glance',
         'glance-lead': '[ Placeholder ] A short, punchy summary of the Mac-Lamp concept — one or two lines that frame the project before the details begin.',
         'section-overview': 'Overview / Concept',
-        'section-process': 'Process', 'process-sub': '6 Steps · Concept → Render',
+        'section-process': 'Process',
         'process-cut': 'The salvaged MacBook shell was cut down on a bandsaw to fit the new housing.',
         'process-sand': 'Cut edges were sanded smooth by hand before final assembly.',
         'process-cad': 'Every part was modeled in CAD to the salvaged MacBook\'s exact measurements before anything was printed.',
@@ -1018,7 +1004,7 @@
         'section-glance': 'Auf einen Blick',
         'glance-lead': '[ Placeholder ] Eine kurze, prägnante Zusammenfassung des Mac-Lamp-Konzepts — ein bis zwei Sätze, die das Projekt einleiten.',
         'section-overview': 'Überblick / Konzept',
-        'section-process': 'Prozess', 'process-sub': '6 Schritte · Konzept → Rendering',
+        'section-process': 'Prozess',
         'process-cut': 'Das gerettete MacBook-Gehäuse wurde mit einer Bandsäge auf das neue Gehäuse zugeschnitten.',
         'process-sand': 'Die Schnittkanten wurden vor der Endmontage von Hand glatt geschliffen.',
         'process-cad': 'Jedes Teil wurde nach den exakten Maßen des geretteten MacBooks in CAD modelliert, bevor etwas gedruckt wurde.',
