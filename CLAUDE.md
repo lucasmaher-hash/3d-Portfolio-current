@@ -42,10 +42,11 @@ When resuming work in a new session:
 
 **Navigation:**
 - Every 2D page embeds nav as a fixed iframe (`#top-bar` → `/top_row_permanent_V3.html`)
-- Iframe height: 90px default, expands to **400px** when Craft dropdown opens (via `postMessage`)
+- Iframe height: **140px** default/collapsed, expands to **400px** when Craft dropdown opens (via `postMessage`)
 - Always `z-index: 9999` to sit above all page content
 - **Critical:** Host page `.page-wrapper` must have `overflow: visible` (not `hidden`), else dropdown gets clipped
 - **Dropdown expand height:** Increased from 280px to 400px to ensure full dropdown visibility without clipping
+- **Collapse height must match the default (140px), not shrink to 90px.** See "Nav bar iframe" below — this was a live bug (nav bottom shadow got clipped after the Craft dropdown closed) fixed this session.
 
 ## Page map
 
@@ -75,16 +76,16 @@ CSS on the host page:
 ```css
 #top-bar {
   position: fixed; top: 0; left: 0;
-  width: 100%; height: 90px;   /* default — just the nav bar */
-  border: none; z-index: 10;
+  width: 100%; height: 140px;   /* default — enough to hold the nav pill's bottom shadow uncropped */
+  border: none; z-index: 9999;
   background: transparent; overflow: visible;
   transition: transform 300ms ease;
 }
 #top-bar.hide { transform: translateY(-220px); }
 ```
 
-**Why 90px default / 280px on dropdown open:**
-The iframe blocks pointer events across its full height. The nav bar itself is ~86px tall. Keeping the iframe at 90px means only a tiny sliver at the top of the page is blocked. When the Craft dropdown opens, the nav sends a `postMessage` and the parent expands the iframe to 280px to give the dropdown room:
+**Why 140px default / 400px on dropdown open:**
+The iframe blocks pointer events across its full height. The nav pill itself sits ~24px down and is ~64px tall, but its neumorphic box-shadow needs roughly another 17px of room below it — 140px is the smallest height that doesn't crop that shadow. When the Craft dropdown opens, the nav sends a `postMessage` and the parent expands the iframe to 400px to give the dropdown room:
 
 ```js
 // In top_row_permanent_V3.html (show/hide functions):
@@ -93,10 +94,12 @@ window.parent.postMessage({ type: 'nav-collapse' }, '*');
 
 // In every host page:
 window.addEventListener('message', function(e) {
-  if (e.data.type === 'nav-expand') topBar.style.height = '280px';
-  if (e.data.type === 'nav-collapse') topBar.style.height = '90px';
+  if (e.data.type === 'nav-expand') topBar.style.height = '400px';
+  if (e.data.type === 'nav-collapse') topBar.style.height = '140px';   // must match the default, NOT 90px
 });
 ```
+
+**Bug fixed this session:** `nav-collapse` used to shrink the iframe to 90px (a stale value from an older, shorter iframe convention). At 90px the nav pill's bottom shadow gets clipped by the iframe's own bounding box — so the shadow looked fine on page load, then visibly lost its bottom edge the first time you hovered Craft and moved away. Fixed on all 9 host pages (`2D.html`, `about2d.html`, `contact2d.html`, `kaffeemaschine2d.html`, `mac-lamp2d.html`, `portfolio2d.html`, `vaccine2d.html`, `unify2d.html`, `virtual_cooking2d.html`) by changing the `nav-collapse` handler's target height from `90px` to `140px`.
 
 The Craft dropdown items in the nav link to all 4 project pages via `window.top.location.href`.
 
@@ -228,7 +231,7 @@ Organized by project for clarity:
 - `vaccine/` — Double Packaging renders & process steps
 - `vr-cookbook/` — Virtual Cooking assets: `side_v1_final_V1.png` (hero + card), `back_final_V2.jpg`, `timer_click_V1.jpg`, silver panel renders `Panel_Left.png` / `Panel_Right.png` / `Stopwatch.png` (transparent bg), and process screenshots `blender-modeling.png` + `app-preview.png` (⚠️ renamed from Figma exports that had spaces in the filename — keep filenames URL-safe)
 - `unify/characters/` — `char-arch.svg`, `char-bird.svg`, `char-mountain.svg` (flattened, transparent-bg character exports)
-- `site/` — favicon and shared UI assets
+- `site/` — favicon and shared UI assets. **Favicon (replaced this session):** orange (`#FF5C00`) circle with a white "LM" monogram — `favicon.svg` (primary, source-of-truth — edit this and regenerate the PNGs below if it ever changes) plus baked PNG fallbacks `favicon-16/32/48/180/192/512.png` and a legacy `/public/favicon.ico` (16/32/48 multi-size), all generated from the SVG via headless Chrome render + Pillow resize (no ffmpeg/imagemagick needed). The monogram text uses a bold system sans-serif (`-apple-system, 'Helvetica Neue', Arial`), not the site's VT323 pixel font — VT323 blurs into illegibility at 16px favicon size (tested), a plain bold sans stays readable. Linked via 3 tags in every page's `<head>` (right after `<meta charset>`): `<link rel="icon" type="image/svg+xml" href="/images/site/favicon.svg">`, a 32×32 PNG fallback, and `apple-touch-icon` (180×180) for iOS/bookmarks. Previously only `index.html` (the 3D entry point) had a favicon at all — a leftover purple abstract-blob SVG, unrelated to the site's branding — and every `public/*2d.html`/`*3d.html` page had no favicon link whatsoever. Now wired into `index.html` + all 14 real site pages (`2D.html`, `about2d/3d.html`, `contact2d/3d.html`, `controls_open3d.html`, `craft3d.html`, `kaffeemaschine2d.html`, `mac-lamp2d.html`, `portfolio2d.html`, `unify2d.html`, `vaccine2d/3d.html`, `virtual_cooking2d.html`). Skipped `top_row_permanent_V3.html` (loaded only as an iframe, never gets its own browser tab) and the two standalone dev/experiment files `Questionmark_Button3d.html` / `blob_morph_bouncy.html` (not part of site navigation).
 
 **Videos** (`/public/videos/`):
 - `kaffeemaschine/` — Cybercoffee interface demo
@@ -308,6 +311,24 @@ Previous session's work (French removal, Unify design-story sections, hero blob,
    - `.process-steps` wrapper uses the same fluid-width centering as Unify/Mac-Lamp
 
 8. **GitHub Pages deployment configured** — see new "Deployment" section below for the full setup (workflow, custom domain, DNS).
+
+9. **Homepage footer polish (`2D.html`).** Removed the "Built with care and way too much coffee" `.footer-note` line entirely (deleted the markup, its CSS rule, and both `footer-note` EN/DE translation keys). The `.copyright` line ("© Lucas Maher. All Rights Reserved.") was nudged up **13px total** (`transform: translateY(-13px)` on `.copyright`, applied in two passes — 8px then another 5px) so it sits level with the "top" scroll button beside it. Year updated **2025 → 2026** in all three places it lives: the HTML default text, `TRANSLATIONS.en['footer-copyright']`, and `TRANSLATIONS.de['footer-copyright']` (it renders via `data-i18n`, so editing just the HTML default isn't enough). The `.footer-logo` "top" button already had a hover lift matching the nav (see item 12); left as-is.
+
+10. **Nav bar bottom-shadow-cropped-on-dropdown-close bug fixed.** Root cause: the `nav-collapse` `postMessage` handler on every host page was shrinking the `#top-bar` iframe to `90px` — a stale value that predates the current 140px-default nav sizing. At 90px the iframe's own bounding box clips the nav pill's neumorphic bottom shadow, so the shadow looked correct on first load (iframe starts at 140px) but visibly lost its bottom edge the moment you hovered the Craft dropdown and it closed again. Fixed by changing the `nav-collapse` target height from `90px` to `140px` (matching the default) on all 9 host pages. See "Nav bar iframe" above for the full before/after.
+
+11. **Nav bar narrowed 10px per side on MacBook aspect ratios only** (`top_row_permanent_V3.html`). Two independent constraints needed updating because different screen sizes hit different ones: `.top-row` padding (`--island-edge-x`) is what actually constrains the pill on 13"/14" MacBooks, so it became `calc(var(--island-edge-x) + 10px)`; `.nav-island`'s `max-width` is what constrains it on 16" MacBooks, so that dropped `1306px → 1286px`. The existing `@media (min-aspect-ratio: 17/10)` rule still forces `max-width: 1330px` on true widescreen monitors, which has enough headroom that the extra padding never engages there — so wide-aspect nav width is untouched, exactly as requested.
+
+12. **Dotted-divider half-cut-dot bug fixed at the root cause, site-wide.** Every `.dot-divider` (breadcrumb dividers under page headers) is a `radial-gradient` dot pattern tiled via `background-size: 10px 4px` + `background-repeat: repeat-x`. Because a divider's rendered width is essentially never an exact multiple of 10px, `repeat-x` was clipping the **final partial tile** — producing a half-rendered dot at the line's end, and only *sometimes*, depending on where the container's width landed relative to the 10px tile boundary (this is why it looked randomly broken rather than consistently). Root-cause fix: switched every instance to `background-repeat: space no-repeat`, which per spec tiles "as much as possible without clipping" — whole dots are pinned to both ends and the leftover space is absorbed into the gaps between dots. Applied across all 13 files with a `.dot-divider` (see "Known Patterns & Gotchas" below for the full file list and the rule to follow for any new divider).
+
+13. **Hover-lift strength unified across the entire site.** Audited every `:hover` rule with a `transform`/`box-shadow` lift and found two inconsistent groups: neumorphic pills (`.contact-item` on the Contact page, `.item` accordion rows on the About page) were using a shallower `6px 6px 18px` shadow than the nav/footer's `11px 11px 24px`; and several scale-only elements (`.btn-view-work`, `.project-nav-item` on 6 project pages, `.gallery-thumb` on Mac-Lamp) used `scale(1.04)` or `translateY(-3px)` instead of the nav's `translateY(-2px) scale(1.03)`. Normalized everything to the nav's values — see "Known Patterns & Gotchas" below for the exact convention to follow on any new hoverable element.
+
+14. **Copyright moved up another 5px, year corrected to 2026.** Item 9's `translateY(-8px)` on `.copyright` (`2D.html`) became `translateY(-13px)` total after a follow-up nudge. "© 2026 Lucas Maher..." — the copyright text specifically; the *project* year tags on the landing grid (unrelated `2025` strings) were left untouched.
+
+15. **Nav bar narrowed on MacBook aspect only (round 2 — 10px tighter per side, on top of item 11's earlier pass).** Same two-constraint pattern as before: `.top-row` padding (`--island-edge-x`) governs 13"/14" MacBooks, `.nav-island`'s `max-width` governs 16" — both nudged another 10px per side. The `min-aspect-ratio: 17/10` widescreen override (`max-width: 1330px`) still has enough headroom that neither change reaches wide-aspect monitors, so that tier is still untouched.
+
+16. **Dotted-divider half-cut-dot bug — the real fix, superseding item 12's `background-repeat: space` attempt.** Item 12's CSS-only fix tested correctly in Chrome but the user reported the bug persisted live — root cause turned out to be a Safari/WebKit bug where `background-repeat: space` doesn't reliably avoid clipping on gradient-image backgrounds (confirmed via an isolated Chrome-only test: `space` rendered perfectly there, so the remaining failure had to be engine-specific). Replaced with a JS-computed exact-divisor fix — see the corrected "Dotted dividers" entry under "Known Patterns & Gotchas" for the full mechanism and the `<script>` snippet to reuse. **Lesson: a CSS spec behavior "should" work isn't the same as it working in every engine — verify the actual fix in the browser the bug was reported in (this site's real-world testing browser is Safari, per the existing `min-aspect-ratio` decimal gotcha), not just Chrome headless.**
+
+17. **Favicon replaced.** Old icon was an unrelated purple abstract-blob SVG that only `index.html` linked to — every other page had no favicon at all. New icon is an orange (`#FF5C00`) circle with a white "LM" monogram, matching the nav's own "LM" badge initials and the site's accent color. See the "Assets" section above for the full file list, why VT323 was swapped for a bold system sans in the icon text (illegible at 16px), and which pages were deliberately skipped.
 
 ## Tips for Next Session
 
@@ -536,3 +557,5 @@ The two standalone videos carry `data-vid="homepage"` / `data-vid="settings"` at
   - **This trap recurs on every new page that adds a sticky/scrolly section**, because new 2D pages get bootstrapped by copying an older page's `<style>` block, and older pages predate the `clip` fix — they still have `overflow-x: hidden` on `html, body` and/or `overflow: hidden` on `.page-wrapper`. Both silently kill `position: sticky` for every descendant with zero console error; the symptom is a sticky element rendering static plus a mysterious empty gap where the pin should have held it in view. Hit this on Unify originally and again on Mac-Lamp's Process section this session. **Always check both `html,body` and `.page-wrapper` for stray `overflow: hidden` before debugging a sticky element any other way.**
 - **i18n on Unify:** Meta tiles + feature copy are filled (EN+DE) in the `TRANSLATIONS` object at the bottom of `unify2d.html`. The newer design-story sections (colors/typography/characters) are plain English in the HTML, not yet keyed into `TRANSLATIONS`. **EN + DE only — no French.**
 - **Virtual Cooking layout:** rebuilt (this session) — At a Glance lead + meta grid + Identifying the problem + Design process (staggered `.stagger-*` panels + `.process-shot` screenshots) + Final result. All text is `[ Placeholder ]`. Reuses `.guide-section` / `.guide-media` classes.
+- **Dotted dividers (`.dot-divider`) — the fix is JS-computed exact tiling, NOT a CSS `background-repeat` value.** The pattern is a `radial-gradient(circle, ... 1.5px, transparent 1.5px)` background tiled at `background-size: 10px 4px`. With `repeat-x`, a container width that isn't an exact multiple of 10px leaves a **partial last tile that gets clipped** — a half-cut dot at the end of the line, and *intermittent* (whether you see it depends on where `width mod 10px` falls). **First attempt this session — switching to `background-repeat: space` — looked correct in Chrome (confirmed via isolated test) but did NOT fix it in Safari:** WebKit has a longstanding bug where `space` doesn't reliably avoid clipping on gradient-image backgrounds, so the half-dot persisted for the user even after that change shipped. **Actual fix:** a small inline `<script>` at the bottom of each page (right before `</body>`) that, on `DOMContentLoaded`/`load`/`resize`, measures every `.dot-divider`'s real `offsetWidth` and sets `background-size` to `width / Math.round(width / 10)` (min 2 dots) with plain `background-repeat: repeat-x`. Because that tile size is an *exact* integer divisor of the measured width, there is no remainder pixel left for any browser's tiling engine to mis-handle — this sidesteps the Safari bug entirely rather than depending on a spec behavior WebKit doesn't honor correctly. Added to the 8 pages that actually render a `.dot-divider` in markup (`about2d.html`, `contact2d.html`, `kaffeemaschine2d.html`, `mac-lamp2d.html`, `portfolio2d.html`, `unify2d.html`, `vaccine2d.html`, `virtual_cooking2d.html` — `2D.html` and the `*3d.html` pages carry the CSS rule but never actually use the class, so they were skipped). **If a new dotted divider is added anywhere, it needs this same JS snippet, not just the CSS class** — copy the `<script>` block verbatim from any of the 8 pages above.
+- **Standard hover-lift strength (site-wide convention, unified this session):** every interactive lift-on-hover element — nav `.logo`/`.pill` (`top_row_permanent_V3.html`), footer `.footer-logo` "top" button, contact page `.contact-item` (Email/LinkedIn/Instagram), about page's `.item` accordion rows, `.btn-view-work`, and every project page's `.project-nav-item` / `.gallery-thumb` — now uses the **same** transform, `translateY(-2px) scale(1.03)`, over `transition: transform 150ms ease` (box-shadow pairs with `box-shadow 150ms ease` where the element has a neumorphic base shadow). Neumorphic pill elements (raised dual-shadow base — nav, footer top button, contact buttons, about accordion) deepen to the same shadow on hover: `box-shadow: 11px 11px 24px rgba(174,174,192,0.9), -8px -8px 20px rgba(255,255,255,1)`. Before this session `.contact-item`/`.item` used a shallower `6px 6px 18px` shadow and several `.project-nav-item`/`.btn-view-work` instances used `scale(1.04)` or `translateY(-3px)` — all now normalized to the values above. **When adding any new hoverable element, match these exact values** rather than inventing a new lift strength.

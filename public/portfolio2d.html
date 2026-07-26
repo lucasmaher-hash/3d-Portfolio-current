@@ -2,6 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/images/site/favicon.svg" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/site/favicon-32.png" />
+  <link rel="apple-touch-icon" href="/images/site/favicon-180.png" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>This Website — Lucas Maher</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -129,7 +132,7 @@
       width: 100%; height: 4px;
       background-image: radial-gradient(circle, var(--text-primary) 1.5px, transparent 1.5px);
       background-size: 10px 4px;
-      background-repeat: repeat-x;
+      background-repeat: space no-repeat;
     }
 
     /* ── Meta grid ── */
@@ -384,7 +387,7 @@
       transition: transform 200ms ease;
     }
 
-    .project-nav-item:hover { transform: scale(1.04); }
+    .project-nav-item:hover { transform: translateY(-2px) scale(1.03); transition: transform 150ms ease; }
 
     .project-nav-top {
       display: flex;
@@ -874,7 +877,7 @@
     window.addEventListener('message', function(e) {
       if (!e.data || !e.data.type) return;
       if (e.data.type === 'nav-expand') topBar.style.height = '400px';
-      if (e.data.type === 'nav-collapse') topBar.style.height = '90px';
+      if (e.data.type === 'nav-collapse') topBar.style.height = '140px';
       if (e.data.type === 'lang-change') applyLang(e.data.lang);
     });
   </script>
@@ -905,5 +908,35 @@
       update();
     })();
   </script>
+
+  <script>
+    // Dot-divider exact-tiling fix: background-repeat:space is unreliable on
+    // gradient backgrounds in Safari (last dot can render half-clipped even
+    // though space is supposed to guarantee whole tiles). Root-cause fix:
+    // measure each divider's real width in JS and set background-size to an
+    // EXACT integer divisor of it, so there is no remainder tile left for
+    // any browser's tiling engine to mishandle.
+    (function () {
+      function fixDotDividers() {
+        document.querySelectorAll('.dot-divider').forEach(function (el) {
+          var w = el.offsetWidth;
+          if (!w) return;
+          var count = Math.max(2, Math.round(w / 10));
+          var tile = w / count;
+          el.style.backgroundSize = tile + 'px 4px';
+          el.style.backgroundRepeat = 'repeat-x';
+        });
+      }
+      var raf;
+      function scheduleFix() {
+        cancelAnimationFrame(raf);
+        raf = requestAnimationFrame(fixDotDividers);
+      }
+      document.addEventListener('DOMContentLoaded', scheduleFix);
+      window.addEventListener('load', scheduleFix);
+      window.addEventListener('resize', scheduleFix);
+    })();
+  </script>
+
 </body>
 </html>

@@ -45,24 +45,26 @@ function applyRotation() {
   camera.rotation.x = pitch
 }
 
-let isRightDown = false
+let isLookDown = false
 let lastX = 0, lastY = 0
 
 renderer.domElement.addEventListener('mousedown', e => {
   if (isOverlayOpen) return
-  if (e.button === 2) {
-    isRightDown = true
+  if (e.button === 2 || e.button === 1) {
+    if (e.button === 1) e.preventDefault()   // stop middle-click autoscroll
+    isLookDown = true
     lastX = e.clientX
     lastY = e.clientY
     document.body.classList.add('looking')
   }
 })
 window.addEventListener('mouseup', e => {
-  if (e.button === 2) { isRightDown = false; document.body.classList.remove('looking') }
+  if (e.button === 2 || e.button === 1) { isLookDown = false; document.body.classList.remove('looking') }
 })
 window.addEventListener('contextmenu', e => e.preventDefault())
+window.addEventListener('auxclick', e => { if (e.button === 1) e.preventDefault() })
 window.addEventListener('mousemove', e => {
-  if (!isRightDown || isOverlayOpen) return
+  if (!isLookDown || isOverlayOpen) return
   yaw   -= (e.clientX - lastX) * MOUSE_SENS
   pitch -= (e.clientY - lastY) * MOUSE_SENS
   lastX  = e.clientX

@@ -77,7 +77,12 @@
 
       display: flex;
       justify-content: center;
-      padding: 0 var(--island-edge-x);
+      /* +10px each side insets the nav bar a touch on MacBook-aspect screens
+         (where the pill is padding-constrained). On wide-aspect the pill is
+         capped by its own max-width (1330px, set below) with room to spare, so
+         this extra padding never bites there. Mobile pill is a fixed 60px
+         centred chip, so it's unaffected too. */
+      padding: 0 calc(var(--island-edge-x) + 10px);
 
       /* clicks pass through except where children opt in */
       pointer-events: none;
@@ -101,7 +106,7 @@
          the card border (island padding 122 vs body padding 55); 1440 − 2×67
          = 1306 keeps that gap on wide monitors instead of the pill edge
          landing on the card's border line. */
-      max-width: 1306px;
+      max-width: 1286px;   /* 1306 − 20: 10px narrower each side on MacBook-aspect (wide-aspect overrides to 1330 below) */
       margin: 0 auto;
       /* stretch within the gutter track */
       overflow: visible;

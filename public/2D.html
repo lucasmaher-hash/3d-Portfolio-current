@@ -2,6 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/images/site/favicon.svg" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/site/favicon-32.png" />
+  <link rel="apple-touch-icon" href="/images/site/favicon-180.png" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>2D — Lucas Maher</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -298,7 +301,7 @@
     }
 
     .btn-view-work:hover {
-      transform: translateY(-3px) scale(1.04);
+      transform: translateY(-2px) scale(1.03);   /* standard site hover-lift magnitude */
       transition: transform 150ms ease;
     }
 
@@ -492,6 +495,15 @@
       flex-shrink: 0;
       position: relative;
       transform: translate(-30px, -18px);
+      cursor: pointer;
+      transition: transform 260ms cubic-bezier(.2,.7,.2,1), box-shadow 260ms cubic-bezier(.2,.7,.2,1);
+    }
+
+    /* same neumorphic lift as the nav logo / other buttons */
+    .footer-logo:hover {
+      transform: translate(-30px, -18px) translateY(-2px) scale(1.03);
+      box-shadow: 11px 11px 24px rgba(174,174,192,0.9), -8px -8px 20px rgba(255,255,255,1);
+      transition: transform 150ms ease, box-shadow 150ms ease;
     }
 
     .footer-column {
@@ -541,13 +553,7 @@
       font-family: 'Roboto Flex', sans-serif;
       font-size: 14px;
       color: var(--text-primary);
-    }
-
-    .footer-note {
-      font-family: 'Roboto Flex', sans-serif;
-      font-size: 14px;
-      color: var(--text-secondary);
-      line-height: 1.5;
+      transform: translateY(-18px);   /* nudge up to sit level with the top button */
     }
 
 
@@ -771,8 +777,7 @@
       <div class="footer-logo" id="scroll-top-btn" style="cursor: pointer;">top</div>
 
 <div class="footer-meta">
-        <p class="copyright" data-i18n="footer-copyright">© 2025 Lucas Maher. All Rights Reserved.</p>
-        <p class="footer-note" data-i18n-html="footer-note">Built with care<br>and way too much coffee.</p>
+        <p class="copyright" data-i18n="footer-copyright">© 2026 Lucas Maher. All Rights Reserved.</p>
       </div>
     </div>
   </div>
@@ -970,16 +975,14 @@
         'tagline2': 'More about me →',
         'craft-title': 'Craft',
         'btn-view-work': 'View Work',
-        'footer-copyright': '© 2025 Lucas Maher. All Rights Reserved.',
-        'footer-note': 'Built with care<br>and way too much coffee.',
+        'footer-copyright': '© 2026 Lucas Maher. All Rights Reserved.',
       },
       de: {
         'tagline1': 'Von Material zu Pixel.',
         'tagline2': 'Mehr über mich →',
         'craft-title': 'Projekte',
         'btn-view-work': 'Ansehen',
-        'footer-copyright': '© 2025 Lucas Maher. Alle Rechte vorbehalten.',
-        'footer-note': 'Mit Sorgfalt gebaut<br>und viel zu viel Kaffee.',
+        'footer-copyright': '© 2026 Lucas Maher. Alle Rechte vorbehalten.',
       }
     };
     function applyLang(lang) {
@@ -993,7 +996,7 @@
     window.addEventListener('message', function(e) {
       if (!e.data || !e.data.type) return;
       if (e.data.type === 'nav-expand') topBar.style.height = '400px';
-      if (e.data.type === 'nav-collapse') topBar.style.height = '90px';
+      if (e.data.type === 'nav-collapse') topBar.style.height = '140px';
       if (e.data.type === 'lang-change') applyLang(e.data.lang);
     });
   </script>
