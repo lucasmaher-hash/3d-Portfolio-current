@@ -640,7 +640,7 @@
     <!-- At a Glance -->
     <div class="section" style="border-bottom: none; padding-bottom: 0;">
       <h2 class="section-title" data-i18n="section-glance">At a Glance</h2>
-      <p class="glance-lead" style="margin-top: clamp(20px, 3vw, 32px);">[ Placeholder ] A short, punchy summary of the Virtual Cooking concept — one or two lines that frame the project before the details begin.</p>
+      <p class="glance-lead" style="margin-top: clamp(20px, 3vw, 32px);">I love cooking, but I hate what pulls me away from it — checking my phone for a measurement, a step, or a timer. Virtual Cooking is a VR/AR concept that keeps the recipe, the ingredients, and the timer in view the whole time, so your hands never have to leave the food.</p>
     </div>
 
     <!-- Meta -->
@@ -672,8 +672,9 @@
         <span class="step-badge">1</span>
       </div>
       <div class="dot-divider"></div>
-      <p class="guide-text">[ Placeholder ] Set out the everyday friction Virtual Cooking responds to — the moment cooking from a recipe breaks down: wet hands, flipping pages, squinting at a timer across the kitchen.</p>
-      <p class="guide-text">[ Placeholder ] A second paragraph on the design ambition — pushing against safe, sterile VR toward a tactile, brushed-silver visual language built from 3D panels.</p>
+      <p class="guide-text">Cooking is something I genuinely enjoy — but following a recipe rarely stays enjoyable for long. Every few minutes I'm wiping my hands to unlock my phone: checking an ingredient amount, scrolling back to the step I was on, glancing at a timer I forgot to start. Ingredients, instructions, and timing are the three things a recipe actually asks of you — and they're exactly the three things that keep interrupting the cooking itself.</p>
+      <p class="guide-text">Virtual Cooking imagines a VR/AR headset that puts all three where you're already looking. The instruction manual sits in the upper left of your view, ingredients and a running timer on the right — nothing to unlock, nothing to wipe off, nothing to look away from the stove for.</p>
+      <p class="guide-text">This is a concept, not a working product — today's VR/AR headsets are still too heavy and clunky to wear comfortably through an hour of cooking. But headsets keep getting lighter and less intrusive, and I think this becomes a genuinely viable idea once they do. It's also easy to imagine this mattering most somewhere other than a home kitchen: restaurants routinely cook for different numbers of people and switch between recipes all night — exactly the two things this concept is built to handle.</p>
     </div>
 
     <!-- Design process -->
@@ -684,36 +685,38 @@
       </div>
       <div class="dot-divider"></div>
 
+      <p class="guide-text">Most VR interfaces are surprisingly flat — floating 2D windows dropped into a 3D space, using none of the depth VR actually offers. I wanted to actually build with the third dimension instead of ignoring it, and to give the whole interface a distinct visual identity: everything here is modeled with a brushed-metal look, echoing the pans, knives, and utensils already sitting on the counter. Every interaction is designed to work without a controller — clicks and simple hand gestures are the only input the whole concept ever asks for.</p>
+
       <div class="stagger-list">
         <div class="stagger-row">
           <div class="stagger-figure">
             <img src="/images/vr-cookbook/Panel_Left.png" alt="Recipe panel render" />
           </div>
-          <p class="stagger-copy">[ Placeholder ] The left panel holds the recipe itself — steps, quantities, technique notes — always sitting in the corner of your vision.</p>
+          <p class="stagger-copy">The left panel is the instruction manual. A progress bar tracks which step of the recipe you're on, with the current step itself shown right beside it — always in view, never more than a glance away.</p>
         </div>
         <div class="stagger-row right">
           <div class="stagger-figure">
             <img src="/images/vr-cookbook/Panel_Right.png" alt="Ingredients panel render" />
           </div>
-          <p class="stagger-copy">[ Placeholder ] The right panel tracks what's cooking — ingredient lists stay pinned next to the pan they belong to.</p>
+          <p class="stagger-copy">The right panel holds the ingredient list, with a control to adjust the serving size on the fly. Beside it, a running timer counts down visually — click it, and it opens into a full-screen timer view.</p>
         </div>
         <div class="stagger-row indent">
           <div class="stagger-figure">
             <img src="/images/vr-cookbook/Stopwatch.png" alt="Timer render" />
           </div>
-          <p class="stagger-copy">[ Placeholder ] Timers run alongside each dish — set with a glance, checked without turning around.</p>
+          <p class="stagger-copy">Clicking the countdown on the right panel opens this full-screen timer, where the time can be set or adjusted with a simple gesture.</p>
         </div>
       </div>
 
       <div class="process-shot shift-right" style="margin-top: clamp(84px, 12.6vw, 168px);">
-        <p class="guide-text">[ Placeholder ] Every panel was modelled in Blender and shaped into a tactile, brushed-silver form language rather than flat menus.</p>
+        <p class="guide-text">Each panel started as a 3D model in Blender, shaped into that brushed-metal form language before being exported into Three.js.</p>
         <div class="guide-media">
           <img src="/images/vr-cookbook/blender-modeling.png" alt="Modelling the panels in Blender" />
         </div>
       </div>
 
       <div class="process-shot shift-left" style="margin-top: clamp(72px, 11vw, 96px); margin-bottom: clamp(72px, 11vw, 96px);">
-        <p class="guide-text">[ Placeholder ] Brought to life in the browser with Three.js — every interaction runs on hand tracking alone: a click to select, a swipe to move on.</p>
+        <p class="guide-text">From there, the scene came together in VS Code with Claude Code — a real background video shot on a GoPro, with the 3D panels layered on top and wired up to respond to clicks.</p>
         <div class="guide-media">
           <img src="/images/vr-cookbook/app-preview.png" alt="The concept running in the browser" />
         </div>
@@ -735,14 +738,14 @@
           <source src="/videos/vr-cookbook/manual_click_V2.mov" type="video/mp4" />
         </video>
       </div>
-      <p class="guide-text">[ Placeholder ] Walk through the finished instruction panel — swiping through recipe steps hands-free inside the headset view.</p>
+      <p class="guide-text">A look at the finished instruction panel in action — flipping through recipe steps with a simple click, hands otherwise free the entire time.</p>
 
       <h3 class="result-subhead" style="margin-top: clamp(32px, 5vw, 64px);">Timer &amp; ingredients</h3>
       <div class="result-image-pair" style="margin-top: clamp(8px, 2vw, 16px);">
         <img src="/images/vr-cookbook/back_final_V2.jpg" alt="Final render — rear view" />
         <img src="/images/vr-cookbook/timer_click_V1.jpg" alt="Final render — timer interaction" />
       </div>
-      <p class="guide-text">[ Placeholder ] The finished timer-and-ingredients panel in action — quantities and countdowns pinned right where they're needed.</p>
+      <p class="guide-text">The finished right-hand panel: ingredient quantities adjust to however many people you're cooking for, and the running timer opens into the full gesture-controlled view the moment you click it.</p>
       <div class="guide-media">
         <video autoplay loop muted playsinline>
           <source src="/videos/vr-cookbook/timer_V1.mov" type="video/quicktime" />

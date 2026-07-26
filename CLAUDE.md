@@ -151,7 +151,7 @@ The interactive coffee machine is a self-contained mini-app:
 
 ## 2D page layout patterns
 
-**Standard pattern** (portfolio, kaffeemaschine — vaccine and mac-lamp have since diverged, see below):
+**Standard pattern** (kaffeemaschine — vaccine and mac-lamp have since diverged, see below; portfolio2d.html, the page this pattern was originally shared with, was removed — see "Recent Changes"):
 1. **Hero** — full-width image or split layout
 2. **Header section** — breadcrumb, OCR-A-BT title, blinking orange dot, dotted divider
 3. **Meta grid** — 4 neumorphic tiles (Timeline, Team, Role, Tools)
@@ -167,7 +167,7 @@ The interactive coffee machine is a self-contained mini-app:
 5. Overview/Concept and/or Process — built from a shared set of ported classes: `.guide-section` (padded/bordered wrapper), `.guide-text` (plain paragraph), `.guide-media` (image/video card), `.stagger-row` / `.stagger-row.right` (portrait or near-square figure + text beside, alternating sides), `.process-shot.shift-right` / `.shift-left` (landscape still, caption above, alternating horizontal offset). A `.process-steps` / `.stagger-list` wrapper applies fluid-width centering (`width: calc(520px + 40vw); max-width: 100%; margin: auto`) so alternating blocks stay pulled together on ultra-wide monitors instead of sprawling to opposite edges.
 6. Project nav
 
-**Mac-Lamp (02)** — rebuilt this session (see "Recent Changes"):
+**Mac-Lamp (04)** — rebuilt this session (see "Recent Changes"):
 1. Hero (image)
 2. Header
 3. At a Glance (placeholder)
@@ -176,16 +176,16 @@ The interactive coffee machine is a self-contained mini-app:
 6. **Overview / Concept** (badge 1) — heading + real copy, then the full-width photo diashow/gallery (`5.jpg`–`9.jpg`, `aspect-ratio: 4/3`, `object-fit: contain`)
 7. Project nav
 
-**Double Packaging (01)** — rebuilt this session (see "Recent Changes"):
+**Double Packaging (05)** — rebuilt this session (see "Recent Changes"):
 1. Hero (video)
 2. Header
 3. At a Glance (placeholder)
 4. Meta grid
 5. **Overview / Concept** (badge 0) — real copy, plain `.guide-text`
 6. **Process** (no badge, `.process-sub` meta "5 Steps · Modeling → Render") — 5 alternating blocks in original order, natural image aspect ratios, no per-step badges
-7. Project nav (no "previous" — this is Project 01, the first)
+7. Project nav (no "next" — this is the last project in the list; see item 24 in "Recent Changes" for the current project order)
 
-**Virtual Cooking (05)** — REBUILT (this session) from a new Figma reference. Middle sections were torn out and rebuilt; hero, header and project nav were kept. Text is all `[ Placeholder ]` pending real copy (English only, not yet in `TRANSLATIONS`).
+**Virtual Cooking (02)** — REBUILT (this session) from a new Figma reference. Middle sections were torn out and rebuilt; hero, header and project nav were kept. Text is all `[ Placeholder ]` pending real copy (English only, not yet in `TRANSLATIONS`).
 1. **Hero** — full-width 16:10 image, now `side_v1_final_V1.png` (also used for the VC card on `2D.html`)
 2. **Header** — breadcrumb + OCR-A-BT title + dotted divider
 3. **At a Glance** — heading + big light lead paragraph (`.glance-lead`), sits ABOVE the meta grid
@@ -193,11 +193,11 @@ The interactive coffee machine is a self-contained mini-app:
 5. **Identifying the problem** (step 0) — heading + dotted divider + 2 paragraphs
 6. **Design process** (step 1) — `.stagger-list` of 3 transparent silver-panel renders (`Panel_Left.png` / `Panel_Right.png` / `Stopwatch.png`) in a STAGGERED layout (`.stagger-row` / `.right` / `.indent`, text beside each), then two `.process-shot` screenshots (`blender-modeling.png` shift-right, `app-preview.png` shift-left — caption ABOVE image, constrained width, staggered offsets)
 7. **Final result** — heading + `5 STEPS · MODELING → RENDER` meta + dotted divider; two demo subheads (`.result-subhead`): "Instruction manual" (`manual_click_V2.mov` + caption), then "Timer & ingredients" in the order **heading → `.result-image-pair` (`back_final_V2.jpg`, `timer_click_V1.jpg`) → caption → `timer_V1.mov`**. The image pair sits directly under the *Timer & ingredients* heading, not under the Instruction-manual video where it originally lived.
-8. **Project nav** — Cybercoffee (prev) / Unify (next)
+8. **Project nav** — Unify (prev) / Cybercoffee (next)
 
 Note: the old "single-track centered" VC layout (glance bullets, Overview/Concept, reflection sections, breakout image) no longer exists. Leftover unused CSS remains (`.breakout-media`, `.glance-list`).
 
-**Unify (06)** — Extended blob hero + design-story sections + scroll-driven dual-video sections. **All copy is now filled (EN+DE for meta/overview/features; English-only for the new design-story sections).**
+**Unify (01)** — Extended blob hero + design-story sections + scroll-driven dual-video sections. **All copy is now filled (EN+DE for meta/overview/features; English-only for the new design-story sections).**
 1. **Hero blob** (CUSTOM) — Large pink blob; pupils track cursor; sits above dotted divider (z-index: 3). Now horizontally centered at the 2/3 mark (`left: 66.667%; transform: translateX(-50%)`), drops in with a bounce on load (`blobDrop` keyframes), and scales 35% larger on true widescreen.
 2. **Header + breadcrumb** — bottom-left of hero + dotted divider
 3. **At a Glance** — overview paragraph (the app's origin/concept)
@@ -211,7 +211,7 @@ Note: the old "single-track centered" VC layout (glance bullets, Overview/Concep
 7. **Features (scrolly A) — Timetable + Socials** (`#timetable-socials-scrolly`): text LEFT, videos RIGHT
 8. **Features (scrolly B) — Friends + Navigation** (`#nav-friends-scrolly`): videos LEFT, text RIGHT
 9. **Feature 6: Settings** — single video + text (reversed grid)
-10. **Project nav** — Virtual Cooking (prev) / Double Packaging (next)
+10. **Project nav** — (no "previous" — this is the first project in the list) / Virtual Cooking (next)
 
 **Feature numbering / data-key mismatch (IMPORTANT):** displayed scroll order is 1 Home, 2 Timetable, 3 Socials, 4 Friends, 5 Navigation, 6 Settings. But internal i18n keys keep old names: display **3 Socials** = key `feat-socials-*`, **4 Friends** = key `feat-friends-*`, **5 Navigation** = key `feat-courses-*`. In `#nav-friends-scrolly` the **Friends** video/panel is now FIRST (is-active) and **Navigation** second, so scroll order reads 4→5. Titles: Home="Your Day at a Glance", Timetable="Your Timetable, and Everyone's", Socials="Beyond the Group Chat", Friends="Find Your Friends Indoors", Navigation="Find the Right Room", Settings="Profile & Friends".
 
@@ -226,11 +226,11 @@ Organized by project for clarity:
 **Images** (`/public/images/`):
 - `about/` — About page hero
 - `mac-lamp/` — Mac-Lamp project images & diashow frames. Diashow items are `5.jpg`–`9.jpg` (converted from `.HEIC` this session — HEIC only renders in Safari, so gallery images must be JPG/PNG; the original `5.HEIC`–`8.HEIC` are still on disk but unused). Process-section stills: `1.png` (CAD render) + videos `2.MOV`/`3.MOV`/`4.MOV` in `videos/mac-lamp/`
-- `portfolio/` — This Website project screenshots
+- `portfolio/` — **orphaned.** Was "This Website" project screenshots; the page (`portfolio2d.html`) was removed this session (see "Recent Changes"). The image files are still on disk but nothing references them — safe to delete, left in place in case any of the removal was meant to be revisited.
 - `vaccine/` — Double Packaging renders & process steps
 - `vr-cookbook/` — Virtual Cooking assets: `side_v1_final_V1.png` (hero + card), `back_final_V2.jpg`, `timer_click_V1.jpg`, silver panel renders `Panel_Left.png` / `Panel_Right.png` / `Stopwatch.png` (transparent bg), and process screenshots `blender-modeling.png` + `app-preview.png` (⚠️ renamed from Figma exports that had spaces in the filename — keep filenames URL-safe)
 - `unify/characters/` — `char-arch.svg`, `char-bird.svg`, `char-mountain.svg` (flattened, transparent-bg character exports)
-- `site/` — favicon and shared UI assets. **Favicon (replaced this session):** orange (`#FF5C00`) circle with a white "LM" monogram — `favicon.svg` (primary, source-of-truth — edit this and regenerate the PNGs below if it ever changes) plus baked PNG fallbacks `favicon-16/32/48/512.png` and a legacy `/public/favicon.ico` (16/32/48 multi-size), all generated from the SVG via headless Chrome render + Pillow resize (no ffmpeg/imagemagick needed). The monogram text uses a bold system sans-serif (`-apple-system, 'Helvetica Neue', Arial`), not the site's VT323 pixel font — VT323 blurs into illegibility at 16px favicon size (tested), a plain bold sans stays readable. Linked via 3 tags in every page's `<head>` (right after `<meta charset>`): `<link rel="icon" type="image/svg+xml" href="/images/site/favicon.svg">`, a 32×32 PNG fallback, and `apple-touch-icon` (180×180) for iOS/bookmarks. Previously only `index.html` (the 3D entry point) had a favicon at all — a leftover purple abstract-blob SVG, unrelated to the site's branding — and every `public/*2d.html`/`*3d.html` page had no favicon link whatsoever. Now wired into `index.html` + all 14 real site pages (`2D.html`, `about2d/3d.html`, `contact2d/3d.html`, `controls_open3d.html`, `craft3d.html`, `kaffeemaschine2d.html`, `mac-lamp2d.html`, `portfolio2d.html`, `unify2d.html`, `vaccine2d/3d.html`, `virtual_cooking2d.html`). Skipped `top_row_permanent_V3.html` (loaded only as an iframe, never gets its own browser tab) and the two standalone dev/experiment files `Questionmark_Button3d.html` / `blob_morph_bouncy.html` (not part of site navigation). **`favicon-180.png` / `favicon-192.png` are NOT the same transparent-circle design as the rest — they're a solid opaque orange square (no circle mask, no transparency) with the same white "LM" mark.** Root cause: `apple-touch-icon` (used by iOS Home Screen, Safari Favorites/Start Page tiles, and macOS "Add to Dock") ignores/fills transparency rather than respecting it — Apple's own icon convention always imposes a rounded-square mask on `apple-touch-icon` regardless of the source shape, so a transparent-cornered circle there rendered as "circle floating inside a visible square" once iOS/Safari filled the transparent corners with its own backdrop. Making that specific asset a full-bleed opaque orange square (not the circle used everywhere else) means the corners iOS reveals are already the brand orange, so the square mask reads as seamless instead of visibly framing the icon. The regular browser-tab favicon (`favicon.svg`, `favicon-16/32/48.png`, `favicon.ico`) is unaffected — those keep the genuine edge-to-edge circle since normal tab rendering respects transparency correctly. **If regenerating: `favicon-16/32/48/512.png` + `.ico` should stay the transparent-circle SVG render; `favicon-180.png`/`favicon-192.png` should stay the separate opaque-square render — don't collapse them back into one asset.**
+- `site/` — favicon and shared UI assets. **Favicon (replaced this session):** orange (`#FF5C00`) circle with a white "LM" monogram — `favicon.svg` (primary, source-of-truth — edit this and regenerate the PNGs below if it ever changes) plus baked PNG fallbacks `favicon-16/32/48/512.png` and a legacy `/public/favicon.ico` (16/32/48 multi-size), all generated from the SVG via headless Chrome render + Pillow resize (no ffmpeg/imagemagick needed). The monogram text uses a bold system sans-serif (`-apple-system, 'Helvetica Neue', Arial`), not the site's VT323 pixel font — VT323 blurs into illegibility at 16px favicon size (tested), a plain bold sans stays readable. Linked via 3 tags in every page's `<head>` (right after `<meta charset>`): `<link rel="icon" type="image/svg+xml" href="/images/site/favicon.svg">`, a 32×32 PNG fallback, and `apple-touch-icon` (180×180) for iOS/bookmarks. Previously only `index.html` (the 3D entry point) had a favicon at all — a leftover purple abstract-blob SVG, unrelated to the site's branding — and every `public/*2d.html`/`*3d.html` page had no favicon link whatsoever. Now wired into `index.html` + all 13 real site pages (`2D.html`, `about2d/3d.html`, `contact2d/3d.html`, `controls_open3d.html`, `craft3d.html`, `kaffeemaschine2d.html`, `mac-lamp2d.html`, `unify2d.html`, `vaccine2d/3d.html`, `virtual_cooking2d.html` — `portfolio2d.html` was among these when the favicon was added, but the page was removed later this session; see "Recent Changes"). Skipped `top_row_permanent_V3.html` (loaded only as an iframe, never gets its own browser tab) and the two standalone dev/experiment files `Questionmark_Button3d.html` / `blob_morph_bouncy.html` (not part of site navigation). **`favicon-180.png` / `favicon-192.png` are NOT the same transparent-circle design as the rest — they're a solid opaque orange square (no circle mask, no transparency) with the same white "LM" mark.** Root cause: `apple-touch-icon` (used by iOS Home Screen, Safari Favorites/Start Page tiles, and macOS "Add to Dock") ignores/fills transparency rather than respecting it — Apple's own icon convention always imposes a rounded-square mask on `apple-touch-icon` regardless of the source shape, so a transparent-cornered circle there rendered as "circle floating inside a visible square" once iOS/Safari filled the transparent corners with its own backdrop. Making that specific asset a full-bleed opaque orange square (not the circle used everywhere else) means the corners iOS reveals are already the brand orange, so the square mask reads as seamless instead of visibly framing the icon. The regular browser-tab favicon (`favicon.svg`, `favicon-16/32/48.png`, `favicon.ico`) is unaffected — those keep the genuine edge-to-edge circle since normal tab rendering respects transparency correctly. **If regenerating: `favicon-16/32/48/512.png` + `.ico` should stay the transparent-circle SVG render; `favicon-180.png`/`favicon-192.png` should stay the separate opaque-square render — don't collapse them back into one asset.**
 
 **Videos** (`/public/videos/`):
 - `kaffeemaschine/` — Cybercoffee interface demo
@@ -246,7 +246,7 @@ Organized by project for clarity:
 
 ## Current Status & Missing / TBD
 
-**Unify page (06):**
+**Unify page (01):**
 - ✅ Hero blob (pupil tracking, 2/3 centering, bounce-in, widescreen scaling)
 - ✅ Scroll-driven dual-video scrollytelling; mobile fallback at ≤860px
 - ✅ NEW design-story sections (Design Process/colors, Typography, Character design, Final Product)
@@ -254,7 +254,7 @@ Organized by project for clarity:
 - ✅ All 6 feature copy filled (EN+DE); titles updated
 - ⏳ Design-story section copy (colors/typography/characters) is English-only, not yet in `TRANSLATIONS` (DE pending)
 
-**Virtual Cooking (05):**
+**Virtual Cooking (02):**
 - ✅ Rebuilt middle from new Figma (see layout above)
 - ⏳ All body text is `[ Placeholder ]` — real copy + DE translations pending
 - Leftover unused CSS: `.breakout-media`, `.glance-list`
@@ -263,11 +263,11 @@ Organized by project for clarity:
 - ✅ **Restored and committed.** Copied from `~/Documents/creative-work/ongoing/GitHub/kaffeemaschine_external_copy/` (the 5 Jul version) and verified working in the iframe on `kaffeemaschine2d.html`.
 - It had never been tracked by git in this repo, which is why it went missing with no way to recover it here. It **is** tracked now — keep it that way.
 
-**Mac-Lamp (02):**
+**Mac-Lamp (04):**
 - ✅ Rebuilt this session — At a Glance, fixed gallery cropping, HEIC→JPG, new Process section with scrolly mechanism (see layout above)
 - ⏳ At a Glance lead is `[ Placeholder ]`, not yet in `TRANSLATIONS` (EN+DE keys exist — `section-glance`/`glance-lead` — but text itself is placeholder)
 
-**Double Packaging (01):**
+**Double Packaging (05):**
 - ✅ Rebuilt this session to match the shared pattern (see layout above); all real copy preserved
 - ⏳ At a Glance lead is `[ Placeholder ]`; same `section-glance`/`glance-lead` keys pattern
 
@@ -356,6 +356,15 @@ Previous session's work (French removal, Unify design-story sections, hero blob,
     **`backwards` was NOT sufficient — three passes were needed, and only the third actually worked.** Passes 1–2 (switching `.anim` to `backwards`; then adding `will-change`/`backface-visibility` + symmetric easing) tested clean in headless Chrome but the user still reported "flickers, and definitely doesn't ease out." **Root cause of the remainder: in Safari a finished CSS animation stays attached to the element and keeps suppressing `transition` on the property it animated.** So `transform` had no transition at all — it snapped instantly — while `box-shadow` (never in the keyframes) eased over 260ms. An instant geometry snap next to a 260ms shadow fade *is* the "flicker," and it's also literally "doesn't ease out." `animation-fill-mode` can't fix this, because the problem is the animation *existing on the element*, not what it fills with.
     **Actual fix — separate the two concerns structurally: the `.anim` fade-in now lives on a WRAPPER `<div>`, never on the hover target.** `contact2d.html`'s three `<a class="contact-item anim anim-N">` became `<div class="anim anim-N"><a class="contact-item">…</a></div>`; same for About's three `.item` rows. The hover element now reports `animationName: "none"` and zero attached animations, so nothing can contest its `transform` in any engine. With the conflict gone, the compositing hints were unnecessary and were removed, and the transitions were restored to **byte-for-byte match `.footer-logo`**: base `transform 260ms cubic-bezier(.2,.7,.2,1), box-shadow 260ms cubic-bezier(.2,.7,.2,1)` (the ease-out on leave) plus `:hover { transition: transform 150ms ease, box-shadow 150ms ease; }` (the enter). Verified over CDP: real intermediate matrices in **both** directions, staggered entrance unchanged (wrapper is `opacity: 0; translateY(10px)` at 120ms → `opacity: 1; transform: none` by 1.5s), all 3 contact `href`s intact, About's accordion still expands (276px), and `<div>`/`</div>` counts balanced on both pages.
     **Rule going forward: never put an entrance animation that touches `transform` on the same element as a `:hover { transform }`.** Put the animation on a wrapper. Cascade tricks (`fill-mode`) only mask it in Chrome.
+
+24. **Project order changed site-wide; "This Website" (`portfolio2d.html`) removed entirely.** New order: **01 Unify → 02 Virtual Cooking → 03 Cybercoffee → 04 Mac-Lamp → 05 Double Packaging** (previously 01 Double Packaging → 02 Mac-Lamp → 03 This Website → 04 Cybercoffee → 05 Virtual Cooking → 06 Unify). Every place the project order/list is duplicated across the codebase had to be updated by hand — there is no single source of truth for it:
+    - **`portfolio2d.html` deleted** (`git rm`). No `portfolio3d.html` ever existed, so no 3D-mode counterpart to remove.
+    - **`2D.html` landing grid** — the "This Website" `.project-section` block removed outright; the remaining 5 rebuilt in new order with renumbered `Project 0X` labels. Re-established a clean alternating left/right layout (`.reverse` class on positions 2 and 4) — the pre-existing grid had **three different DOM-wrapping patterns** for the image tile across projects (tile-div-is-direct-grid-child vs. `<a>`-wraps-tile-div), and critically, `.project-section.reverse .project-tile { grid-column: 1 }` only takes effect when `.project-tile` is a **direct** grid child — for the `<a>`-wraps-tile pattern (Cybercoffee/Virtual Cooking/Unify's own asset markup) the `reverse` class silently no-ops and the visual side is actually determined by plain DOM auto-placement instead. Controlled every row's side via **DOM child order** (content-first vs. tile-first), not the `reverse` class alone, since that's the mechanism that's reliable across all three wrapping patterns; kept the `reverse` class present on rows where it happens to also apply correctly, purely for stylistic consistency with the rest of the file.
+    - **Craft dropdown** (`top_row_permanent_V3.html`) — the "This Website" `<span>` removed, remaining 5 reordered. Its `data-nav="this-website"` translation wiring removed from the language-toggle IIFE (`NAV_LANG.thisWebsite` key + the `[data-nav="this-website"]` lookup, both en/de). Also found and cleaned **four separate, independent** inline `parentPath.includes('portfolio2d')` checks scattered across different IIFEs in this file (mobile-collapse detection, nav-shadow detection, help-button visibility, Craft-dropdown-init guard, logo-button click handler) — this file does not centralize its "which 2D page am I on" logic, so any future page addition/removal needs a manual sweep of all `is2DView`/`isXxx2D` blocks, not just one.
+    - **Every remaining project page's `.project-nav`** (prev/next links, `.project-nav-number`, title text, `data-i18n` keys) rewired to the new chain. First project (Unify) now has **no previous** (empty `<div class="project-nav-item">` placeholder, first slot); last project (Double Packaging) now has **no next** (empty placeholder, second slot) — a deliberate change from the *previous* inconsistent state where Unify's "next" silently wrapped around to Double Packaging (01) while Double Packaging itself had no "previous," i.e. a one-directional, asymmetric loop that was never actually documented as intentional. Resolved it into a clean non-cyclic start/end, matching the one behavior that *was* documented (item 7 above: "no previous — this is Project 01, the first").
+    - **i18n cleanup, per page:** removed now-dead `data-i18n` keys from each page's `TRANSLATIONS` object (en+de) wherever the corresponding `nav-*` span was removed/replaced — `nav-this-website` (mac-lamp2d.html, kaffeemaschine2d.html), `nav-prev`+`nav-double-packaging` (unify2d.html, no longer has a "previous" item), and an already-dead unused `nav-double-packaging` key on virtual_cooking2d.html that predated this change. Added a fresh `nav-prev` key (en `'<< PREVIOUS'` / de `'<< ZURÜCK'`, matching the site-wide convention) to vaccine2d.html, which never needed one before since it used to be the first project. **Not every neighboring project title has a translated `data-i18n` key on every page** — some pages only ever localized the specific neighbor they happened to link to (an existing site-wide inconsistency, not something this reorder fixed) — where a page's new neighbor has no existing translation, the title was left as plain English text rather than inventing a new key, matching how the site already handles several such cases (e.g. vaccine2d.html's "Mac-Lamp" project-nav title has never been localized).
+    - **`portfolio/` image folder now orphaned** — files left on disk, nothing references them (see "Assets").
+    - **Vite dev-server quirk, not a bug:** `curl localhost:5173/portfolio2d.html` still returns `200` with `index.html`'s content after deletion — this is Vite's default `appType: 'spa'` fallback (serves `index.html` for any unmatched route) with no `vite.config.js` present to override it. GitHub Pages has no such fallback, so the deleted page correctly 404s in production. Don't mistake this local-only 200 for the removal having failed.
 
 ## 3D Mode: Camera Controls
 
