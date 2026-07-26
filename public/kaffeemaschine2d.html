@@ -32,7 +32,9 @@
 
     html, body {
       width: 100%;
-      overflow-x: hidden;
+      /* clip (not hidden): prevents horizontal scroll without becoming a
+         scroll container — hidden here silently breaks the sticky spin pin. */
+      overflow-x: clip;
       background: var(--bg-surface);
       color: var(--text-primary);
       font-family: 'Roboto Flex', sans-serif;
@@ -60,7 +62,12 @@
       padding-bottom: 12px;
       border: 1px solid var(--border-color);
       margin: 12px auto;
-      overflow: hidden;
+      /* Cap the content card on wide monitors; page bg fills the sides.
+         Only bites above ~1550px — 13"/14" MacBooks stay edge-to-edge. */
+      max-width: 1440px;
+      /* clip (not hidden): clips shadow bleed to the bordered card without
+         becoming a scroll container, which would break the sticky spin pin. */
+      overflow: clip;
     }
 
     /* ── Hero (full-width machine render) ── */
@@ -271,7 +278,7 @@
       font-size: clamp(18px, 2.2vw, 24px);
       line-height: 1.4;
       letter-spacing: -0.01em;
-      color: var(--text-primary);
+      color: var(--text-secondary);
     }
 
     .guide-text {
@@ -322,6 +329,53 @@
     }
 
     .stagger-figure img { width: 100%; height: auto; display: block; border-radius: 12px; }
+
+    /* ── Sticky scroll-spin ──────────────────────────────────────
+       A tall spacer pins .spin-sticky; scroll progress spins the machine
+       (centered), then slides it center→right while the copy fades in.
+       The end (pinned) state = machine right + text left. */
+    .spin-scrolly {
+      position: relative;
+      height: 240vh;      /* scroll room for a full spin + the slide */
+    }
+
+    .spin-sticky {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .spin-stage {
+      position: relative;
+      width: 100%;
+      max-width: calc(520px + 40vw);   /* same fluid width as .process-steps */
+      height: clamp(300px, 44vw, 460px);
+      margin: 0 auto;
+    }
+
+    .spin-copy {
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: min(42%, 440px);
+      opacity: 0;                       /* JS fades this in near the end */
+      will-change: opacity, transform;
+    }
+
+    .spin {
+      position: absolute;
+      right: 0;                         /* natural (end) position: right */
+      top: 50%;
+      transform: translateY(-50%);
+      width: clamp(280px, 40vw, 460px);
+      will-change: transform;
+    }
+
+    .spin img { width: 100%; height: auto; display: block; }
 
     .stagger-copy {
       display: flex;
@@ -417,6 +471,28 @@
         gap: 32px;
       }
       .result-copy { order: 2; }
+      /* Sticky spin → static stacked block on small screens (no pin/slide) */
+      .spin-scrolly { height: auto; }
+      .spin-sticky { position: static; height: auto; }
+      .spin-stage {
+        position: static; width: 100%; height: auto;
+        display: flex; flex-direction: column; align-items: center; gap: 18px;
+      }
+      .spin-copy { position: static; transform: none; opacity: 1; width: 100%; order: 2; }
+      .spin { position: static; transform: none; width: min(320px, 78%); order: 1; }
+    }
+
+    /* Reduced motion: collapse the pinned spin to the same static stacked
+       block as mobile — machine + caption shown at rest, no spin/slide/fade. */
+    @media (prefers-reduced-motion: reduce) {
+      .spin-scrolly { height: auto; }
+      .spin-sticky { position: static; height: auto; }
+      .spin-stage {
+        position: static; width: 100%; height: auto;
+        display: flex; flex-direction: column; align-items: center; gap: 18px;
+      }
+      .spin-copy { position: static; transform: none; opacity: 1; width: 100%; order: 2; }
+      .spin { position: static; transform: none; width: min(320px, 78%); order: 1; }
     }
 
     @media (max-width: 640px) {
@@ -507,6 +583,34 @@
       width: 5px; height: 5px; border-radius: 50%;
       background: var(--accent-orange, #FF5C00); display: block; flex-shrink: 0;
     }
+    /* ── Reduced motion (apple-design §14): drop non-essential movement,
+       keep layout + opacity cues. No effect unless the OS pref is set. */
+    @media (prefers-reduced-motion: reduce) {
+      .accent-dot { animation: none !important; opacity: 1; }
+      .machine-overlay-btn,
+      .hero-blob,
+      .character-row,
+      .spin-scrolly .spin { animation: none !important; }
+      .project-nav-item:hover,
+      .meta-tile:hover,
+      .project-tile:hover,
+      .machine-frame-wrap:hover,
+      .tag:hover { transform: none !important; }
+    }
+
+    /* Past the 1440px card cap, freeze the fluid spread to its 1440 value
+       (calc(520 + 40*14.4) = 1096) so wide monitors match the MacBook look. */
+    @media (min-width: 1440px) {
+      .process-steps { width: 1096px; }
+      .spin-stage { max-width: 1096px; }
+    }
+
+    /* Wide-aspect monitors only (not the ~1.6 MacBook ratio): pull the card
+       in another 20px each side for a touch more breathing room. Nav stays
+       its current width. 17/10 (not 1.7) — Safari ignores the decimal form. */
+    @media (min-aspect-ratio: 17/10) {
+      .page-wrapper { max-width: 1390px; }
+    }
   </style>
 </head>
 <body>
@@ -579,14 +683,21 @@
       </div>
       <div class="dot-divider" style="margin-bottom: clamp(20px, 3vw, 28px);"></div>
 
-      <div class="process-steps">
-        <div class="stagger-row right">
-          <div class="stagger-figure">
-            <img src="/images/cybercoffee/01_hero_3q_duo.png" alt="Cybercoffee machine — three-quarter duo render" />
+      <!-- Sticky scroll-spin: machine starts centred + spins a full turn while
+           pinned, then slides to the right as the caption fades in on the left.
+           The pinned end-state = machine right / text left. See initSpin below. -->
+      <section class="spin-scrolly" id="spin-scrolly">
+        <div class="spin-sticky">
+          <div class="spin-stage">
+            <p class="spin-copy guide-text" id="spin-copy" data-i18n="process-1">[ Placeholder ] A short caption describing this render — the machine's form language and the retro-futuristic direction it set.</p>
+            <div class="spin" id="spin">
+              <img id="spin-img" src="/images/cybercoffee/spin/frame_001.webp" alt="Cybercoffee machine — rotating render" />
+            </div>
           </div>
-          <p class="stagger-copy guide-text" data-i18n="process-1">[ Placeholder ] A short caption describing this render — the machine's form language and the retro-futuristic direction it set.</p>
         </div>
+      </section>
 
+      <div class="process-steps" style="margin-top: clamp(40px, 6vw, 80px);">
         <div class="process-shot shift-left">
           <div class="guide-media">
             <img src="/images/cybercoffee/03_low_hero_egg_focus.png" alt="Cybercoffee machine — low hero, egg in focus" />
@@ -663,9 +774,10 @@
         return w;
       }
 
+      var _rm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       var dir = sessionStorage.getItem('_sv');
-      if (dir) {
-        sessionStorage.removeItem('_sv');
+      if (dir) sessionStorage.removeItem('_sv');
+      if (dir && !_rm) {
         var wrap = _getWrap();
         wrap.style.transform = dir === 'right' ? 'translateX(100%)' : 'translateX(-100%)';
         var done = false;
@@ -755,6 +867,72 @@
       else if (y < lastScrollY && Math.abs(y - lastToggleY) > 180) { topBar.classList.remove('hide'); lastToggleY = y; }
       lastScrollY = y;
     });
+
+    // ── Sticky scroll-spin (design-process render) ────────────────
+    // While the section is pinned, scroll progress p (0→1) drives three
+    // phases: [0 – SPIN_END] the machine spins a full turn, centred;
+    // [SLIDE_START – 1] it slides from centre to its right-hand rest spot;
+    // [TEXT_START – 1] the caption fades in on the left. Frames preloaded.
+    (function initSpin() {
+      const scrolly = document.getElementById('spin-scrolly');
+      const spinEl  = document.getElementById('spin');
+      const spinImg = document.getElementById('spin-img');
+      const copy    = document.getElementById('spin-copy');
+      const stage   = scrolly ? scrolly.querySelector('.spin-stage') : null;
+      if (!scrolly || !spinEl || !spinImg || !copy || !stage) return;
+
+      const COUNT = 56;
+      const src = i => `/images/cybercoffee/spin/frame_${String(i + 1).padStart(3, '0')}.webp`;
+      for (let i = 0; i < COUNT; i++) { const im = new Image(); im.src = src(i); }
+
+      const SPIN_END = 0.55;    // spin completes by 55% of the pinned scroll
+      const SLIDE_START = 0.55; // then slide centre → right
+      const TEXT_START = 0.82;  // caption fades in only near the very end
+
+      const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+      const smooth = t => t * t * (3 - 2 * t);
+
+      let current = -1, ticking = false;
+      function update() {
+        ticking = false;
+
+        // reduced motion: single static frame, no spin/slide/fade (CSS stacks it)
+        if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          if (current !== 0) { current = 0; spinImg.src = src(0); }
+          spinEl.style.transform = ''; copy.style.opacity = ''; copy.style.transform = '';
+          return;
+        }
+
+        // frame from pinned progress
+        const range = scrolly.offsetHeight - window.innerHeight;
+        const p = clamp(-scrolly.getBoundingClientRect().top / (range > 0 ? range : 1), 0, 1);
+        const idx = Math.min(COUNT - 1, Math.round(clamp(p / SPIN_END, 0, 1) * (COUNT - 1)));
+        if (idx !== current) { current = idx; spinImg.src = src(idx); }
+
+        // small screens: static stacked layout, no slide/fade
+        if (window.innerWidth <= 860) {
+          spinEl.style.transform = '';
+          copy.style.opacity = '';
+          copy.style.transform = '';
+          return;
+        }
+
+        // slide the machine centre → right
+        const slideP = smooth(clamp((p - SLIDE_START) / (1 - SLIDE_START), 0, 1));
+        const centreOffset = (stage.clientWidth - spinEl.offsetWidth) / 2; // machine is right:0
+        const x = -centreOffset * (1 - slideP);
+        spinEl.style.transform = `translate(${x.toFixed(1)}px, -50%)`;
+
+        // caption fades + eases in from the left near the end
+        const textP = clamp((p - TEXT_START) / (1 - TEXT_START), 0, 1);
+        copy.style.opacity = textP.toFixed(3);
+        copy.style.transform = `translateY(-50%) translateX(${(-18 * (1 - textP)).toFixed(1)}px)`;
+      }
+      function onScroll() { if (!ticking) { ticking = true; requestAnimationFrame(update); } }
+      window.addEventListener('scroll', onScroll, { passive: true });
+      window.addEventListener('resize', onScroll);
+      update();
+    })();
 
     // ── i18n ─────────────────────────────────────────────────────
     const TRANSLATIONS = {

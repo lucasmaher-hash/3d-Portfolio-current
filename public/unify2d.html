@@ -65,6 +65,11 @@
       padding-bottom: 12px;
       border: 1px solid var(--border-color);
       margin: 12px auto;
+      /* Cap the content card so it stops sprawling on wide monitors; the
+         page background fills the space left/right. With the body's ~55px
+         side padding, the cap only bites above ~1550px — 13"/14" MacBooks
+         stay edge-to-edge; 16" + external monitors get the whitespace. */
+      max-width: 1440px;
       /* visible (not hidden) so the hero blob can break out above the
          top border and run to the very top edge of the page */
       overflow: visible;
@@ -791,6 +796,13 @@
       margin-right: auto;
     }
 
+    /* Past the 1440px card cap, freeze the fluid spread to its value AT 1440
+       (calc(520 + 40*14.4) = 1096) so wide monitors match the MacBook layout
+       instead of pulling the figures apart inside the capped card. */
+    @media (min-width: 1440px) {
+      .character-list { width: 1096px; }
+    }
+
     .character-row {
       display: flex;
       align-items: center;
@@ -872,6 +884,21 @@
       .character-row.right,
       .character-row.indent { flex-direction: column; align-items: flex-start; gap: 16px; }
     }
+    /* ── Reduced motion (apple-design §14): drop non-essential movement,
+       keep layout + opacity cues. No effect unless the OS pref is set. */
+    @media (prefers-reduced-motion: reduce) {
+      .accent-dot { animation: none !important; opacity: 1; }
+      .machine-overlay-btn,
+      .hero-blob,
+      .character-row,
+      .spin-scrolly .spin { animation: none !important; }
+      .project-nav-item:hover,
+      .meta-tile:hover,
+      .project-tile:hover,
+      .machine-frame-wrap:hover,
+      .tag:hover { transform: none !important; }
+    }
+
   </style>
 </head>
 <body>
@@ -1172,9 +1199,10 @@
         return w;
       }
 
+      var _rm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       var dir = sessionStorage.getItem('_sv');
-      if (dir) {
-        sessionStorage.removeItem('_sv');
+      if (dir) sessionStorage.removeItem('_sv');
+      if (dir && !_rm) {
         var wrap = _getWrap();
         wrap.style.transform = dir === 'right' ? 'translateX(100%)' : 'translateX(-100%)';
         var done = false;

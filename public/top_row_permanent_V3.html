@@ -96,6 +96,13 @@
       box-shadow: none;
       /* no shadow on the outer container */
       width: 100%;
+      /* Cap so the nav sits inside the 1440px content card with the same
+         gap it has on a MacBook. On a MacBook the pill is inset ~67px inside
+         the card border (island padding 122 vs body padding 55); 1440 − 2×67
+         = 1306 keeps that gap on wide monitors instead of the pill edge
+         landing on the card's border line. */
+      max-width: 1306px;
+      margin: 0 auto;
       /* stretch within the gutter track */
       overflow: visible;
 
@@ -106,6 +113,9 @@
       transition: box-shadow 260ms var(--ease);
     }
 
+    /* Over a full-bleed hero the nav bar stays (its light background),
+       only the outer raised shadow/highlight drops; it returns once the
+       nav leaves the image (or on pages with no full-bleed hero). */
     .nav-island.is-2d-mode {
       box-shadow: var(--shadow-raised-sm);
     }
@@ -400,6 +410,12 @@
         max-width: calc(100vw - 28px);
       }
     }
+    /* Wide-aspect monitors only: widen the nav bar 12px each side (1306→1330)
+       — it grows a little while the content card comes in. 17/10 not 1.7
+       (Safari ignores the decimal aspect form). */
+    @media (min-aspect-ratio: 17/10) {
+      .nav-island { max-width: 1330px; }
+    }
   </style>
 </head>
 
@@ -481,7 +497,8 @@
       const isPortfolio2D = parentPath.includes('portfolio2d');
       const isKaffeemaschine2D = parentPath.includes('kaffeemaschine2d');
       const isVirtualCooking2D = parentPath.includes('virtual_cooking2d');
-      const is2DView = is2D || isAbout2D || isContact2D || isVaccine2D || isMacLamp2D || isPortfolio2D || isKaffeemaschine2D || isVirtualCooking2D;
+      const isUnify2D = parentPath.includes('unify2d');
+      const is2DView = is2D || isAbout2D || isContact2D || isVaccine2D || isMacLamp2D || isPortfolio2D || isKaffeemaschine2D || isVirtualCooking2D || isUnify2D;
       const navIsland = document.querySelector('.nav-island');
 
       // Mobile 3D: collapse island behind LM button by default
@@ -490,18 +507,36 @@
         navIsland.classList.add('is-collapsible');
       }
 
-      // Apply 2D mode styling — if a full-bleed .hero exists, wait until scrolled past it
+      // 2D-mode shading. Over a full-bleed `.hero` image the nav stays
+      // transparent; the raised pill turns on the moment it scrolls past the
+      // hero. Pages without a full-bleed `.hero` keep the pill on always.
+      //
+      // `.hero` is queried LIVE on every call (not cached once) and
+      // updateNavShadow is retriggered on load/DOMContentLoaded/rAF/timeout —
+      // this beats the iframe-vs-parent race that used to leave the shadow
+      // stuck (missing, or wrongly on over the hero) until a manual refresh.
       if (is2DView) {
-        const heroEl = window.top.document.querySelector('.hero');
-        if (heroEl) {
-          function updateNavShadow() {
-            navIsland.classList.toggle('is-2d-mode', window.top.scrollY > heroEl.offsetHeight - 60);
+        function updateNavShadow() {
+          var doc = window.top.document;
+          var hero = doc.querySelector('.hero');
+          if (hero && hero.offsetHeight > 0) {
+            navIsland.classList.toggle('is-2d-mode', window.top.scrollY > hero.offsetHeight - 60);
+          } else if (doc.readyState === 'complete') {
+            // parent fully loaded and no full-bleed hero → pill always on
+            navIsland.classList.add('is-2d-mode');
           }
-          window.top.addEventListener('scroll', updateNavShadow, { passive: true });
-          updateNavShadow();
-        } else {
-          navIsland.classList.add('is-2d-mode');
+          // else: parent still loading / hero not laid out yet — a later call decides
         }
+        window.top.addEventListener('scroll', updateNavShadow, { passive: true });
+        window.top.addEventListener('resize', updateNavShadow, { passive: true });
+        window.top.addEventListener('load', updateNavShadow);
+        if (window.top.document.readyState !== 'complete') {
+          window.top.document.addEventListener('DOMContentLoaded', updateNavShadow);
+        }
+        updateNavShadow();
+        requestAnimationFrame(updateNavShadow);
+        setTimeout(updateNavShadow, 120);
+        setTimeout(updateNavShadow, 500);
       }
 
       // Set initial active state based on current page

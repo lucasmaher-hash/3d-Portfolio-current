@@ -65,6 +65,9 @@
       padding-bottom: 12px;
       border: 1px solid var(--border-color);
       margin: 12px auto;
+      /* Cap the content card on wide monitors; page bg fills the sides.
+         Only bites above ~1550px — 13"/14" MacBooks stay edge-to-edge. */
+      max-width: 1440px;
       overflow: hidden;
     }
 
@@ -92,7 +95,7 @@
     /* ── Sections ─────────────────────────────────────────────── */
     .section {
       border-bottom: 1px solid var(--border-color);
-      padding: clamp(40px, 6vw, 64px) clamp(40px, 8vw, 80px);
+      padding: clamp(32px, 5vw, 56px) clamp(40px, 8vw, 80px);
     }
 
     /* ── Header ───────────────────────────────────────────────── */
@@ -118,10 +121,10 @@
 
     .project-title {
       font-family: 'OCR-A-BT', monospace;
-      font-size: clamp(40px, 6vw, 72px);
-      line-height: 1;
+      font-size: clamp(40px, 7vw, 96px);
+      line-height: 1.05;
       color: var(--text-primary);
-      text-transform: uppercase;
+      letter-spacing: -0.04em;
     }
 
     @keyframes blink {
@@ -134,7 +137,7 @@
       height: 16px;
       border-radius: 50%;
       background: var(--accent-orange);
-      margin-bottom: 10px;
+      margin-bottom: 12px;
       flex-shrink: 0;
       animation: blink 1.5s step-end infinite;
     }
@@ -151,19 +154,18 @@
     .meta-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: clamp(16px, 3vw, 40px);
+      gap: clamp(16px, 3vw, 48px);
     }
 
     .meta-tile {
       background: var(--bg-surface);
       border-radius: 24px;
-      box-shadow: var(--shadow-raised-sm);
+      box-shadow: var(--shadow-raised);
       padding: 16px;
       display: flex;
       flex-direction: column;
       gap: 12px;
-      min-height: 210px;
-      transition: transform 260ms var(--ease), box-shadow 260ms var(--ease);
+      min-height: 180px;
     }
 
 
@@ -180,9 +182,9 @@
       border-radius: 14px;
       padding: 14px 18px;
       box-shadow: var(--shadow-pressed);
-      font-size: 14px;
+      font-size: 13px;
       line-height: 1.55;
-      color: var(--text-primary);
+      color: var(--text-secondary);
     }
 
     /* ── Guide section (At a Glance / Overview / Process) ────────
@@ -241,7 +243,7 @@
       font-size: clamp(18px, 2.2vw, 24px);
       line-height: 1.4;
       letter-spacing: -0.01em;
-      color: var(--text-primary);
+      color: var(--text-secondary);
     }
 
 
@@ -290,7 +292,7 @@
       width: clamp(220px, 32vw, 380px);
     }
 
-    .stagger-figure img { width: 100%; height: auto; display: block; }
+    .stagger-figure img { width: 100%; height: auto; display: block; border-radius: 16px; }
 
     .stagger-copy {
       display: flex;
@@ -311,7 +313,7 @@
     .process-shot.shift-right { width: 66%; margin-left: 27%; }
     .process-shot.shift-left  { width: 80%; }
 
-    .process-shot img { width: 100%; height: auto; display: block; }
+    .process-shot img { width: 100%; height: auto; display: block; border-radius: 16px; }
 
     @media (max-width: 860px) {
       .meta-grid { grid-template-columns: 1fr 1fr; }
@@ -475,6 +477,33 @@
     .scroll-dot {
       width: 5px; height: 5px; border-radius: 50%;
       background: var(--accent-orange, #FF5C00); display: block; flex-shrink: 0;
+    }
+    /* ── Reduced motion (apple-design §14): drop non-essential movement,
+       keep layout + opacity cues. No effect unless the OS pref is set. */
+    @media (prefers-reduced-motion: reduce) {
+      .accent-dot { animation: none !important; opacity: 1; }
+      .machine-overlay-btn,
+      .hero-blob,
+      .character-row,
+      .spin-scrolly .spin { animation: none !important; }
+      .project-nav-item:hover,
+      .meta-tile:hover,
+      .project-tile:hover,
+      .machine-frame-wrap:hover,
+      .tag:hover { transform: none !important; }
+    }
+
+    /* Past the 1440px card cap, freeze the fluid spread to its 1440 value
+       (calc(520 + 40*14.4) = 1096) so wide monitors match the MacBook look. */
+    @media (min-width: 1440px) {
+      .process-steps { width: 1096px; }
+    }
+
+    /* Wide-aspect monitors only (not the ~1.6 MacBook ratio): pull the card
+       in a bit more for extra breathing room. Nav keeps its own width.
+       17/10 not 1.7 — Safari ignores the decimal aspect form. */
+    @media (min-aspect-ratio: 17/10) {
+      .page-wrapper { max-width: 1390px; }
     }
   </style>
 </head>
@@ -648,9 +677,10 @@
         return w;
       }
 
+      var _rm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       var dir = sessionStorage.getItem('_sv');
-      if (dir) {
-        sessionStorage.removeItem('_sv');
+      if (dir) sessionStorage.removeItem('_sv');
+      if (dir && !_rm) {
         var wrap = _getWrap();
         wrap.style.transform = dir === 'right' ? 'translateX(100%)' : 'translateX(-100%)';
         var done = false;

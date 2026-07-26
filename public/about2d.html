@@ -62,6 +62,9 @@
       padding-bottom: 12px;
       border: 1px solid var(--border-color);
       margin: 12px auto;
+      /* Cap the content card on wide monitors; page bg fills the sides.
+         Only bites above ~1550px — 13"/14" MacBooks stay edge-to-edge. */
+      max-width: 1440px;
       overflow: hidden;
     }
 
@@ -306,6 +309,27 @@
       width: 5px; height: 5px; border-radius: 50%;
       background: var(--accent-orange, #FF5C00); display: block; flex-shrink: 0;
     }
+    /* ── Reduced motion (apple-design §14): drop non-essential movement,
+       keep layout + opacity cues. No effect unless the OS pref is set. */
+    @media (prefers-reduced-motion: reduce) {
+      .accent-dot { animation: none !important; opacity: 1; }
+      .machine-overlay-btn,
+      .hero-blob,
+      .character-row,
+      .spin-scrolly .spin { animation: none !important; }
+      .project-nav-item:hover,
+      .meta-tile:hover,
+      .project-tile:hover,
+      .machine-frame-wrap:hover,
+      .tag:hover { transform: none !important; }
+    }
+
+    /* Wide-aspect monitors only (not the ~1.6 MacBook ratio): pull the card
+       in a bit more for extra breathing room. Nav keeps its own width.
+       17/10 not 1.7 — Safari ignores the decimal aspect form. */
+    @media (min-aspect-ratio: 17/10) {
+      .page-wrapper { max-width: 1390px; }
+    }
   </style>
 </head>
 <body>
@@ -427,9 +451,10 @@
         return w;
       }
 
+      var _rm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       var dir = sessionStorage.getItem('_sv');
-      if (dir) {
-        sessionStorage.removeItem('_sv');
+      if (dir) sessionStorage.removeItem('_sv');
+      if (dir && !_rm) {
         var wrap = _getWrap();
         wrap.style.transform = dir === 'right' ? 'translateX(100%)' : 'translateX(-100%)';
         var done = false;
