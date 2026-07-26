@@ -811,7 +811,7 @@
     <!-- At a Glance -->
     <div class="section" style="border-bottom: none; padding-bottom: 0;">
       <h2 class="section-title" data-i18n="section-glance">At a Glance</h2>
-      <p class="glance-lead" style="margin-top: clamp(20px, 3vw, 32px);" data-i18n="glance-lead">[ Placeholder ] A short, punchy summary of the Mac-Lamp concept — one or two lines that frame the project before the details begin.</p>
+      <p class="glance-lead" style="margin-top: clamp(20px, 3vw, 32px);" data-i18n="glance-lead">I've always loved the colorful, translucent look of old Apple products, and wanted to capture some of that magic myself — while finally trying my hand at 3D printing. Mac-Lamp is a desk lamp built around the salvaged shell of an old, broken MacBook: a 3D-printed housing in transparent orange PLA glows through the trackpad and the Apple logo, just like those old devices used to, and the trackpad itself doubles as the on/off switch.</p>
     </div>
 
     <!-- Meta -->
@@ -848,14 +848,14 @@
         <div class="guide-media">
           <img src="/images/mac-lamp/1.png" alt="CAD render of the housing" />
         </div>
-        <p class="guide-text" data-i18n="process-cad">Every part was modeled in CAD to the salvaged MacBook's exact measurements before anything was printed.</p>
+        <p class="guide-text" data-i18n="process-cad">Every part was modeled in Blender around the exact dimensions of a salvaged, broken MacBook — including cutouts over the trackpad and the Apple logo, the two areas designed to glow once the lamp was built.</p>
       </div>
 
       <div class="process-shot shift-left" style="margin-top: clamp(72px, 11vw, 96px); margin-bottom: clamp(72px, 11vw, 96px);">
         <div class="guide-media">
           <video src="/videos/mac-lamp/2.MOV" autoplay loop muted playsinline></video>
         </div>
-        <p class="guide-text" data-i18n="process-print">Printed in translucent orange PLA, layer by layer.</p>
+        <p class="guide-text" data-i18n="process-print">3D printing was something I'd wanted to try for a while, so the whole housing was printed rather than machined — in a transparent orange filament chosen specifically to let light pass through it as cleanly as possible.</p>
       </div>
 
       <div class="lamp-scrolly">
@@ -875,8 +875,8 @@
             </div>
           </div>
           <div class="lamp-scrolly-copy">
-            <p class="lamp-scrolly-panel guide-text is-active" data-step="cut" data-i18n="process-cut">The salvaged MacBook shell was cut down on a bandsaw to fit the new housing.</p>
-            <p class="lamp-scrolly-panel guide-text" data-step="sand" data-i18n="process-sand">Cut edges were sanded smooth by hand before final assembly.</p>
+            <p class="lamp-scrolly-panel guide-text is-active" data-step="cut" data-i18n="process-cut">The salvaged MacBook's own aluminium shell was cut down on a bandsaw — reusing the real hardware rather than just referencing its look was the whole point.</p>
+            <p class="lamp-scrolly-panel guide-text" data-step="sand" data-i18n="process-sand">Every cut edge was sanded smooth by hand, so the reused aluminium sits flush against the printed housing instead of looking bolted on.</p>
           </div>
         </div>
       </div>
@@ -885,10 +885,11 @@
     <!-- Gallery + Overview -->
     <div class="section" style="border-bottom: none;">
       <div class="section-heading-row" style="margin-bottom: clamp(20px, 3vw, 28px);">
-        <h2 class="section-title" data-i18n="section-overview">Overview / Concept</h2>
+        <h2 class="section-title" data-i18n="section-result">Final result</h2>
         <span class="step-badge">2</span>
       </div>
       <div class="dot-divider" style="margin-bottom: clamp(20px, 3vw, 28px);"></div>
+      <p class="guide-text" data-i18n="result-text" style="margin-bottom: clamp(28px, 4vw, 44px);">The finished lamp does what I set out to do: the trackpad clicks on and off like a real button, and once it's lit, the trackpad and the Apple logo glow through the orange housing the same way the display and logo used to on the machine it came from. It's less a tribute to one specific MacBook than to a whole era of translucent, colorful Apple hardware I grew up loving.</p>
       <div class="gallery-with-text">
         <div class="gallery-layout">
           <div class="gallery-main-wrap">
@@ -1045,13 +1046,14 @@
         'label-role': 'Role', 'val-role': 'Designer & Maker',
         'label-tools': 'Tools', 'val-tools': 'CAD Modeling<br>3D Printing<br>Metal Tooling',
         'section-glance': 'At a Glance',
-        'glance-lead': '[ Placeholder ] A short, punchy summary of the Mac-Lamp concept — one or two lines that frame the project before the details begin.',
-        'section-overview': 'Overview / Concept',
+        'glance-lead': 'I\'ve always loved the colorful, translucent look of old Apple products, and wanted to capture some of that magic myself — while finally trying my hand at 3D printing. Mac-Lamp is a desk lamp built around the salvaged shell of an old, broken MacBook: a 3D-printed housing in transparent orange PLA glows through the trackpad and the Apple logo, just like those old devices used to, and the trackpad itself doubles as the on/off switch.',
+        'section-result': 'Final result',
+        'result-text': 'The finished lamp does what I set out to do: the trackpad clicks on and off like a real button, and once it\'s lit, the trackpad and the Apple logo glow through the orange housing the same way the display and logo used to on the machine it came from. It\'s less a tribute to one specific MacBook than to a whole era of translucent, colorful Apple hardware I grew up loving.',
         'section-process': 'Process',
-        'process-cut': 'The salvaged MacBook shell was cut down on a bandsaw to fit the new housing.',
-        'process-sand': 'Cut edges were sanded smooth by hand before final assembly.',
-        'process-cad': 'Every part was modeled in CAD to the salvaged MacBook\'s exact measurements before anything was printed.',
-        'process-print': 'Printed in translucent orange PLA, layer by layer.',
+        'process-cut': 'The salvaged MacBook\'s own aluminium shell was cut down on a bandsaw — reusing the real hardware rather than just referencing its look was the whole point.',
+        'process-sand': 'Every cut edge was sanded smooth by hand, so the reused aluminium sits flush against the printed housing instead of looking bolted on.',
+        'process-cad': 'Every part was modeled in Blender around the exact dimensions of a salvaged, broken MacBook — including cutouts over the trackpad and the Apple logo, the two areas designed to glow once the lamp was built.',
+        'process-print': '3D printing was something I\'d wanted to try for a while, so the whole housing was printed rather than machined — in a transparent orange filament chosen specifically to let light pass through it as cleanly as possible.',
         'section-gallery': 'Gallery', 'gallery-meta': '3 Videos · 6 Photos',
         'nav-prev': '<< PREVIOUS', 'nav-next': 'NEXT >>',
         'nav-double-packaging': 'Double Packaging',
@@ -1062,13 +1064,14 @@
         'label-role': 'Rolle', 'val-role': 'Designer & Hersteller',
         'label-tools': 'Werkzeuge', 'val-tools': 'CAD-Modellierung<br>3D-Druck<br>Metallbearbeitung',
         'section-glance': 'Auf einen Blick',
-        'glance-lead': '[ Placeholder ] Eine kurze, prägnante Zusammenfassung des Mac-Lamp-Konzepts — ein bis zwei Sätze, die das Projekt einleiten.',
-        'section-overview': 'Überblick / Konzept',
+        'glance-lead': 'Ich habe den bunten, durchscheinenden Look alter Apple-Produkte schon immer geliebt und wollte diese Magie selbst einfangen — und endlich 3D-Druck ausprobieren. Mac-Lamp ist eine Schreibtischlampe um die gerettete Hülle eines kaputten MacBooks: Ein 3D-gedrucktes Gehäuse aus transparentem orangem PLA leuchtet durch Trackpad und Apple-Logo wie bei den alten Geräten, und das Trackpad dient als Ein-/Ausschalter.',
+        'section-result': 'Endergebnis',
+        'result-text': 'Die fertige Lampe schafft genau das, was ich wollte: Das Trackpad klickt wie ein echter Taster ein und aus, und sobald sie leuchtet, scheinen Trackpad und Apple-Logo durch das orange Gehäuse, genau wie einst Display und Logo auf dem Gerät, aus dem sie stammen. Es ist weniger eine Hommage an ein bestimmtes MacBook als an eine ganze Ära bunter, durchscheinender Apple-Hardware, mit der ich aufgewachsen bin.',
         'section-process': 'Prozess',
-        'process-cut': 'Das gerettete MacBook-Gehäuse wurde mit einer Bandsäge auf das neue Gehäuse zugeschnitten.',
-        'process-sand': 'Die Schnittkanten wurden vor der Endmontage von Hand glatt geschliffen.',
-        'process-cad': 'Jedes Teil wurde nach den exakten Maßen des geretteten MacBooks in CAD modelliert, bevor etwas gedruckt wurde.',
-        'process-print': 'Gedruckt in transparentem orangem PLA, Schicht für Schicht.',
+        'process-cut': 'Die eigentliche Aluminiumhülle des geretteten MacBooks wurde mit einer Bandsäge zugeschnitten — die echte Hardware wiederzuverwenden statt nur ihren Look zu zitieren, war der ganze Punkt.',
+        'process-sand': 'Jede Schnittkante wurde von Hand glatt geschliffen, damit das wiederverwendete Aluminium bündig am gedruckten Gehäuse sitzt statt angeschraubt zu wirken.',
+        'process-cad': 'Jedes Teil wurde in Blender exakt nach den Maßen eines geretteten, kaputten MacBooks modelliert — inklusive Aussparungen über Trackpad und Apple-Logo, den beiden Stellen, die später leuchten sollten.',
+        'process-print': '3D-Druck wollte ich schon lange ausprobieren, also wurde das ganze Gehäuse gedruckt statt gefräst — in einem transparenten orangen Filament, gewählt, damit Licht möglichst sauber hindurchscheint.',
         'section-gallery': 'Galerie', 'gallery-meta': '3 Videos · 6 Fotos',
         'nav-prev': '<< ZURÜCK', 'nav-next': 'WEITER >>',
         'nav-double-packaging': 'Double Packaging',

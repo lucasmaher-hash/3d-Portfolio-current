@@ -188,12 +188,16 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      font-family: 'VT323', monospace;
-      font-size: 18px;
-      color: var(--text-primary);
       text-decoration: none;
       flex-shrink: 0;
       transition: transform 260ms var(--ease), box-shadow 260ms var(--ease);
+    }
+
+    .logo-mark {
+      width: 34.56px;
+      height: auto;
+      display: block;
+      pointer-events: none;
     }
 
     .logo:hover {
@@ -442,7 +446,7 @@
 
       <!-- Left: lang toggle + logo -->
       <div class="nav-left">
-        <a href="#" class="logo" aria-label="Lucas Maher home" id="logo-btn">LM</a>
+        <a href="#" class="logo" aria-label="Lucas Maher home" id="logo-btn"><img src="/images/site/logo-lm.png" alt="" class="logo-mark" /></a>
         <div class="lang-toggle">
           <button class="lang-btn" data-lang="de">de</button>
           <span class="lang-sep">/</span>

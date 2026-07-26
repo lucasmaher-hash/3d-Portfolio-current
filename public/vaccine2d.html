@@ -609,7 +609,7 @@
     <!-- At a Glance -->
     <div class="guide-section" style="border-bottom: none; padding-bottom: 0;">
       <h2 class="section-title" data-i18n="section-glance">At a Glance</h2>
-      <p class="glance-lead" style="margin-top: clamp(20px, 3vw, 32px);" data-i18n="glance-lead">[ Placeholder ] A short, punchy summary of the Double Packaging concept — one or two lines that frame the project before the details begin.</p>
+      <p class="glance-lead" style="margin-top: clamp(20px, 3vw, 32px);" data-i18n="glance-lead">A Blender exercise in presenting a 3D object in a way you could never actually photograph: a bottle vacuum-sealed inside a zip bag, shrink-wrapped tight and rendered from an angle no real vacuum bag could hold still for. This project became the basis for the render approach I later used on Cybercoffee.</p>
     </div>
 
     <!-- Meta -->
@@ -634,25 +634,15 @@
       </div>
     </div>
 
-    <!-- Overview -->
+    <!-- Process -->
     <div class="guide-section">
       <div class="section-heading-row">
-        <h2 class="section-title" data-i18n="section-overview">Overview / Concept</h2>
+        <h2 class="section-title" data-i18n="section-process">Process</h2>
         <span class="step-badge">1</span>
       </div>
       <div class="dot-divider"></div>
-      <p class="guide-text" data-i18n="overview-text">
-        Vacuum-sealed packaging is usually photographed flat — real-world gravity and suction don't leave many options. That constraint was part of why this felt worth building: in CGI the pack can stand upright, rotate freely, and be lit from any angle. The object itself was a deliberate choice too, inspired by intranetgirl's tutorial — I wanted something unconventional, a pairing you wouldn't normally see merchandised. A pharmaceutical vial sealed inside a zip bag ticks that box. It also made for a useful technical challenge: two materials with opposite physical behaviour, which pushed me into cloth simulation, Cycles rendering, and transparent shading for the first time.
-      </p>
-    </div>
 
-    <!-- Process -->
-    <div class="guide-section" style="border-bottom: none;">
-      <div class="section-heading-row">
-        <h2 class="section-title" data-i18n="section-process">Process</h2>
-        <span class="step-badge">2</span>
-      </div>
-      <div class="dot-divider"></div>
+      <p class="guide-text" data-i18n="process-intro">This started as a Blender exercise — practice at presenting a 3D object in a way that actually shows it off, and it became the basis for how I later approached the Cybercoffee render. Credit for the idea goes to Intranetgirl, whose tutorial I followed to get started. The point of doing it in 3D specifically: you can't actually photograph a vacuum bag suspended mid-rotation like this — in real life it just sits flat on a surface. Rendering it let the bag hang and turn the way gravity never would, around an equally unusual pairing: a bottle, vacuum-sealed inside a zip bag.</p>
 
       <div class="process-steps">
         <div class="stagger-row">
@@ -681,7 +671,7 @@
           </div>
           <div class="stagger-copy">
             <span class="step-heading" data-i18n="step3-heading">Vacuum Sim</span>
-            <p class="guide-text" data-i18n="step3-text">Cloth simulation with negative pressure — the bag actively sucks down onto the rigid bottle. 192 baked frames, with frame 90 picked as the hero.</p>
+            <p class="guide-text" data-i18n="step3-text">The payoff of the simulation: the bag pulled taut and wrinkled exactly like real shrink-wrap, sucked down tight around the bottle. 192 baked frames, with frame 90 picked as the hero.</p>
           </div>
         </div>
 
@@ -707,12 +697,21 @@
           <img src="/images/vaccine/step5_viewport.png" alt="Final Render — viewport preview" />
         </div>
         <div class="stagger-copy">
-          <span class="step-heading" data-i18n="step5-heading">Final Render</span>
-          <p class="guide-text" data-i18n="step5-text">Cycles output at 1920×1400, single key light at 6500K, denoised in compositor. Two hero passes shipped — a cool blue clinical front-on, and a rose-tinted angle used as the portfolio cover.</p>
+          <span class="step-heading" data-i18n="step5-heading">Rendering</span>
+          <p class="guide-text" data-i18n="step5-text">A look at the render setup itself — Cycles output configured at 1920×1400 with a single key light at 6500K, denoised in the compositor before any of the final angles were picked.</p>
         </div>
       </div>
+    </div>
 
-      <div class="process-video">
+    <!-- Final Render -->
+    <div class="guide-section" style="border-bottom: none;">
+      <div class="section-heading-row">
+        <h2 class="section-title" data-i18n="section-final-render">Final Render</h2>
+        <span class="step-badge">2</span>
+      </div>
+      <div class="dot-divider"></div>
+
+      <div class="process-video" style="margin-top: clamp(44px, calc(9vw - 20px), 100px);">
         <video autoplay muted loop playsinline>
           <source src="/videos/vaccine/vaccine_render_V1.mov" type="video/quicktime" />
           <source src="/videos/vaccine/vaccine_render_V1.mov" type="video/mp4" />
@@ -855,15 +854,15 @@
         'label-role': 'Role', 'val-role': '3D Designer',
         'label-skills': 'Skills', 'val-skills': 'Blender · Cycles<br/>Cloth Simulation<br/>Material Shading',
         'section-glance': 'At a Glance',
-        'glance-lead': '[ Placeholder ] A short, punchy summary of the Double Packaging concept — one or two lines that frame the project before the details begin.',
-        'section-overview': 'Overview / Concept',
-        'overview-text': 'Vacuum-sealed packaging is usually photographed flat — real-world gravity and suction don\'t leave many options. That constraint was part of why this felt worth building: in CGI the pack can stand upright, rotate freely, and be lit from any angle. The object itself was a deliberate choice too, inspired by intranetgirl\'s tutorial — I wanted something unconventional, a pairing you wouldn\'t normally see merchandised. A pharmaceutical vial sealed inside a zip bag ticks that box. It also made for a useful technical challenge: two materials with opposite physical behaviour, which pushed me into cloth simulation, Cycles rendering, and transparent shading for the first time.',
+        'glance-lead': 'A Blender exercise in presenting a 3D object in a way you could never actually photograph: a bottle vacuum-sealed inside a zip bag, shrink-wrapped tight and rendered from an angle no real vacuum bag could hold still for. This project became the basis for the render approach I later used on Cybercoffee.',
         'section-process': 'Process',
+        'process-intro': 'This started as a Blender exercise — practice at presenting a 3D object in a way that actually shows it off, and it became the basis for how I later approached the Cybercoffee render. Credit for the idea goes to Intranetgirl, whose tutorial I followed to get started. The point of doing it in 3D specifically: you can\'t actually photograph a vacuum bag suspended mid-rotation like this — in real life it just sits flat on a surface. Rendering it let the bag hang and turn the way gravity never would, around an equally unusual pairing: a bottle, vacuum-sealed inside a zip bag.',
         'step1-heading': 'Modeling', 'step1-text': 'The vial body modeled from a single profile, lathed and edge-loop-tightened around the cap. Cap separated as its own object so it could be UV-unwrapped cleanly for the label band. Subdivision surface kept on for the final render to round the silhouette without losing the printed-grade ribs at the base.',
         'step2-heading': 'Topology', 'step2-text': 'Bag subdivided to ~250k tris — enough resolution for the cloth sim to resolve fine wrinkles where the plastic suctions onto the bottle without exploding into noise.',
-        'step3-heading': 'Vacuum Sim', 'step3-text': 'Cloth simulation with negative pressure — the bag actively sucks down onto the rigid bottle. 192 baked frames, with frame 90 picked as the hero.',
+        'step3-heading': 'Vacuum Sim', 'step3-text': 'The payoff of the simulation: the bag pulled taut and wrinkled exactly like real shrink-wrap, sucked down tight around the bottle. 192 baked frames, with frame 90 picked as the hero.',
         'step4-heading': 'Shading', 'step4-text': 'Bag mixes Transparent BSDF for clarity, Translucent BSDF for the milky scatter on the bunched areas, and Glossy with IOR-driven Fresnel for the wet plastic highlights.',
-        'step5-heading': 'Final Render', 'step5-text': 'Cycles output at 1920×1400, single key light at 6500K, denoised in compositor. Two hero passes shipped — a cool blue clinical front-on, and a rose-tinted angle used as the portfolio cover.',
+        'step5-heading': 'Rendering', 'step5-text': 'A look at the render setup itself — Cycles output configured at 1920×1400 with a single key light at 6500K, denoised in the compositor before any of the final angles were picked.',
+        'section-final-render': 'Final Render',
         'nav-prev': '<< PREVIOUS', 'nav-next': 'NEXT >>',
       },
       de: {
@@ -872,15 +871,15 @@
         'label-role': 'Rolle', 'val-role': '3D-Designer',
         'label-skills': 'Werkzeuge', 'val-skills': 'Blender · Cycles<br/>Tuchsimulation<br/>Material-Shading',
         'section-glance': 'Auf einen Blick',
-        'glance-lead': '[ Placeholder ] Eine kurze, prägnante Zusammenfassung des Double-Packaging-Konzepts — ein bis zwei Sätze, die das Projekt einleiten.',
-        'section-overview': 'Überblick / Konzept',
-        'overview-text': 'Vakuumversiegelte Verpackungen werden normalerweise flach fotografiert — Schwerkraft und Unterdruck lassen in der echten Welt wenig Spielraum. Diese Einschränkung war Teil dessen, was dieses Projekt lohnenswert machte: In CGI kann die Verpackung aufrecht stehen, sich frei drehen und aus jedem Winkel beleuchtet werden. Das Objekt selbst war ebenfalls eine bewusste Wahl, inspiriert durch intranetgirls Tutorial — ich wollte etwas Unkonventionelles, eine Kombination, die man normalerweise nicht kommerziell sieht. Ein pharmazeutisches Fläschchen in einem Druckverschlussbeutel trifft genau das. Es war auch eine hilfreiche technische Herausforderung: zwei Materialien mit gegensätzlichem physikalischen Verhalten, was mich zum ersten Mal in die Tuchsimulation, Cycles-Rendering und transparentes Shading eingeführt hat.',
+        'glance-lead': 'Eine Blender-Übung, bei der ein 3D-Objekt so präsentiert wird, wie man es nie tatsächlich fotografieren könnte: eine Flasche, vakuumversiegelt in einem Druckverschlussbeutel, straff geschrumpft und aus einem Winkel gerendert, den kein echter Vakuumbeutel je halten würde. Dieses Projekt wurde später zur Grundlage für den Rendering-Ansatz bei Cybercoffee.',
         'section-process': 'Prozess',
-        'step1-heading': 'Modellierung', 'step1-text': 'Der Fläschchenkörper wurde aus einem einzelnen Profil modelliert, gedreht und mit Edge Loops um den Deckel gespannt. Der Deckel wurde als eigenes Objekt getrennt, um sauber für die Etikettenbahn UV-unwrapped werden zu können. Subdivision Surface blieb für das finale Rendering aktiv, um die Silhouette abzurunden, ohne die Rippen an der Basis zu verlieren.',
+        'process-intro': 'Das begann als Blender-Übung — Praxis darin, ein 3D-Objekt wirkungsvoll zu präsentieren, und wurde später zur Grundlage für mein Cybercoffee-Rendering. Die Idee stammt von Intranetgirl, deren Tutorial ich als Ausgangspunkt nutzte. Der Grund für 3D: Einen Vakuumbeutel, der so mitten in der Drehung schwebt, kann man in echt nicht fotografieren — er liegt sonst einfach flach. Das Rendering ließ ihn hängen und drehen, wie es Schwerkraft nie erlauben würde, um eine Flasche, vakuumversiegelt in einem Druckverschlussbeutel.',
+        'step1-heading': 'Modellierung', 'step1-text': 'Der Fläschchenkörper wurde aus einem Profil modelliert, gedreht und mit Edge Loops um den Deckel verdichtet. Der Deckel wurde als eigenes Objekt getrennt, um sauber für die Etikettenbahn UV-entfaltet zu werden. Subdivision Surface blieb aktiv, um die Silhouette abzurunden, ohne die Rippen an der Basis zu verlieren.',
         'step2-heading': 'Topologie', 'step2-text': 'Der Beutel wurde auf ~250k Tris unterteilt — ausreichend Auflösung, damit die Tuchsimulation feine Falten dort auflösen kann, wo sich der Kunststoff an die Flasche saugt, ohne in Rauschen zu eskalieren.',
-        'step3-heading': 'Vakuumsimulation', 'step3-text': 'Tuchsimulation mit Unterdruck — der Beutel saugt sich aktiv an der starren Flasche fest. 192 gebackene Frames, Frame 90 als Hero ausgewählt.',
+        'step3-heading': 'Vakuumsimulation', 'step3-text': 'Das Ergebnis der Simulation: Der Beutel zieht sich stramm und faltet sich genau wie echte Schrumpffolie, fest um die Flasche gesaugt. 192 gebackene Frames, Frame 90 als Hero ausgewählt.',
         'step4-heading': 'Shading', 'step4-text': 'Der Beutel kombiniert Transparent BSDF für Klarheit, Translucent BSDF für die milchige Streuung an den gewellten Bereichen und Glossy mit IOR-gesteuertem Fresnel für die glänzenden Kunststoffhöhepunkte.',
-        'step5-heading': 'Finales Rendering', 'step5-text': 'Cycles-Ausgabe bei 1920×1400, einzelnes Key-Licht bei 6500K, im Compositor entrauscht. Zwei Hero-Pässe exportiert — ein kühler blauer klinischer Frontalblick und ein rosafarbener Winkel als Portfolio-Cover.',
+        'step5-heading': 'Rendering', 'step5-text': 'Ein Blick auf das Render-Setup selbst — Cycles-Ausgabe konfiguriert auf 1920×1400 mit einem einzelnen Key-Licht bei 6500K, im Compositor entrauscht, bevor die finalen Winkel ausgewählt wurden.',
+        'section-final-render': 'Finales Rendering',
         'nav-prev': '<< ZURÜCK', 'nav-next': 'WEITER >>',
       }
     };
