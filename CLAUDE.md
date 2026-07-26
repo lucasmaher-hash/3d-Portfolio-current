@@ -252,7 +252,7 @@ Organized by project for clarity:
 - ✅ NEW design-story sections (Design Process/colors, Typography, Character design, Final Product)
 - ✅ Meta tiles filled (Timeline/Team/Role/Skills)
 - ✅ All 6 feature copy filled (EN+DE); titles updated
-- ⏳ Design-story section copy (colors/typography/characters) is English-only, not yet in `TRANSLATIONS` (DE pending)
+- ✅ Design-story section copy (colors/typography/characters/Final Product heading) now wired into `TRANSLATIONS` with German (was English-only); also caught and fixed 3 pre-existing German blocks (`overview-text`, `feat-timetable-text`, `feat-socials-text`) that were translated but overflowed their English line count by 1–3 lines undetected until this pass
 
 **Virtual Cooking (02):**
 - ✅ Rebuilt middle from new Figma (see layout above)
