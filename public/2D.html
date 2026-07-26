@@ -33,11 +33,29 @@
 
     html, body {
       width: 100%;
+      /* clip (not hidden): prevents horizontal scroll without becoming a
+         scroll container, which would break position:sticky descendants. */
+      overflow-x: clip;
       background: var(--bg-surface);
       color: var(--text-primary);
       font-family: 'Roboto', system-ui, sans-serif;
       line-height: 1.6;
-      padding: 0 clamp(20px, 3.9vw, 55px);
+      /* Fluid outer padding: full clamp() ceiling (55px) at/above 1440px,
+         shrinks linearly to exactly 0 by 860px — matches the vertical
+         border-removal breakpoint below, so the disappearance is continuous
+         instead of jumping straight from ~25px to 0. */
+      padding: 0 clamp(0px, calc(9.483vw - 81.552px), 55px);
+    }
+
+    /* Desktop-only shrink cap: once the padded/bordered layout has fully
+       collapsed (below 860px), stop reflowing further — narrowing the real
+       browser window just clips the extra width (no horizontal scrollbar);
+       vertical scroll is unaffected. pointer:fine + hover:hover targets
+       mouse/trackpad devices specifically, so actual touchscreens (phones,
+       tablets) are excluded and keep reflowing normally down to their real
+       widths via the existing @media (max-width: 640px) rules below. */
+    @media (hover: hover) and (pointer: fine) {
+      html, body { min-width: 860px; }
     }
 
     #top-bar {
@@ -308,13 +326,20 @@
       transition: transform 150ms ease;
     }
 
-    @media (max-width: 640px) {
+    /* Endpoint of the fluid shrink above: padding is already 0 by here via
+       the clamp(), but the page-wrapper's own border/margin need an explicit
+       cut — a 1px border can't fade gradually, so it's removed outright at
+       the exact width the padding hits zero, which reads as continuous. */
+    @media (max-width: 860px) {
       html, body { padding: 0; }
       .page-wrapper {
         margin: 0;
         border-left: none;
         border-right: none;
       }
+    }
+
+    @media (max-width: 640px) {
       /* Shrink the nav bar iframe to just its content height so it only blocks
          the tiny strip where the nav island lives, not the top third of the blob */
       #top-bar {
