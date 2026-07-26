@@ -274,7 +274,10 @@
     .tag {
       background: var(--bg-surface);
       border-radius: 999px;
-      box-shadow: var(--shadow-pressed);
+      /* --shadow-pressed's offset/blur (5px/10px) reduced 35% — a scoped
+         override, not a change to the shared variable, so other pressed-inset
+         elements (meta-inset, text-inset, etc.) keep the standard depth. */
+      box-shadow: inset 3.25px 3.25px 6.5px rgba(174,174,192,0.6), inset -3.25px -3.25px 6.5px rgba(255,255,255,1);
       padding: clamp(3px, 0.5vw, 5px) clamp(8px, 1.2vw, 12px);
       font-family: 'VT323', monospace;
       font-size: clamp(12px, 1.4vw, 16px);

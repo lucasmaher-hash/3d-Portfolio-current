@@ -126,7 +126,15 @@
       from { opacity: 0; transform: translateY(10px); }
       to   { opacity: 1; transform: translateY(0); }
     }
-    .anim { opacity: 0; animation: fadeUp 350ms ease forwards; }
+    /* `backwards`, NOT `forwards` — this is what makes :hover work at all.
+       `forwards` keeps asserting the final keyframe (`transform: translateY(0)`)
+       forever after the animation ends, and CSS animations outrank normal
+       declarations in the cascade, so it silently beat `:hover { transform }`
+       — the lift never applied and only the shadow changed, which read as a
+       flicker. `backwards` still applies the `from` keyframe during
+       animation-delay (so the staggered fade-in is unchanged), but releases
+       transform/opacity once finished, leaving :hover free to take over. */
+    .anim { animation: fadeUp 350ms ease backwards; }
     .anim-1 { animation-delay: 0ms; }
     .anim-2 { animation-delay: 150ms; }
     .anim-3 { animation-delay: 300ms; }
@@ -136,18 +144,22 @@
       background: var(--bg-surface);
       border-radius: 999px;
       box-shadow: -5px -5px 12px 0 rgba(255,255,255,1), 5px 5px 12px 0 rgba(174,174,192,0.65);
-      overflow: hidden;
-      transition: box-shadow 300ms ease-out, transform 300ms ease-out;
       text-decoration: none;
       color: inherit;
       display: block;
+      /* EXACT ease-out from the homepage "top" button (.footer-logo in 2D.html):
+         this base transition is what runs when the pointer LEAVES. */
+      transition: transform 260ms cubic-bezier(.2,.7,.2,1), box-shadow 260ms cubic-bezier(.2,.7,.2,1);
     }
 
+    /* Hover state — byte-for-byte the same as .footer-logo:hover in 2D.html
+       (the 150ms ease is the enter timing; the 260ms cubic-bezier above is the
+       ease-out on leave). Only works because the .anim fade-in sits on a
+       WRAPPER div, not on this element — see the markup comment below. */
     .contact-item:hover {
-      /* Standard site hover-lift — matches nav (.logo/.pill) & footer top button */
-      box-shadow: 11px 11px 24px rgba(174,174,192,0.9), -8px -8px 20px rgba(255,255,255,1);
       transform: translateY(-2px) scale(1.03);
-      transition: box-shadow 150ms ease, transform 150ms ease;
+      box-shadow: 11px 11px 24px rgba(174,174,192,0.9), -8px -8px 20px rgba(255,255,255,1);
+      transition: transform 150ms ease, box-shadow 150ms ease;
     }
 
     .contact-header {
@@ -321,26 +333,39 @@
 
         <div class="contact-list">
 
-          <a href="mailto:lucas.maher@outlook.com" class="contact-item anim anim-2">
-            <div class="contact-header">
-              <span class="contact-label">Email</span>
-              <div class="btn">↗</div>
-            </div>
-          </a>
+          <!-- The .anim fade-in lives on a WRAPPER, never on .contact-item itself.
+               A CSS animation that targets `transform` keeps ownership of that
+               property in Safari even after it finishes, which suppresses the
+               `transition` on .contact-item:hover — the lift then snapped
+               instantly while the shadow eased, reading as a flicker. Keeping
+               the animation and the hover on two different elements makes the
+               conflict structurally impossible. Do not merge them back. -->
+          <div class="anim anim-2">
+            <a href="mailto:lucas.maher@outlook.com" class="contact-item">
+              <div class="contact-header">
+                <span class="contact-label">Email</span>
+                <div class="btn">↗</div>
+              </div>
+            </a>
+          </div>
 
-          <a href="https://www.linkedin.com/in/lucas-maher-5b53163bb/" target="_blank" rel="noopener" class="contact-item anim anim-3">
-            <div class="contact-header">
-              <span class="contact-label">LinkedIn</span>
-              <div class="btn">↗</div>
-            </div>
-          </a>
+          <div class="anim anim-3">
+            <a href="https://www.linkedin.com/in/lucas-maher-5b53163bb/" target="_blank" rel="noopener" class="contact-item">
+              <div class="contact-header">
+                <span class="contact-label">LinkedIn</span>
+                <div class="btn">↗</div>
+              </div>
+            </a>
+          </div>
 
-          <a href="https://www.instagram.com/lucas.maher.visuals" target="_blank" rel="noopener" class="contact-item anim anim-4">
-            <div class="contact-header">
-              <span class="contact-label">Instagram</span>
-              <div class="btn">↗</div>
-            </div>
-          </a>
+          <div class="anim anim-4">
+            <a href="https://www.instagram.com/lucas.maher.visuals" target="_blank" rel="noopener" class="contact-item">
+              <div class="contact-header">
+                <span class="contact-label">Instagram</span>
+                <div class="btn">↗</div>
+              </div>
+            </a>
+          </div>
 
         </div>
       </div>

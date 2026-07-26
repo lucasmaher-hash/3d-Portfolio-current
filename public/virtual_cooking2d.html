@@ -354,10 +354,19 @@
       flex-direction: column;
       text-decoration: none;
       color: var(--text-primary);
+    }
+
+    /* Hover scale lives on this inner wrapper, not .project-nav-item itself —
+       .project-nav-item carries the real border-left divider (see rule above),
+       and scaling that element would visibly grow/shift the divider line too. */
+    .project-nav-item-inner {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
       transition: transform 200ms ease;
     }
 
-    .project-nav-item:hover { transform: translateY(-2px) scale(1.03); transition: transform 150ms ease; }
+    .project-nav-item:hover .project-nav-item-inner { transform: translateY(-2px) scale(1.03); transition: transform 150ms ease; }
 
     .project-nav-top {
       display: flex;
@@ -579,7 +588,7 @@
       .hero-blob,
       .character-row,
       .spin-scrolly .spin { animation: none !important; }
-      .project-nav-item:hover,
+      .project-nav-item:hover .project-nav-item-inner,
       .meta-tile:hover,
       .project-tile:hover,
       .machine-frame-wrap:hover,
@@ -744,18 +753,22 @@
 
     <div class="project-nav">
       <a href="/kaffeemaschine2d.html" class="project-nav-item">
-        <div class="project-nav-top">
-          <span class="project-nav-number">04</span>
-          <span class="project-nav-label" data-i18n="nav-prev">&lt;&lt; PREVIOUS</span>
+        <div class="project-nav-item-inner">
+          <div class="project-nav-top">
+            <span class="project-nav-number">04</span>
+            <span class="project-nav-label" data-i18n="nav-prev">&lt;&lt; PREVIOUS</span>
+          </div>
+          <span class="project-nav-title" data-i18n="nav-cybercoffee">Cybercoffee</span>
         </div>
-        <span class="project-nav-title" data-i18n="nav-cybercoffee">Cybercoffee</span>
       </a>
       <a href="/unify2d.html" class="project-nav-item" style="text-align: right;">
-        <div class="project-nav-top">
-          <span class="project-nav-label" data-i18n="nav-next">NEXT &gt;&gt;</span>
-          <span class="project-nav-number">06</span>
+        <div class="project-nav-item-inner">
+          <div class="project-nav-top">
+            <span class="project-nav-label" data-i18n="nav-next">NEXT &gt;&gt;</span>
+            <span class="project-nav-number">06</span>
+          </div>
+          <span class="project-nav-title" data-i18n="nav-unify">Unify</span>
         </div>
-        <span class="project-nav-title" data-i18n="nav-unify">Unify</span>
       </a>
     </div>
 

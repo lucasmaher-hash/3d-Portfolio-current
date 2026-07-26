@@ -314,9 +314,40 @@
     }
 
     .process-shot.shift-right { width: 66%; margin-left: 27%; }
-    .process-shot.shift-left  { width: 80%; }
 
     .process-shot img { width: 100%; height: auto; display: block; border-radius: 16px; }
+
+    /* Final Render, resized — was .process-shot.shift-left at 80% width
+       inside .process-steps; 64% = that 80% reduced a further 20% (0.8×0.8),
+       now measured against the full section content box instead, and with no
+       margin-left so it's flush against the section's own left padding —
+       same left edge as .process-video below, at every viewport width. */
+    .final-render-shot {
+      display: flex;
+      flex-direction: column;
+      gap: clamp(14px, 1.6vw, 20px);
+      width: 64%;
+      margin-top: clamp(64px, 9vw, 120px);
+    }
+
+    .final-render-shot img { width: 100%; height: auto; display: block; border-radius: 16px; }
+
+    /* Full-width closing video — deliberately OUTSIDE .process-steps (the
+       fluid-narrowed stagger column) so it spans the full padded content
+       width instead of the ~860px alternating-block track. Not offset
+       left/right like .process-shot — sits centered, edge to edge within
+       the section's own padding. */
+    .process-video {
+      width: 100%;
+      margin-top: clamp(64px, 9vw, 120px);
+    }
+
+    .process-video video {
+      width: 100%;
+      height: auto;
+      display: block;
+      border-radius: 16px;
+    }
 
     @media (max-width: 860px) {
       .meta-grid { grid-template-columns: 1fr 1fr; }
@@ -325,8 +356,8 @@
         margin-left: 0; max-width: none; flex-direction: row;
       }
       .stagger-figure { width: clamp(160px, 34vw, 240px); }
-      .process-shot.shift-right,
-      .process-shot.shift-left { width: 100%; margin-left: 0; }
+      .process-shot.shift-right { width: 100%; margin-left: 0; }
+      .final-render-shot { width: 100%; }
     }
 
     /* ── Mobile layout ─────────────────────────────────────── */
@@ -366,10 +397,19 @@
       flex-direction: column;
       text-decoration: none;
       color: var(--text-primary);
+    }
+
+    /* Hover scale lives on this inner wrapper, not .project-nav-item itself —
+       .project-nav-item carries the real border-left divider (see rule above),
+       and scaling that element would visibly grow/shift the divider line too. */
+    .project-nav-item-inner {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
       transition: transform 200ms ease;
     }
 
-    .project-nav-item:hover {
+    .project-nav-item:hover .project-nav-item-inner {
       transform: translateY(-2px) scale(1.03);
       transition: transform 150ms ease;
     }
@@ -484,7 +524,7 @@
       .hero-blob,
       .character-row,
       .spin-scrolly .spin { animation: none !important; }
-      .project-nav-item:hover,
+      .project-nav-item:hover .project-nav-item-inner,
       .meta-tile:hover,
       .project-tile:hover,
       .machine-frame-wrap:hover,
@@ -631,26 +671,41 @@
           </div>
         </div>
 
-        <div class="process-shot shift-left">
-          <div class="guide-media">
-            <img src="/images/vaccine/step5_viewport.png" alt="Final Render — viewport preview" />
-          </div>
-          <div class="stagger-copy">
-            <span class="step-heading" data-i18n="step5-heading">Final Render</span>
-            <p class="guide-text" data-i18n="step5-text">Cycles output at 1920×1400, single key light at 6500K, denoised in compositor. Two hero passes shipped — a cool blue clinical front-on, and a rose-tinted angle used as the portfolio cover.</p>
-          </div>
+      </div>
+
+      <!-- Final Render — deliberately OUTSIDE .process-steps (same reason as
+           .process-video below): .process-steps re-centers itself on wide
+           monitors, which would fight a fixed left-alignment. Sized/positioned
+           against the same section content box as .process-video so its left
+           edge always matches the video's, at any viewport width. -->
+      <div class="final-render-shot">
+        <div class="guide-media">
+          <img src="/images/vaccine/step5_viewport.png" alt="Final Render — viewport preview" />
         </div>
+        <div class="stagger-copy">
+          <span class="step-heading" data-i18n="step5-heading">Final Render</span>
+          <p class="guide-text" data-i18n="step5-text">Cycles output at 1920×1400, single key light at 6500K, denoised in compositor. Two hero passes shipped — a cool blue clinical front-on, and a rose-tinted angle used as the portfolio cover.</p>
+        </div>
+      </div>
+
+      <div class="process-video">
+        <video autoplay muted loop playsinline>
+          <source src="/videos/vaccine/vaccine_render_V1.mov" type="video/quicktime" />
+          <source src="/videos/vaccine/vaccine_render_V1.mov" type="video/mp4" />
+        </video>
       </div>
     </div>
 
     <div class="project-nav">
       <div class="project-nav-item"></div>
       <a href="/mac-lamp2d.html" class="project-nav-item">
-        <div class="project-nav-top">
-          <span class="project-nav-label" data-i18n="nav-next">NEXT >></span>
-          <span class="project-nav-number">02</span>
+        <div class="project-nav-item-inner">
+          <div class="project-nav-top">
+            <span class="project-nav-label" data-i18n="nav-next">NEXT >></span>
+            <span class="project-nav-number">02</span>
+          </div>
+          <span class="project-nav-title">Mac-Lamp</span>
         </div>
-        <span class="project-nav-title">Mac-Lamp</span>
       </a>
     </div>
 

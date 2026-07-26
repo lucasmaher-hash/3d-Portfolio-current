@@ -119,8 +119,10 @@
       border-radius: 999px;
       box-shadow: -5px -5px 12px 0 rgba(255,255,255,1), 5px 5px 12px 0 rgba(174,174,192,0.65);
       cursor: pointer;
-      overflow: hidden;
-      transition: box-shadow 300ms ease-out, transform 300ms ease-out;
+      overflow: hidden;   /* required: clips the accordion body during max-height collapse */
+      /* EXACT ease-out from the homepage "top" button (.footer-logo in 2D.html):
+         this base transition is what runs when the pointer LEAVES. */
+      transition: transform 260ms cubic-bezier(.2,.7,.2,1), box-shadow 260ms cubic-bezier(.2,.7,.2,1);
     }
 
     .item.open,
@@ -130,11 +132,14 @@
       cursor: default;
     }
 
+    /* Hover state — byte-for-byte the same as .footer-logo:hover in 2D.html
+       (the 150ms ease is the enter timing; the 260ms cubic-bezier above is the
+       ease-out on leave). Only works because the .anim fade-in sits on a
+       WRAPPER div, not on this element — see the markup comment below. */
     .item:hover:not(.open):not(.closing) {
-      /* Standard site hover-lift — matches nav (.logo/.pill) & footer top button */
-      box-shadow: 11px 11px 24px rgba(174,174,192,0.9), -8px -8px 20px rgba(255,255,255,1);
       transform: translateY(-2px) scale(1.03);
-      transition: box-shadow 150ms ease, transform 150ms ease;
+      box-shadow: 11px 11px 24px rgba(174,174,192,0.9), -8px -8px 20px rgba(255,255,255,1);
+      transition: transform 150ms ease, box-shadow 150ms ease;
     }
 
     .item-header {
@@ -212,9 +217,16 @@
       to   { opacity: 1; transform: translateY(0); }
     }
 
+    /* `backwards`, NOT `forwards` — this is what makes :hover work at all.
+       `forwards` keeps asserting the final keyframe (`transform: translateY(0)`)
+       forever after the animation ends, and CSS animations outrank normal
+       declarations in the cascade, so it silently beat `:hover { transform }`
+       — the lift never applied and only the shadow changed, which read as a
+       flicker. `backwards` still applies the `from` keyframe during
+       animation-delay (so the staggered fade-in is unchanged), but releases
+       transform/opacity once finished, leaving :hover free to take over. */
     .anim {
-      opacity: 0;
-      animation: fadeUp 350ms ease forwards;
+      animation: fadeUp 350ms ease backwards;
     }
 
     .anim-1 { animation-delay: 0ms; }
@@ -362,42 +374,55 @@
 
         <div class="accordion">
 
-          <div class="item anim anim-2" data-key="background">
-            <div class="item-header">
-              <span class="item-label" data-i18n="label-background">Background</span>
-              <div class="btn">+</div>
-            </div>
-            <div class="item-body">
-              <div class="text-inset" data-i18n-html="bg-text">
-                <p>Hi, I'm Lucas Maher, a 21 yo designer based in Munich.</p>
-                <p style="margin-top: 12px;">I've always created with my hands. Long before I discovered design, I was drawing, sculpting clay, cutting glass, welding metal, sewing fabric, and painting in oil and acrylic — constantly switching materials, constantly asking: what can this become?</p>
-                <p style="margin-top: 12px;">That restlessness led me to Industrial Design, where three-dimensional thinking meets real-world problems. Now, studying at Hochschule München, I'm channeling that same energy into the digital space — where 2D and 3D collide, and where screens are becoming the new material to shape.</p>
+          <!-- The .anim fade-in lives on a WRAPPER, never on .item itself.
+               A CSS animation that targets `transform` keeps ownership of that
+               property in Safari even after it finishes, which suppresses the
+               `transition` on .item:hover — the lift then snapped instantly
+               while the shadow eased, reading as a flicker. Keeping the
+               animation and the hover on two different elements makes the
+               conflict structurally impossible. Do not merge them back. -->
+          <div class="anim anim-2">
+            <div class="item" data-key="background">
+              <div class="item-header">
+                <span class="item-label" data-i18n="label-background">Background</span>
+                <div class="btn">+</div>
+              </div>
+              <div class="item-body">
+                <div class="text-inset" data-i18n-html="bg-text">
+                  <p>Hi, I'm Lucas Maher, a 21 yo designer based in Munich.</p>
+                  <p style="margin-top: 12px;">I've always created with my hands. Long before I discovered design, I was drawing, sculpting clay, cutting glass, welding metal, sewing fabric, and painting in oil and acrylic — constantly switching materials, constantly asking: what can this become?</p>
+                  <p style="margin-top: 12px;">That restlessness led me to Industrial Design, where three-dimensional thinking meets real-world problems. Now, studying at Hochschule München, I'm channeling that same energy into the digital space — where 2D and 3D collide, and where screens are becoming the new material to shape.</p>
+                </div>
               </div>
             </div>
           </div>
 
-          <div class="item anim anim-3" data-key="things-i-love">
-            <div class="item-header">
-              <span class="item-label" data-i18n="label-things-i-love">Things I Love</span>
-              <div class="btn">+</div>
-            </div>
-            <div class="item-body">
-              <div class="text-inset" data-i18n-html="love-text">
-                <p>What excites me most right now is spatial computing — VR & AR. The idea that digital experiences can exist in three-dimensional space, that you can step inside a design rather than just look at it through a screen, feels like the most radical shift in how humans interact with technology. I want to be at the forefront of that.</p>
-                <p style="margin-top: 12px;">Outside of that, I find a lot of inspiration in film — the way directors use composition, light, and pacing to guide attention and evoke emotion isn't so different from what we do as designers. And sport keeps me grounded: the discipline, the consistency, the reminder that good results come from showing up every day.</p>
+          <div class="anim anim-3">
+            <div class="item" data-key="things-i-love">
+              <div class="item-header">
+                <span class="item-label" data-i18n="label-things-i-love">Things I Love</span>
+                <div class="btn">+</div>
+              </div>
+              <div class="item-body">
+                <div class="text-inset" data-i18n-html="love-text">
+                  <p>What excites me most right now is spatial computing — VR & AR. The idea that digital experiences can exist in three-dimensional space, that you can step inside a design rather than just look at it through a screen, feels like the most radical shift in how humans interact with technology. I want to be at the forefront of that.</p>
+                  <p style="margin-top: 12px;">Outside of that, I find a lot of inspiration in film — the way directors use composition, light, and pacing to guide attention and evoke emotion isn't so different from what we do as designers. And sport keeps me grounded: the discipline, the consistency, the reminder that good results come from showing up every day.</p>
+                </div>
               </div>
             </div>
           </div>
 
-          <div class="item anim anim-4" data-key="design-philosophy">
-            <div class="item-header">
-              <span class="item-label" data-i18n="label-design-philosophy">Design Philosophy</span>
-              <div class="btn">+</div>
-            </div>
-            <div class="item-body">
-              <div class="text-inset" data-i18n-html="philosophy-text">
-                <p>Design that only looks good has already failed. I came to this field from fine art and craft — and that background taught me one thing above all: beauty without purpose is decoration, not design.</p>
-                <p style="margin-top: 12px;">I work at the intersection of bold aesthetics and real problem-solving. I'm not afraid to experiment, to try what hasn't been done, or to borrow from unexpected places. The best ideas often live at the edges — between physical and digital, between 2D and 3D, between what exists and what could.</p>
+          <div class="anim anim-4">
+            <div class="item" data-key="design-philosophy">
+              <div class="item-header">
+                <span class="item-label" data-i18n="label-design-philosophy">Design Philosophy</span>
+                <div class="btn">+</div>
+              </div>
+              <div class="item-body">
+                <div class="text-inset" data-i18n-html="philosophy-text">
+                  <p>Design that only looks good has already failed. I came to this field from fine art and craft — and that background taught me one thing above all: beauty without purpose is decoration, not design.</p>
+                  <p style="margin-top: 12px;">I work at the intersection of bold aesthetics and real problem-solving. I'm not afraid to experiment, to try what hasn't been done, or to borrow from unexpected places. The best ideas often live at the edges — between physical and digital, between 2D and 3D, between what exists and what could.</p>
+                </div>
               </div>
             </div>
           </div>
