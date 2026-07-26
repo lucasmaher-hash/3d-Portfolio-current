@@ -430,12 +430,11 @@
 <body>
 
   <div id="craft-dropdown" class="craft-dropdown">
-    <span class="craft-dropdown-item" onclick="window.top.location.href='/vaccine2d.html'">Double Packaging</span>
-    <span class="craft-dropdown-item" onclick="window.top.location.href='/mac-lamp2d.html'">Mac-Lamp</span>
-    <span class="craft-dropdown-item" onclick="window.top.location.href='/portfolio2d.html'" data-nav="this-website">This Website</span>
-    <span class="craft-dropdown-item" onclick="window.top.location.href='/kaffeemaschine2d.html'">Cybercoffee</span>
-    <span class="craft-dropdown-item" onclick="window.top.location.href='/virtual_cooking2d.html'">Virtual Cooking</span>
     <span class="craft-dropdown-item" onclick="window.top.location.href='/unify2d.html'">Unify</span>
+    <span class="craft-dropdown-item" onclick="window.top.location.href='/virtual_cooking2d.html'">Virtual Cooking</span>
+    <span class="craft-dropdown-item" onclick="window.top.location.href='/kaffeemaschine2d.html'">Cybercoffee</span>
+    <span class="craft-dropdown-item" onclick="window.top.location.href='/mac-lamp2d.html'">Mac-Lamp</span>
+    <span class="craft-dropdown-item" onclick="window.top.location.href='/vaccine2d.html'">Double Packaging</span>
   </div>
 
   <header class="top-row" role="banner">
@@ -479,7 +478,7 @@
     document.getElementById('logo-btn').addEventListener('click', e => {
       e.preventDefault();
       const parentPath = window.top.location.pathname;
-      const is2DView = parentPath.includes('2D') || parentPath.includes('about2d') || parentPath.includes('contact2d') || parentPath.includes('vaccine2d') || parentPath.includes('mac-lamp2d') || parentPath.includes('portfolio2d') || parentPath.includes('kaffeemaschine2d') || parentPath.includes('virtual_cooking2d') || parentPath.includes('unify2d');
+      const is2DView = parentPath.includes('2D') || parentPath.includes('about2d') || parentPath.includes('contact2d') || parentPath.includes('vaccine2d') || parentPath.includes('mac-lamp2d') || parentPath.includes('kaffeemaschine2d') || parentPath.includes('virtual_cooking2d') || parentPath.includes('unify2d');
       if (!is2DView && navigator.maxTouchPoints > 0) {
         document.querySelector('.nav-island').classList.toggle('is-open');
         return;
@@ -502,11 +501,10 @@
       const isContact2D = parentPath.includes('contact2d');
       const isVaccine2D = parentPath.includes('vaccine2d');
       const isMacLamp2D = parentPath.includes('mac-lamp2d');
-      const isPortfolio2D = parentPath.includes('portfolio2d');
       const isKaffeemaschine2D = parentPath.includes('kaffeemaschine2d');
       const isVirtualCooking2D = parentPath.includes('virtual_cooking2d');
       const isUnify2D = parentPath.includes('unify2d');
-      const is2DView = is2D || isAbout2D || isContact2D || isVaccine2D || isMacLamp2D || isPortfolio2D || isKaffeemaschine2D || isVirtualCooking2D || isUnify2D;
+      const is2DView = is2D || isAbout2D || isContact2D || isVaccine2D || isMacLamp2D || isKaffeemaschine2D || isVirtualCooking2D || isUnify2D;
       const navIsland = document.querySelector('.nav-island');
 
       // Mobile 3D: collapse island behind LM button by default
@@ -621,7 +619,7 @@
       const parentPath = window.top.location.pathname;
       const is2DView = parentPath.includes('2D') || parentPath.includes('about2d') ||
                        parentPath.includes('contact2d') || parentPath.includes('vaccine2d') ||
-                       parentPath.includes('mac-lamp2d') || parentPath.includes('portfolio2d') ||
+                       parentPath.includes('mac-lamp2d') ||
                        parentPath.includes('kaffeemaschine2d') || parentPath.includes('virtual_cooking2d') || parentPath.includes('unify2d');
       if (is2DView) helpBtn.style.setProperty('display', 'none', 'important');
       helpBtn.addEventListener('click', () => {
@@ -632,8 +630,8 @@
     // ── Language toggle ───────────────────────────────────────────
     (function() {
       const NAV_LANG = {
-        en: { craft: 'Craft', about: 'About', contact: 'Contact', thisWebsite: 'This Website' },
-        de: { craft: 'Projekte', about: 'Über mich', contact: 'Kontakt', thisWebsite: 'Diese Website' }
+        en: { craft: 'Craft', about: 'About', contact: 'Contact' },
+        de: { craft: 'Projekte', about: 'Über mich', contact: 'Kontakt' }
       };
       const q = s => document.querySelector(s);
       function applyNavLang(l) {
@@ -641,7 +639,6 @@
         if (q('[data-page="craft"]'))        q('[data-page="craft"]').textContent = t.craft;
         if (q('[data-page="about"]'))        q('[data-page="about"]').textContent = t.about;
         if (q('[data-page="contact"]'))      q('[data-page="contact"]').textContent = t.contact;
-        if (q('[data-nav="this-website"]'))  q('[data-nav="this-website"]').textContent = t.thisWebsite;
         document.querySelectorAll('.lang-btn').forEach(btn => {
           btn.classList.toggle('active', btn.dataset.lang === l);
         });
@@ -666,7 +663,7 @@
     // ── Craft dropdown (2D mode only) ────────────────────────────
     (function () {
       const parentPath = window.top.location.pathname;
-      const is2DView = parentPath.includes('2D') || parentPath.includes('about2d') || parentPath.includes('contact2d') || parentPath.includes('vaccine2d') || parentPath.includes('mac-lamp2d') || parentPath.includes('portfolio2d') || parentPath.includes('kaffeemaschine2d') || parentPath.includes('virtual_cooking2d') || parentPath.includes('unify2d');
+      const is2DView = parentPath.includes('2D') || parentPath.includes('about2d') || parentPath.includes('contact2d') || parentPath.includes('vaccine2d') || parentPath.includes('mac-lamp2d') || parentPath.includes('kaffeemaschine2d') || parentPath.includes('virtual_cooking2d') || parentPath.includes('unify2d');
       if (!is2DView) return;
 
       const craftSeg = document.querySelector('[data-page="craft"]');

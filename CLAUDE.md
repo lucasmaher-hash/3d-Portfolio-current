@@ -53,15 +53,14 @@ When resuming work in a new session:
 | File | What it is |
 |---|---|
 | `index.html` | 3D entry point (Three.js scene) |
-| `public/2D.html` | 2D landing page — project grid (6 projects) |
+| `public/2D.html` | 2D landing page — project grid (5 projects) |
 | `public/about2d.html` | About page |
 | `public/contact2d.html` | Contact page |
-| `public/vaccine2d.html` | Project page — Double Packaging (01) |
-| `public/mac-lamp2d.html` | Project page — Mac-Lamp (02) |
-| `public/portfolio2d.html` | Project page — This Website (03) |
-| `public/kaffeemaschine2d.html` | Project page — Cybercoffee (04) |
-| `public/virtual_cooking2d.html` | Project page — Virtual Cooking (05) |
-| `public/unify2d.html` | Project page — Unify (06) |
+| `public/unify2d.html` | Project page — Unify (01) |
+| `public/virtual_cooking2d.html` | Project page — Virtual Cooking (02) |
+| `public/kaffeemaschine2d.html` | Project page — Cybercoffee (03) |
+| `public/mac-lamp2d.html` | Project page — Mac-Lamp (04) |
+| `public/vaccine2d.html` | Project page — Double Packaging (05) |
 | `public/top_row_permanent_V3.html` | Nav bar — loaded as an iframe on every 2D page |
 
 ## Nav bar iframe
