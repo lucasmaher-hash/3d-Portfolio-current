@@ -1,6 +1,7 @@
 import './style.css'
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js'
 
 // Scene
 const scene = new THREE.Scene()
@@ -18,10 +19,22 @@ renderer.setSize(window.innerWidth, window.innerHeight)
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 renderer.shadowMap.enabled = !isMobile
 renderer.outputColorSpace = THREE.SRGBColorSpace
+// Tone mapping — without this, bright values (e.g. the emissive ceiling tiles,
+// meant to read as glowing light sources) hard-clip to flat white instead of
+// rolling off, and that clipping was also blowing out walls/floor nearby.
+renderer.toneMapping = THREE.ACESFilmicToneMapping
+renderer.toneMappingExposure = 0.8
 document.body.appendChild(renderer.domElement)
 
+// Environment map — gives metalness/roughness materials something to reflect.
+// Without this, any metallic material renders black/dead (no IBL to sample).
+const pmremGenerator = new THREE.PMREMGenerator(renderer)
+scene.environment = pmremGenerator.fromScene(new RoomEnvironment(), 0.04).texture
+
 // Lights
-scene.add(new THREE.AmbientLight(0xffffff, 0.8))
+// Ambient trimmed down from 0.8 — the environment map above already contributes
+// ambient fill, so the two were stacking and over-lighting non-emissive surfaces.
+scene.add(new THREE.AmbientLight(0xffffff, 0.4))
 const dirLight = new THREE.DirectionalLight(0xffffff, 2.0)
 dirLight.position.set(5, 8, 5)
 dirLight.castShadow = true
@@ -169,7 +182,19 @@ window.addEventListener('keyup',   e => { keys[e.code] = false })
 const SPEED          = 3.0
 const COLLISION_DIST = 0.4
 
-let playerHeight = -1.3601
+// NOTE: -1.3601 is the ORIGINAL pre-session constant, hand-tuned for the OLD
+// severance_V23.glb scene's coordinate system. It was never re-tuned when
+// the model was swapped to portfolio_scene.glb (see CLAUDE.md item 34/35),
+// and in the new model's coordinates it puts the camera BELOW the actual
+// floor (spawn probe's floorY lands on `MainRoom_Floor` at world Y≈0.018 —
+// see item 35 for the full root-cause writeup and glTF-verified room scale,
+// ~1 unit ≈ 1 meter). User explicitly chose to keep iterating on this
+// known-underground original rather than switch to the root-cause-fixed 1.6
+// baseline. Per the confirmed R/F convention (less-negative = higher), each
+// requested raise shrinks this negative offset's magnitude by that percent
+// (×0.8, ×0.8, now ×0.9) — still underground at every step so far, just
+// less deep (currently ~0.77 units below the floor).
+let playerHeight = -1.3601 * 0.8 * 0.8 * 0.9
 let floorY       = 0
 
 // R = höher, F = tiefer (live, kein Reload nötig)
@@ -182,6 +207,20 @@ window.addEventListener('keydown', e => {
   if (e.code === 'KeyF') {
     playerHeight -= 0.05
     console.log('F gedrückt — playerHeight:', playerHeight.toFixed(4))
+    e.preventDefault()
+  }
+  // P = dump the current camera position/angle as a ready-to-paste spawn
+  // override (also copies to clipboard) — press it while standing where
+  // you want the page to spawn, then send the printed snippet back.
+  if (e.code === 'KeyP') {
+    const snippet = `spawnPos = new THREE.Vector3(${camera.position.x.toFixed(4)}, ${camera.position.y.toFixed(4)}, ${camera.position.z.toFixed(4)}); spawnYaw = ${yaw.toFixed(4)}; spawnPitch = ${pitch.toFixed(4)};`
+    console.log('P gedrückt — Spawn-Snippet:', snippet)
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(snippet).then(
+        () => console.log('(in die Zwischenablage kopiert)'),
+        () => {}
+      )
+    }
     e.preventDefault()
   }
 })
@@ -217,6 +256,7 @@ loader.load(
   '/portfolio_scene.glb',
   (gltf) => {
     const model  = gltf.scene
+    window.__DEBUG_scene = scene; window.__DEBUG_camera = camera; window.__DEBUG_model = model
     const box    = new THREE.Box3().setFromObject(model)
     const center = box.getCenter(new THREE.Vector3())
     const size   = box.getSize(new THREE.Vector3())
@@ -297,6 +337,19 @@ loader.load(
       spawnPos = camera.position.clone()
       spawnYaw = yaw; spawnPitch = pitch
     }
+
+    // Fixed initial spawn (user-captured via the P debug key) — overrides
+    // the auto-detected floor-probe spawn point above so the page always
+    // opens at this exact position/angle instead. floorY/collidables from
+    // the probing above are kept as-is (still needed for live movement
+    // collision + the per-frame floorY+playerHeight+bob height system).
+    camera.position.set(2.2970, -0.7653, 9.6615)
+    yaw = 2.3400
+    pitch = 0.0540
+    applyRotation()
+    spawnPos = camera.position.clone()
+    spawnYaw = yaw
+    spawnPitch = pitch
 
     console.log(`Modellgröße: x=${size.x.toFixed(2)} y=${size.y.toFixed(2)} z=${size.z.toFixed(2)}`)
     console.log(`floorY=${floorY.toFixed(3)} | playerHeight=${playerHeight.toFixed(4)} | spawnFound=${spawnFound}`)
