@@ -9,8 +9,17 @@ scene.background = new THREE.Color(0x0d0d14)
 scene.fog = new THREE.Fog(0x0d0d14, 10, 60)
 
 // Camera – YXZ order so yaw/pitch don't interfere
-const camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.01, 1000)
+// near=0.1 (was 0.01): depth precision is concentrated near the near plane, so a
+// 0.01/1000 range (100,000:1) left almost no precision at the ~8-16 unit distances
+// objects actually sit at. The centre tower's panels and their grid lattice are only
+// 0.022 apart — inside one depth quantum at that range — so which drew in front
+// flipped with sub-pixel camera motion, causing a 1-frame brightness flash while
+// moving. 0.1 is a 10x precision gain and ~10cm, closer than the player can get.
+const camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.1, 1000)
 camera.rotation.order = 'YXZ'
+window.__debugScene = scene
+window.__debugCamera = camera
+window.__debugTHREE = THREE
 
 // Renderer
 const isMobile = navigator.maxTouchPoints > 0
@@ -25,6 +34,7 @@ renderer.outputColorSpace = THREE.SRGBColorSpace
 renderer.toneMapping = THREE.ACESFilmicToneMapping
 renderer.toneMappingExposure = 0.3
 document.body.appendChild(renderer.domElement)
+window.__debugRenderer = renderer
 
 // Environment map — gives metalness/roughness materials something to reflect.
 // Without this, any metallic material renders black/dead (no IBL to sample).
@@ -306,6 +316,7 @@ loader.load(
         clickables.push(child)
     })
     console.log('Clickables gefunden:', clickables.length)
+    window.__debugClickables = clickables.map(o => o.name)
 
     const fixedClearance = size.y * 0.20
     const roofCutoff     = size.y * 0.35  // obere 35% = Dach, wird ausgeschlossen
@@ -654,7 +665,10 @@ renderer.domElement.addEventListener('click', e => {
   if (name) {
     const data = CONTENT[name]
     if (data.url) {
-      window._nav(data.url, 'left')
+      // ?from=3d tells the destination page it was opened from the 3D scene,
+      // so it swaps its usual nav bar for a fixed "Exit" button that returns
+      // here — see the per-page <script> block that checks this param.
+      window._nav(data.url + '?from=3d', 'left')
     } else {
       openOverlay(name)
     }
@@ -698,7 +712,6 @@ const openMobileMenu = () => mobileMenu?.classList.add('open')
   ['craft-back-btn',          closeCraft],
   ['controls-back-btn',       closeControls],
   ['kaffeemaschine-back-btn', closeKaffeemaschine],
-  ['project-back-btn',  () => { projectOverlay.classList.remove('open'); isOverlayOpen = false }],
 ].forEach(([id, closeFn]) => {
   document.getElementById(id)?.addEventListener('click', () => {
     closeFn()
