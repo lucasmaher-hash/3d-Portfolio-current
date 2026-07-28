@@ -191,7 +191,7 @@ let clickables  = []
 
 // ── Inhaltsverzeichnis: Objektname → Overlay-Inhalt ──────────────
 const CONTENT = {
-  'YellowRoom_CoffeeTable001': {
+  'YellowRoom_CoffeeTable': {
     title: 'Coffee Table',
     image: '',
     text:  'Placeholder-Text für den Coffee Table. Hier kannst du eine Beschreibung, Geschichte oder Information zu diesem Objekt eintragen.'
@@ -214,7 +214,7 @@ function canMove(origin, direction) {
 // ── Load model ───────────────────────────────────────────────────
 const loader = new GLTFLoader()
 loader.load(
-  '/severance_V23.glb',
+  '/portfolio_scene.glb',
   (gltf) => {
     const model  = gltf.scene
     const box    = new THREE.Box3().setFromObject(model)

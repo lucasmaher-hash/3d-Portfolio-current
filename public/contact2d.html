@@ -158,26 +158,28 @@
     .anim-3 { animation-delay: 300ms; }
     .anim-4 { animation-delay: 450ms; }
 
+    /* .contact-item ported directly from contact3d.html's working version —
+       same overflow:hidden + transition/hover treatment as the 3D nav buttons
+       the user pointed to as correct, instead of the old .footer-logo-matched
+       "big lift" hover. Font-size/dimensions below are kept at the 2D page's
+       own fixed values (not 3D's clamp()) so the button size is unchanged. */
     .contact-item {
       background: var(--bg-surface);
       border-radius: 999px;
       box-shadow: -5px -5px 12px 0 rgba(255,255,255,1), 5px 5px 12px 0 rgba(174,174,192,0.65);
+      overflow: hidden;
       text-decoration: none;
       color: inherit;
       display: block;
-      /* EXACT ease-out from the homepage "top" button (.footer-logo in 2D.html):
-         this base transition is what runs when the pointer LEAVES. */
-      transition: transform 260ms cubic-bezier(.2,.7,.2,1), box-shadow 260ms cubic-bezier(.2,.7,.2,1);
+      transition: box-shadow 300ms ease-out, transform 300ms ease-out;
     }
 
-    /* Hover state — byte-for-byte the same as .footer-logo:hover in 2D.html
-       (the 150ms ease is the enter timing; the 260ms cubic-bezier above is the
-       ease-out on leave). Only works because the .anim fade-in sits on a
-       WRAPPER div, not on this element — see the markup comment below. */
+    /* Only works because the .anim fade-in sits on a WRAPPER div, not on this
+       element — see the markup comment below. */
     .contact-item:hover {
+      box-shadow: -6px -6px 18px 0 rgba(255,255,255,1), 6px 6px 18px 0 rgba(174,174,192,0.8);
       transform: translateY(-2px) scale(1.03);
-      box-shadow: 11px 11px 24px rgba(174,174,192,0.9), -8px -8px 20px rgba(255,255,255,1);
-      transition: transform 150ms ease, box-shadow 150ms ease;
+      transition: box-shadow 150ms ease, transform 150ms ease;
     }
 
     .contact-header {
