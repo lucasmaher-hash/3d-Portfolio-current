@@ -23,7 +23,7 @@ renderer.outputColorSpace = THREE.SRGBColorSpace
 // meant to read as glowing light sources) hard-clip to flat white instead of
 // rolling off, and that clipping was also blowing out walls/floor nearby.
 renderer.toneMapping = THREE.ACESFilmicToneMapping
-renderer.toneMappingExposure = 0.8
+renderer.toneMappingExposure = 0.3
 document.body.appendChild(renderer.domElement)
 
 // Environment map — gives metalness/roughness materials something to reflect.
@@ -32,11 +32,16 @@ const pmremGenerator = new THREE.PMREMGenerator(renderer)
 scene.environment = pmremGenerator.fromScene(new RoomEnvironment(), 0.04).texture
 
 // Lights
-// Ambient trimmed down from 0.8 — the environment map above already contributes
-// ambient fill, so the two were stacking and over-lighting non-emissive surfaces.
-scene.add(new THREE.AmbientLight(0xffffff, 0.4))
-const dirLight = new THREE.DirectionalLight(0xffffff, 2.0)
-dirLight.position.set(5, 8, 5)
+// The rooms are meant to read as lit by their emissive ceiling panels, so the key
+// light points straight DOWN and most of the illumination comes from ambient +
+// hemisphere fill. Previously a single strong angled DirectionalLight (intensity 2.0
+// from (5,8,5)) lit one side of the room only — measured, that made the centre
+// tower's flat faces swing ~1.6x in brightness across a 360° orbit, which reads as
+// "flickering light/dark" while walking around it. Overhead + fill measures ~1.35.
+scene.add(new THREE.AmbientLight(0xffffff, 0.6))
+scene.add(new THREE.HemisphereLight(0xffffff, 0xb0b0b0, 1.4))
+const dirLight = new THREE.DirectionalLight(0xffffff, 0.5)
+dirLight.position.set(0, 10, 0)
 dirLight.castShadow = true
 scene.add(dirLight)
 
@@ -235,10 +240,20 @@ const CONTENT = {
     image: '',
     text:  'Placeholder-Text für den Coffee Table. Hier kannst du eine Beschreibung, Geschichte oder Information zu diesem Objekt eintragen.'
   },
-  'NewRoom_Podium': {
-    title: 'Vaccine Project',
-    url: '/vaccine3d.html'
-  }
+  // Project pivots → their 2D project pages. Keyed on the DIRECT parent name
+  // of each object's clickable meshes (checked one level up in the click
+  // handler below), not the outer Pivot_* group — verified per-mesh via the
+  // "Mesh: X | Parent: Y" console logging in the model-load traversal.
+  // Only the product objects themselves are clickable (NewRoom_Podium, the
+  // display pedestal, is deliberately NOT a key — clicking the podium itself
+  // should do nothing, only the bottle sitting on it).
+  'bottle_body_Podest': { title: 'Double Packaging', url: '/vaccine2d.html' },        // bottle on NewRoom_Podium
+  'bottle_body':        { title: 'Double Packaging', url: '/vaccine2d.html' },        // second bottle instance (Pivot_Bottle)
+  'Pivot_MacLamp':       { title: 'Mac-Lamp',         url: '/mac-lamp2d.html' },
+  'Pivot_MacLamp_Table': { title: 'Mac-Lamp',         url: '/mac-lamp2d.html' },
+  'egg-rig':             { title: 'Cybercoffee',      url: '/kaffeemaschine2d.html' }, // Pivot_Kaffeemaschine's mesh parent
+  'Pivot_UNify':         { title: 'Unify',            url: '/unify2d.html' },
+  'Pivot_VRPanel':       { title: 'Virtual Cooking',  url: '/virtual_cooking2d.html' },
 }
 
 const ray = new THREE.Raycaster()
@@ -256,7 +271,6 @@ loader.load(
   '/portfolio_scene.glb',
   (gltf) => {
     const model  = gltf.scene
-    window.__DEBUG_scene = scene; window.__DEBUG_camera = camera; window.__DEBUG_model = model
     const box    = new THREE.Box3().setFromObject(model)
     const center = box.getCenter(new THREE.Vector3())
     const size   = box.getSize(new THREE.Vector3())
@@ -561,39 +575,12 @@ window.resetScene = function () {
 
 aboutOverlay.addEventListener('click', e => { if (e.target === aboutOverlay) closeAbout() })
 
-// ── Project Overlay ──────────────────────────────────────────────
-const projectOverlay = document.getElementById('project-overlay')
-
 function ensureOverlayFrameLoaded(id) {
   const frame = document.getElementById(id)
   if (!frame) return
   const src = frame.dataset.src
   if (src && frame.src !== src) frame.src = src
 }
-
-const VACCINE_NATIVE_W = 1512
-
-function scaleProjectFrame() {
-  const frame    = document.getElementById('project-frame')
-  const isMobileCoarse = window.matchMedia('(pointer: coarse)').matches
-  const topbarH  = isMobileCoarse ? 57 : 0
-  const wrapFrac = isMobileCoarse ? 0.85 : 0.6666
-  const wrapW    = window.innerWidth  * wrapFrac
-  const wrapH    = window.innerHeight * wrapFrac - topbarH
-  const scale    = wrapW / VACCINE_NATIVE_W
-  frame.style.width     = VACCINE_NATIVE_W + 'px'
-  frame.style.height    = Math.round(wrapH / scale) + 'px'
-  frame.style.transform = `scale(${scale})`
-}
-
-window.addEventListener('resize', scaleProjectFrame)
-
-projectOverlay.addEventListener('click', e => {
-  if (e.target === projectOverlay) {
-    projectOverlay.classList.remove('open')
-    isOverlayOpen = false
-  }
-})
 
 // ── Info-Overlay ─────────────────────────────────────────────────
 const infoOverlay = document.getElementById('info-overlay')
@@ -629,10 +616,6 @@ infoOverlay.addEventListener('click', e => { if (e.target === infoOverlay) close
 // Escape key closes any open overlay
 window.addEventListener('keydown', e => {
   if (e.code !== 'Escape') return
-  if (projectOverlay.classList.contains('open')) {
-    projectOverlay.classList.remove('open')
-    isOverlayOpen = false
-  }
   if (aboutOverlay.classList.contains('open')) {
     closeAbout()
   }
@@ -671,10 +654,7 @@ renderer.domElement.addEventListener('click', e => {
   if (name) {
     const data = CONTENT[name]
     if (data.url) {
-      ensureOverlayFrameLoaded('project-frame')
-      projectOverlay.classList.add('open')
-      isOverlayOpen = true
-      scaleProjectFrame()
+      window._nav(data.url, 'left')
     } else {
       openOverlay(name)
     }
@@ -705,7 +685,6 @@ kaffeemaschineOverlay.addEventListener('click', e => { if (e.target === kaffeema
   ['craft-close-btn',          closeCraft],
   ['controls-close-btn',       closeControls],
   ['kaffeemaschine-close-btn', closeKaffeemaschine],
-  ['project-close-btn',  () => { projectOverlay.classList.remove('open'); isOverlayOpen = false }],
 ].forEach(([id, fn]) => {
   document.getElementById(id)?.addEventListener('click', fn)
 })
