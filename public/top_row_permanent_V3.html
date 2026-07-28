@@ -125,6 +125,16 @@
       box-shadow: var(--shadow-raised-sm);
     }
 
+    /* 3D view only: clip child hover shadows (.logo, .pill) to the island's
+       own rounded silhouette. The blur on those hover shadows always extends
+       a bit past the child's own box — invisible in 2D because the page
+       background is the exact same flat colour as the island's own
+       background, but visible in 3D as a smudge past the rounded edge over
+       the busy scene behind it. is-3d-view is added by JS below. */
+    .nav-island.is-3d-view {
+      overflow: hidden;
+    }
+
     .nav-island>.nav-left {
       justify-self: start;
     }
@@ -515,6 +525,12 @@
       if (!is2DView && navigator.maxTouchPoints > 0) {
         document.querySelector('.top-row').classList.add('is-collapsible');
         navIsland.classList.add('is-collapsible');
+      }
+
+      // 3D view: clip hover shadow bleed to the island's own rounded edge
+      // (see .nav-island.is-3d-view rule above) — not needed in 2D.
+      if (!is2DView) {
+        navIsland.classList.add('is-3d-view');
       }
 
       // 2D-mode shading. Over a full-bleed `.hero` image the nav stays
