@@ -578,9 +578,9 @@
         <button class="mobile-mode-btn is-active" data-mode="2d">2D</button>
         <button class="mobile-mode-btn" data-mode="3d">3D</button>
       </div>
-      <a class="mobile-nav-btn" data-page="craft">Craft</a>
-      <a class="mobile-nav-btn" data-page="about">About</a>
-      <a class="mobile-nav-btn" data-page="contact">Contact</a>
+      <a class="mobile-nav-btn" data-page="craft" data-i18n="menu-craft">Craft</a>
+      <a class="mobile-nav-btn" data-page="about" data-i18n="menu-about">About</a>
+      <a class="mobile-nav-btn" data-page="contact" data-i18n="menu-contact">Contact</a>
     </div>
   </div>
 
@@ -597,7 +597,7 @@
     <!-- Header -->
     <div class="section" style="border-bottom: none;">
       <div class="project-header">
-        <p class="breadcrumb">Portfolio&nbsp;&nbsp;/&nbsp;&nbsp;Projects&nbsp;&nbsp;/&nbsp;&nbsp;Double Packaging</p>
+        <p class="breadcrumb" data-i18n-html="breadcrumb">Portfolio&nbsp;&nbsp;/&nbsp;&nbsp;Projects&nbsp;&nbsp;/&nbsp;&nbsp;Double Packaging</p>
         <div class="title-row">
           <h1 class="project-title">Double Packaging</h1>
           <span class="accent-dot"></span>
@@ -849,6 +849,8 @@
     // ── i18n ─────────────────────────────────────────────────────
     const TRANSLATIONS = {
       en: {
+        'menu-craft': 'Craft', 'menu-about': 'About', 'menu-contact': 'Contact',
+        'breadcrumb': 'Portfolio&nbsp;&nbsp;/&nbsp;&nbsp;Projects&nbsp;&nbsp;/&nbsp;&nbsp;Double Packaging',
         'label-timeline': 'Timeline', 'val-timeline': 'Spring 2026<br/>4 weeks',
         'label-team': 'Team', 'val-team': 'Just Me',
         'label-role': 'Role', 'val-role': '3D Designer',
@@ -866,6 +868,8 @@
         'nav-prev': '<< PREVIOUS', 'nav-next': 'NEXT >>',
       },
       de: {
+        'menu-craft': 'Projekte', 'menu-about': 'Über mich', 'menu-contact': 'Kontakt',
+        'breadcrumb': 'Portfolio&nbsp;&nbsp;/&nbsp;&nbsp;Projekte&nbsp;&nbsp;/&nbsp;&nbsp;Double Packaging',
         'label-timeline': 'Zeitraum', 'val-timeline': 'Frühling 2026<br/>4 Wochen',
         'label-team': 'Team', 'val-team': 'Nur ich',
         'label-role': 'Rolle', 'val-role': '3D-Designer',

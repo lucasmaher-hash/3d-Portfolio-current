@@ -636,9 +636,9 @@
         <button class="mobile-mode-btn is-active" data-mode="2d">2D</button>
         <button class="mobile-mode-btn" data-mode="3d">3D</button>
       </div>
-      <a class="mobile-nav-btn" data-page="craft">Craft</a>
-      <a class="mobile-nav-btn" data-page="about">About</a>
-      <a class="mobile-nav-btn" data-page="contact">Contact</a>
+      <a class="mobile-nav-btn" data-page="craft" data-i18n="menu-craft">Craft</a>
+      <a class="mobile-nav-btn" data-page="about" data-i18n="menu-about">About</a>
+      <a class="mobile-nav-btn" data-page="contact" data-i18n="menu-contact">Contact</a>
     </div>
   </div>
 
@@ -916,6 +916,7 @@
     // ── i18n ─────────────────────────────────────────────────────
     const TRANSLATIONS = {
       en: {
+        'menu-craft': 'Craft', 'menu-about': 'About', 'menu-contact': 'Contact',
         'breadcrumb': 'Portfolio&nbsp;&nbsp;/&nbsp;&nbsp;Projects&nbsp;&nbsp;/&nbsp;&nbsp;Virtual Cooking',
         'label-timeline': 'Timeline', 'val-timeline': 'May 2026 —<br>Jul 2026',
         'label-team': 'Team', 'val-team': 'Just Me',
@@ -943,6 +944,7 @@
         'nav-cybercoffee': 'Cybercoffee', 'nav-unify': 'Unify',
       },
       de: {
+        'menu-craft': 'Projekte', 'menu-about': 'Über mich', 'menu-contact': 'Kontakt',
         'breadcrumb': 'Portfolio&nbsp;&nbsp;/&nbsp;&nbsp;Projekte&nbsp;&nbsp;/&nbsp;&nbsp;Virtual Cooking',
         'label-timeline': 'Zeitraum', 'val-timeline': 'Mai 2026 —<br>Jul. 2026',
         'label-team': 'Team', 'val-team': 'Nur ich',

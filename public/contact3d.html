@@ -124,7 +124,7 @@
 <body>
   <div class="container">
     <div class="header">
-      <h1 class="header-title">CONTACT</h1>
+      <h1 class="header-title" data-i18n="contact-title">CONTACT</h1>
       <hr class="header-divider" />
     </div>
 
@@ -132,7 +132,7 @@
 
       <a href="mailto:lucas.maher@outlook.com" class="contact-item">
         <div class="contact-header">
-          <span class="contact-label">Email</span>
+          <span class="contact-label" data-i18n="label-email">Email</span>
           <div class="btn">↗</div>
         </div>
       </a>
@@ -153,5 +153,21 @@
 
     </div>
   </div>
+
+  <script>
+    // ── i18n (EN + DE) ───────────────────────────────────────────
+    (function () {
+      var T = {
+        de: { 'contact-title': 'KONTAKT', 'label-email': 'E-Mail' },
+        en: { 'contact-title': 'CONTACT', 'label-email': 'Email' }
+      };
+      function apply(lang) {
+        var t = T[lang] || T.en;
+        document.querySelectorAll('[data-i18n]').forEach(function (el) { if (t[el.dataset.i18n] !== undefined) el.textContent = t[el.dataset.i18n]; });
+      }
+      apply(localStorage.getItem('lang') || 'de');
+      window.addEventListener('storage', function (e) { if (e.key === 'lang') apply(e.newValue || 'de'); });
+    })();
+  </script>
 </body>
 </html>

@@ -274,7 +274,7 @@ function canMove(origin, direction) {
 // ── Load model ───────────────────────────────────────────────────
 const loader = new GLTFLoader()
 loader.load(
-  '/portfolio_scene.glb',
+  '/current🟢.glb',
   (gltf) => {
     const model  = gltf.scene
     const box    = new THREE.Box3().setFromObject(model)

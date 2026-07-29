@@ -938,9 +938,9 @@
         <button class="mobile-mode-btn is-active" data-mode="2d">2D</button>
         <button class="mobile-mode-btn" data-mode="3d">3D</button>
       </div>
-      <a class="mobile-nav-btn" data-page="craft">Craft</a>
-      <a class="mobile-nav-btn" data-page="about">About</a>
-      <a class="mobile-nav-btn" data-page="contact">Contact</a>
+      <a class="mobile-nav-btn" data-page="craft" data-i18n="menu-craft">Craft</a>
+      <a class="mobile-nav-btn" data-page="about" data-i18n="menu-about">About</a>
+      <a class="mobile-nav-btn" data-page="contact" data-i18n="menu-contact">Contact</a>
     </div>
   </div>
 
@@ -1319,6 +1319,7 @@
     // ── i18n ─────────────────────────────────────────────────────
     const TRANSLATIONS = {
       en: {
+        'menu-craft': 'Craft', 'menu-about': 'About', 'menu-contact': 'Contact',
         'breadcrumb': 'Portfolio&nbsp;&nbsp;/&nbsp;&nbsp;Projects&nbsp;&nbsp;/&nbsp;&nbsp;Unify',
         'label-timeline': 'Timeline', 'val-timeline': 'February 2025<br>June 2025',
         'label-team': 'Team', 'val-team': 'Me<br>Sophie Meyer<br>Moritz Ackermann',
@@ -1359,6 +1360,7 @@
         'nav-virtual-cooking': 'Virtual Cooking',
       },
       de: {
+        'menu-craft': 'Projekte', 'menu-about': 'Über mich', 'menu-contact': 'Kontakt',
         'breadcrumb': 'Portfolio&nbsp;&nbsp;/&nbsp;&nbsp;Projekte&nbsp;&nbsp;/&nbsp;&nbsp;Unify',
         'label-timeline': 'Zeitraum', 'val-timeline': 'Februar 2025<br>Juni 2025',
         'label-team': 'Team', 'val-team': 'Ich<br>Sophie Meyer<br>Moritz Ackermann',

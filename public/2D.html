@@ -633,9 +633,9 @@
         <button class="mobile-mode-btn is-active" data-mode="2d">2D</button>
         <button class="mobile-mode-btn" data-mode="3d">3D</button>
       </div>
-      <a class="mobile-nav-btn is-active" data-page="craft" href="#craft-section">Craft</a>
-      <a class="mobile-nav-btn" data-page="about" href="/about2d.html">About</a>
-      <a class="mobile-nav-btn" data-page="contact" href="/contact2d.html">Contact</a>
+      <a class="mobile-nav-btn is-active" data-page="craft" data-i18n="menu-craft" href="#craft-section">Craft</a>
+      <a class="mobile-nav-btn" data-page="about" data-i18n="menu-about" href="/about2d.html">About</a>
+      <a class="mobile-nav-btn" data-page="contact" data-i18n="menu-contact" href="/contact2d.html">Contact</a>
     </div>
   </div>
 
@@ -663,7 +663,7 @@
     <div class="project-section" style="align-items: stretch;">
       <div class="project-content">
         <div class="project-title-block">
-          <p class="project-label" style="font-family: 'VT323', monospace; font-size: 20px;">Project 01</p>
+          <p class="project-label" style="font-family: 'VT323', monospace; font-size: 20px;" data-i18n="label-project-01">Project 01</p>
           <h2 class="project-title">Unify</h2>
         </div>
         <div class="project-tags">
@@ -694,7 +694,7 @@
       </a>
       <div class="project-content">
         <div class="project-title-block">
-          <p class="project-label" style="font-family: 'VT323', monospace; font-size: 20px;">Project 02</p>
+          <p class="project-label" style="font-family: 'VT323', monospace; font-size: 20px;" data-i18n="label-project-02">Project 02</p>
           <h2 class="project-title">Virtual Cooking</h2>
         </div>
         <div class="project-tags">
@@ -711,7 +711,7 @@
     <div class="project-section" style="align-items: stretch;">
       <div class="project-content">
         <div class="project-title-block">
-          <p class="project-label" style="font-family: 'VT323', monospace; font-size: 20px;">Project 03</p>
+          <p class="project-label" style="font-family: 'VT323', monospace; font-size: 20px;" data-i18n="label-project-03">Project 03</p>
           <h2 class="project-title">Cybercoffee</h2>
         </div>
         <div class="project-tags">
@@ -740,13 +740,13 @@
       </div>
       <div class="project-content">
         <div class="project-title-block">
-          <p class="project-label" style="font-family: 'VT323', monospace; font-size: 20px;">Project 04</p>
+          <p class="project-label" style="font-family: 'VT323', monospace; font-size: 20px;" data-i18n="label-project-04">Project 04</p>
           <h2 class="project-title">Mac-Lamp</h2>
         </div>
         <div class="project-tags">
           <div class="tag">2024</div>
-          <div class="tag">Industrial</div>
-          <div class="tag">Fabrication</div>
+          <div class="tag" data-i18n="tag-industrial">Industrial</div>
+          <div class="tag" data-i18n="tag-fabrication">Fabrication</div>
           <div class="tag">Studio</div>
         </div>
         <a href="/mac-lamp2d.html" class="btn-view-work" data-i18n="btn-view-work" style="margin-top: auto; align-self: flex-start;">View Work</a>
@@ -757,14 +757,14 @@
     <div class="project-section" style="align-items: stretch;">
       <div class="project-content">
         <div class="project-title-block">
-          <p class="project-label" style="font-family: 'VT323', monospace; font-size: 20px;">Project 05</p>
+          <p class="project-label" style="font-family: 'VT323', monospace; font-size: 20px;" data-i18n="label-project-05">Project 05</p>
           <h2 class="project-title">Double Packaging</h2>
         </div>
         <div class="project-tags">
           <div class="tag">2025</div>
           <div class="tag">Blender</div>
-          <div class="tag">Lighting</div>
-          <div class="tag">Texturing</div>
+          <div class="tag" data-i18n="tag-lighting">Lighting</div>
+          <div class="tag" data-i18n="tag-texturing">Texturing</div>
         </div>
         <a href="/vaccine2d.html" class="btn-view-work" data-i18n="btn-view-work" style="margin-top: auto; align-self: flex-start;">View Work</a>
       </div>
@@ -780,7 +780,7 @@
 
     <!-- Footer -->
     <div class="footer-section">
-      <div class="footer-logo" id="scroll-top-btn" style="cursor: pointer;">top</div>
+      <div class="footer-logo" id="scroll-top-btn" style="cursor: pointer;" data-i18n="footer-top">top</div>
 
 <div class="footer-meta">
         <p class="copyright" data-i18n="footer-copyright">© 2026 Lucas Maher. All Rights Reserved.</p>
@@ -977,6 +977,13 @@
     // ── i18n ─────────────────────────────────────────────────────
     const TRANSLATIONS = {
       en: {
+        'menu-craft': 'Craft', 'menu-about': 'About', 'menu-contact': 'Contact',
+        'label-project-01': 'Project 01', 'label-project-02': 'Project 02',
+        'label-project-03': 'Project 03', 'label-project-04': 'Project 04',
+        'label-project-05': 'Project 05',
+        'tag-industrial': 'Industrial', 'tag-fabrication': 'Fabrication',
+        'tag-lighting': 'Lighting', 'tag-texturing': 'Texturing',
+        'footer-top': 'top',
         'tagline1': 'From material to pixel.',
         'tagline2': 'More about me →',
         'craft-title': 'Craft',
@@ -984,6 +991,13 @@
         'footer-copyright': '© 2026 Lucas Maher. All Rights Reserved.',
       },
       de: {
+        'menu-craft': 'Projekte', 'menu-about': 'Über mich', 'menu-contact': 'Kontakt',
+        'label-project-01': 'Projekt 01', 'label-project-02': 'Projekt 02',
+        'label-project-03': 'Projekt 03', 'label-project-04': 'Projekt 04',
+        'label-project-05': 'Projekt 05',
+        'tag-industrial': 'Industrie', 'tag-fabrication': 'Fertigung',
+        'tag-lighting': 'Beleuchtung', 'tag-texturing': 'Texturierung',
+        'footer-top': 'oben',
         'tagline1': 'Von Material zu Pixel.',
         'tagline2': 'Mehr über mich →',
         'craft-title': 'Projekte',

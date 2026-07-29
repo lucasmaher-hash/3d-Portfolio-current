@@ -124,11 +124,27 @@
 <body>
   <div class="container">
     <div class="header">
-      <h1 class="header-title">CRAFT</h1>
+      <h1 class="header-title" data-i18n="craft-title">CRAFT</h1>
       <hr class="header-divider" />
     </div>
 
-    <p class="craft-hint">walk around and explore :)</p>
+    <p class="craft-hint" data-i18n="craft-hint">walk around and explore :)</p>
   </div>
+
+  <script>
+    // ── i18n (EN + DE) ───────────────────────────────────────────
+    (function () {
+      var T = {
+        de: { 'craft-title': 'PROJEKTE', 'craft-hint': 'lauf herum und entdecke :)' },
+        en: { 'craft-title': 'CRAFT', 'craft-hint': 'walk around and explore :)' }
+      };
+      function apply(lang) {
+        var t = T[lang] || T.en;
+        document.querySelectorAll('[data-i18n]').forEach(function (el) { if (t[el.dataset.i18n] !== undefined) el.textContent = t[el.dataset.i18n]; });
+      }
+      apply(localStorage.getItem('lang') || 'de');
+      window.addEventListener('storage', function (e) { if (e.key === 'lang') apply(e.newValue || 'de'); });
+    })();
+  </script>
 </body>
 </html>

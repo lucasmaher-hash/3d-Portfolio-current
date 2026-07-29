@@ -390,9 +390,9 @@
         <button class="mobile-mode-btn is-active" data-mode="2d">2D</button>
         <button class="mobile-mode-btn" data-mode="3d">3D</button>
       </div>
-      <a class="mobile-nav-btn" data-page="craft">Craft</a>
-      <a class="mobile-nav-btn is-active" data-page="about">About</a>
-      <a class="mobile-nav-btn" data-page="contact">Contact</a>
+      <a class="mobile-nav-btn" data-page="craft" data-i18n="menu-craft">Craft</a>
+      <a class="mobile-nav-btn is-active" data-page="about" data-i18n="menu-about">About</a>
+      <a class="mobile-nav-btn" data-page="contact" data-i18n="menu-contact">Contact</a>
     </div>
   </div>
 
@@ -607,6 +607,7 @@
     // ── i18n ─────────────────────────────────────────────────────
     const TRANSLATIONS = {
       en: {
+        'menu-craft': 'Craft', 'menu-about': 'About', 'menu-contact': 'Contact',
         'label-background': 'Background',
         'bg-text': '<p>Hi, I\'m Lucas Maher, a 21 yo designer based in Munich.</p><p style="margin-top:12px;">I\'ve always created with my hands. Long before I discovered design, I was drawing, sculpting clay, cutting glass, welding metal, sewing fabric, and painting in oil and acrylic — constantly switching materials, constantly asking: what can this become?</p><p style="margin-top:12px;">That restlessness led me to Industrial Design, where three-dimensional thinking meets real-world problems. Now, studying at Hochschule München, I\'m channeling that same energy into the digital space — where 2D and 3D collide, and where screens are becoming the new material to shape.</p>',
         'label-things-i-love': 'Things I Love',
@@ -615,6 +616,7 @@
         'philosophy-text': '<p>Design that only looks good has already failed. I came to this field from fine art and craft — and that background taught me one thing above all: beauty without purpose is decoration, not design.</p><p style="margin-top:12px;">I work at the intersection of bold aesthetics and real problem-solving. I\'m not afraid to experiment, to try what hasn\'t been done, or to borrow from unexpected places. The best ideas often live at the edges — between physical and digital, between 2D and 3D, between what exists and what could.</p>',
       },
       de: {
+        'menu-craft': 'Projekte', 'menu-about': 'Über mich', 'menu-contact': 'Kontakt',
         'label-background': 'Hintergrund',
         'bg-text': '<p>Hallo, ich bin Lucas Maher, ein 21-jähriger Designer aus München.</p><p style="margin-top:12px;">Ich habe schon immer mit meinen Händen erschaffen. Lange bevor ich das Design entdeckte, zeichnete ich, formte Ton, schnitt Glas, schweißte Metall, nähte Stoff und malte in Öl und Acryl — immer wieder wechselte ich die Materialien, immer wieder fragte ich: Was kann daraus werden?</p><p style="margin-top:12px;">Diese Ruhelosigkeit führte mich zum Industriedesign, wo dreidimensionales Denken auf reale Probleme trifft. Nun, im Studium an der Hochschule München, kanalisiere ich diese Energie in den digitalen Raum — wo 2D und 3D kollidieren und Bildschirme zum neuen Material werden, das geformt werden will.</p>',
         'label-things-i-love': 'Was ich liebe',

@@ -654,9 +654,9 @@
         <button class="mobile-mode-btn is-active" data-mode="2d">2D</button>
         <button class="mobile-mode-btn" data-mode="3d">3D</button>
       </div>
-      <a class="mobile-nav-btn" data-page="craft">Craft</a>
-      <a class="mobile-nav-btn" data-page="about">About</a>
-      <a class="mobile-nav-btn" data-page="contact">Contact</a>
+      <a class="mobile-nav-btn" data-page="craft" data-i18n="menu-craft">Craft</a>
+      <a class="mobile-nav-btn" data-page="about" data-i18n="menu-about">About</a>
+      <a class="mobile-nav-btn" data-page="contact" data-i18n="menu-contact">Contact</a>
     </div>
   </div>
 
@@ -670,7 +670,7 @@
     <!-- Header -->
     <div class="section" style="border-bottom: none;">
       <div class="project-header">
-        <p class="breadcrumb">Portfolio&nbsp;&nbsp;/&nbsp;&nbsp;Projects&nbsp;&nbsp;/&nbsp;&nbsp;Cybercoffee</p>
+        <p class="breadcrumb" data-i18n-html="breadcrumb">Portfolio&nbsp;&nbsp;/&nbsp;&nbsp;Projects&nbsp;&nbsp;/&nbsp;&nbsp;Cybercoffee</p>
         <div class="title-row">
           <h1 class="project-title">Cybercoffee</h1>
           <span class="accent-dot"></span>
@@ -761,7 +761,7 @@
           <div class="machine-frame-wrap">
             <iframe src="/kaffeemaschine/kaffeemaschine.html" title="Cybercoffee" loading="lazy" allowtransparency="true"></iframe>
             <div class="machine-overlay" id="machine-overlay">
-              <button class="machine-overlay-btn"><span style="font-size: 1.6em; line-height: 1;">[</span><span style="position: relative; top: -5px;"> click me </span><span style="font-size: 1.6em; line-height: 1;">]</span></button>
+              <button class="machine-overlay-btn"><span style="font-size: 1.6em; line-height: 1;">[</span><span style="position: relative; top: -5px;" data-i18n="machine-click"> click me </span><span style="font-size: 1.6em; line-height: 1;">]</span></button>
             </div>
           </div>
         </div>
@@ -975,6 +975,9 @@
     // ── i18n ─────────────────────────────────────────────────────
     const TRANSLATIONS = {
       en: {
+        'menu-craft': 'Craft', 'menu-about': 'About', 'menu-contact': 'Contact',
+        'breadcrumb': 'Portfolio&nbsp;&nbsp;/&nbsp;&nbsp;Projects&nbsp;&nbsp;/&nbsp;&nbsp;Cybercoffee',
+        'machine-click': ' click me ',
         'hero-desc': 'Boot it up and you land on an always-on display showing what\'s left in the beans, water, and milk. Press any button and you\'re straight into the drink menu — every screen here runs on one rule: each of the six side buttons does a single dedicated thing, so a press always moves you forward, with no arrow keys or confirm button anywhere in the system. From there, drop into a saved preset or configure a drink from scratch — milk, water, beans — tracking your progress along the top bar, and saving the setup as a new preset while it brews. A few details reward using it for real: the side chevrons light up red the moment a button becomes actionable, a wrong press shakes the display instead of just sitting there, and you can set a wake-up timer for the first cup tomorrow morning.',
         'section-glance': 'At a Glance',
         'glance-lead': 'Coffee machines have some of the most forgettable interfaces in the world. I wanted to push that mundanity somewhere visually specific — a retro-futuristic interface controlled entirely by six physical side buttons, with CRT scanlines and a Digital-7 readout pulled straight from a 2003 sci-fi film. Designed in Figma, rebuilt pixel-perfect in HTML, then modeled into a full 3D machine in Blender so it could actually sit on a counter.',
@@ -991,6 +994,9 @@
         'nav-prev': '<< PREVIOUS', 'nav-next': 'NEXT >>',
       },
       de: {
+        'menu-craft': 'Projekte', 'menu-about': 'Über mich', 'menu-contact': 'Kontakt',
+        'breadcrumb': 'Portfolio&nbsp;&nbsp;/&nbsp;&nbsp;Projekte&nbsp;&nbsp;/&nbsp;&nbsp;Cybercoffee',
+        'machine-click': ' klick mich ',
         'hero-desc': 'Beim Start landest du auf einem Dauer-Display, das zeigt, wie viel Bohnen, Wasser und Milch noch übrig sind. Ein Tastendruck führt direkt ins Getränkemenü — jede der sechs Seitentasten macht genau eine feste Sache, ein Druck bringt dich also immer weiter, ganz ohne Pfeiltasten oder Bestätigungstaste. Von dort wählst du ein gespeichertes Preset oder stellst ein Getränk selbst zusammen — Milch, Wasser, Bohnen —, verfolgst den Fortschritt oben und speicherst die Einstellung als neues Preset, während es brüht. Details belohnen die echte Nutzung: Die seitlichen Pfeile leuchten rot, sobald eine Taste aktiv wird, ein Fehldruck lässt das Display zittern, und du kannst einen Wecktimer für die erste Tasse morgen früh stellen.',
         'section-glance': 'Auf einen Blick',
         'glance-lead': 'Kaffeemaschinen haben einige der unauffälligsten Oberflächen der Welt. Ich wollte diese Banalität visuell konkret machen — eine retro-futuristische Oberfläche, gesteuert über sechs physische Seitentasten, mit CRT-Scanlines und einer Digital-7-Anzeige wie aus einem Sci-Fi-Film von 2003. In Figma entworfen, pixelgenau in HTML umgesetzt und in Blender zur vollen 3D-Maschine modelliert.',

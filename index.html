@@ -235,10 +235,14 @@
         var target = 0;      // real progress 0..1 (set from main.js)
         var shown  = 0;      // displayed, eased toward target
         var doneRequested = false;
+        var MIN_DURATION = 3000; // the fill always takes at least this long
+        var t0 = performance.now();
 
         function frame() {
-          // ease displayed value toward target so it fills smoothly
-          var goal = doneRequested ? 1 : target;
+          // ease displayed value toward target so it fills smoothly;
+          // a time cap keeps the fill from completing before MIN_DURATION
+          var timeCap = Math.min(1, (performance.now() - t0) / MIN_DURATION);
+          var goal = Math.min(doneRequested ? 1 : target, timeCap);
           shown += (goal - shown) * (doneRequested ? 0.14 : 0.06);
           if (goal - shown < 0.001) shown = goal;
           var pct = Math.round(shown * 100);
@@ -304,9 +308,9 @@
           <button class="mobile-mode-btn" data-mode="2d">2D</button>
           <button class="mobile-mode-btn is-active" data-mode="3d">3D</button>
         </div>
-        <a class="mobile-nav-btn" data-page="craft">Craft</a>
-        <a class="mobile-nav-btn" data-page="about">About</a>
-        <a class="mobile-nav-btn" data-page="contact">Contact</a>
+        <a class="mobile-nav-btn" data-page="craft" data-i18n="menu-craft">Craft</a>
+        <a class="mobile-nav-btn" data-page="about" data-i18n="menu-about">About</a>
+        <a class="mobile-nav-btn" data-page="contact" data-i18n="menu-contact">Contact</a>
       </div>
     </div>
 
@@ -406,6 +410,22 @@
             else if (btn.dataset.page === 'about'   && window.openAboutOverlay)   window.openAboutOverlay();
             else if (btn.dataset.page === 'contact' && window.openContactOverlay) window.openContactOverlay();
           });
+        });
+      })();
+
+      // ── i18n for the mobile menu (EN + DE) ──────────────────────
+      (function () {
+        var T = {
+          de: { 'menu-craft': 'Projekte', 'menu-about': 'Über mich', 'menu-contact': 'Kontakt' },
+          en: { 'menu-craft': 'Craft', 'menu-about': 'About', 'menu-contact': 'Contact' }
+        };
+        function apply(lang) {
+          var t = T[lang] || T.en;
+          document.querySelectorAll('[data-i18n]').forEach(function (el) { if (t[el.dataset.i18n] !== undefined) el.textContent = t[el.dataset.i18n]; });
+        }
+        apply(localStorage.getItem('lang') || 'de');
+        window.addEventListener('message', function (e) {
+          if (e.data && e.data.type === 'lang-change') apply(e.data.lang);
         });
       })();
 

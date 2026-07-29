@@ -343,9 +343,9 @@
         <button class="mobile-mode-btn is-active" data-mode="2d">2D</button>
         <button class="mobile-mode-btn" data-mode="3d">3D</button>
       </div>
-      <a class="mobile-nav-btn" data-page="craft">Craft</a>
-      <a class="mobile-nav-btn" data-page="about">About</a>
-      <a class="mobile-nav-btn is-active" data-page="contact">Contact</a>
+      <a class="mobile-nav-btn" data-page="craft" data-i18n="menu-craft">Craft</a>
+      <a class="mobile-nav-btn" data-page="about" data-i18n="menu-about">About</a>
+      <a class="mobile-nav-btn is-active" data-page="contact" data-i18n="menu-contact">Contact</a>
     </div>
   </div>
 
@@ -370,7 +370,7 @@
           <div class="anim anim-2">
             <a href="mailto:lucas.maher@outlook.com" class="contact-item">
               <div class="contact-header">
-                <span class="contact-label">Email</span>
+                <span class="contact-label" data-i18n="label-email">Email</span>
                 <div class="btn">↗</div>
               </div>
             </a>
@@ -513,8 +513,16 @@
 
     // ── i18n ─────────────────────────────────────────────────────
     const TRANSLATIONS = {
-      en: { 'contact-title': 'Get In Touch' },
-      de: { 'contact-title': 'Kontakt aufnehmen' }
+      en: {
+        'contact-title': 'Get In Touch',
+        'label-email': 'Email',
+        'menu-craft': 'Craft', 'menu-about': 'About', 'menu-contact': 'Contact',
+      },
+      de: {
+        'contact-title': 'Kontakt aufnehmen',
+        'label-email': 'E-Mail',
+        'menu-craft': 'Projekte', 'menu-about': 'Über mich', 'menu-contact': 'Kontakt',
+      }
     };
     function applyLang(lang) {
       const t = TRANSLATIONS[lang] || TRANSLATIONS.en;

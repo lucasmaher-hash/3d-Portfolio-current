@@ -225,15 +225,15 @@
 <body>
   <div class="panel">
     <div class="header">
-      <h1 class="header-title">CONTROLS</h1>
+      <h1 class="header-title" data-i18n="controls-title">CONTROLS</h1>
       <hr class="header-divider" />
     </div>
 
     <div class="grid">
       <div class="card">
         <div>
-          <div class="card-title">MOVE</div>
-          <div class="card-description">W, A, S, D or arrow keys to walk the scene</div>
+          <div class="card-title" data-i18n="move-title">MOVE</div>
+          <div class="card-description" data-i18n="move-desc">W, A, S, D or arrow keys to walk the scene</div>
         </div>
         <div class="card-visual">
           <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;">
@@ -249,8 +249,8 @@
 
       <div class="card">
         <div>
-          <div class="card-title">CAMERA</div>
-          <div class="card-description">Rightclick or trackpad to move camera</div>
+          <div class="card-title" data-i18n="camera-title">CAMERA</div>
+          <div class="card-description" data-i18n="camera-desc">Rightclick or trackpad to move camera</div>
         </div>
         <div class="card-visual">
           <div class="mouse-icon">
@@ -264,8 +264,8 @@
 
       <div class="card">
         <div>
-          <div class="card-title">INSPECT</div>
-          <div class="card-description">Leftclick to select item</div>
+          <div class="card-title" data-i18n="inspect-title">INSPECT</div>
+          <div class="card-description" data-i18n="inspect-desc">Leftclick to select item</div>
         </div>
         <div class="card-visual">
           <div class="mouse-icon">
@@ -279,8 +279,8 @@
 
       <div class="card">
         <div>
-          <div class="card-title">RESET</div>
-          <div class="card-description">Tap icon (top left) to reset to center</div>
+          <div class="card-title" data-i18n="reset-title">RESET</div>
+          <div class="card-description" data-i18n="reset-desc">Tap icon (top left) to reset to center</div>
         </div>
         <div class="card-visual">
           <div class="lm-button">LM</div>
@@ -288,10 +288,38 @@
       </div>
     </div>
 
-    <div class="start-hint">[ click anywhere to start ]</div>
+    <div class="start-hint" data-i18n="start-hint">[ click anywhere to start ]</div>
   </div>
 
   <script>
+    // ── i18n (EN + DE) ───────────────────────────────────────────
+    (function () {
+      var T = {
+        de: {
+          'controls-title': 'STEUERUNG',
+          'move-title': 'BEWEGEN', 'move-desc': 'W, A, S, D oder Pfeiltasten, um durch die Szene zu laufen',
+          'camera-title': 'KAMERA', 'camera-desc': 'Rechtsklick oder Trackpad, um die Kamera zu bewegen',
+          'inspect-title': 'ANSEHEN', 'inspect-desc': 'Linksklick, um ein Objekt auszuwählen',
+          'reset-title': 'RESET', 'reset-desc': 'Icon (oben links) tippen, um zur Mitte zurückzukehren',
+          'start-hint': '[ klicke irgendwo, um zu starten ]'
+        },
+        en: {
+          'controls-title': 'CONTROLS',
+          'move-title': 'MOVE', 'move-desc': 'W, A, S, D or arrow keys to walk the scene',
+          'camera-title': 'CAMERA', 'camera-desc': 'Rightclick or trackpad to move camera',
+          'inspect-title': 'INSPECT', 'inspect-desc': 'Leftclick to select item',
+          'reset-title': 'RESET', 'reset-desc': 'Tap icon (top left) to reset to center',
+          'start-hint': '[ click anywhere to start ]'
+        }
+      };
+      function apply(lang) {
+        var t = T[lang] || T.en;
+        document.querySelectorAll('[data-i18n]').forEach(function (el) { if (t[el.dataset.i18n] !== undefined) el.textContent = t[el.dataset.i18n]; });
+      }
+      apply(localStorage.getItem('lang') || 'de');
+      window.addEventListener('storage', function (e) { if (e.key === 'lang') apply(e.newValue || 'de'); });
+    })();
+
     // Exact-divisor dot tiling (Safari clips partial gradient tiles — see CLAUDE.md)
     (function () {
       function fixDividers() {
