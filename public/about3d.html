@@ -28,6 +28,12 @@
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { width: 100%; }
+    /* Content (accordion + photo) is legitimately taller than the fixed
+       #about-wrapper box it's embedded in via iframe in the 3D scene, so it
+       needs to stay scrollable — just without showing the native scrollbar,
+       matching the same hide-scrollbar convention used on the 2D pages. */
+    html { scrollbar-width: none; }
+    html::-webkit-scrollbar { display: none; }
     body { background: var(--bg-base); font-family: 'VT323', monospace; padding: 32px; display: flex; justify-content: center; }
 
     .container {

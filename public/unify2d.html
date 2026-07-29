@@ -1588,5 +1588,49 @@
     })();
   </script>
 
+  <script>
+    // 3D-scene entry point: ?from=3d (set by the click handler in src/main.js
+    // when a scene object navigates here) hides the usual nav bar and shows
+    // a fixed "Exit" pill (top-left) that returns to the 3D scene instead.
+    (function () {
+      if (new URLSearchParams(location.search).get('from') !== '3d') return;
+      var topBarEl = document.getElementById('top-bar');
+      if (topBarEl) topBarEl.style.display = 'none';
+      // A 3D-scene click is only meant to open this ONE project page — no
+      // hopping to other projects from here — so the prev/next footer nav
+      // is hidden too. Untouched when the page is opened normally from 2D.
+      var projectNavEl = document.querySelector('.project-nav');
+      if (projectNavEl) projectNavEl.style.display = 'none';
+      var style = document.createElement('style');
+      style.textContent = '.exit-3d-btn{position:fixed;top:24px;left:24px;z-index:10000;background:var(--bg-surface);border:none;border-radius:9999px;padding:10px 24px;font-family:"VT323",monospace;font-size:16px;letter-spacing:0.04em;text-transform:uppercase;color:var(--text-primary);box-shadow:var(--shadow-raised-sm);cursor:pointer;text-decoration:none;transition:left 200ms ease, transform 150ms ease, box-shadow 150ms ease;}.exit-3d-btn:hover{transform:translateY(-2px) scale(1.03);box-shadow:11px 11px 24px rgba(174,174,192,0.9), -8px -8px 20px rgba(255,255,255,1);}';
+      document.head.appendChild(style);
+      var btn = document.createElement('a');
+      btn.href = '/';
+      btn.className = 'exit-3d-btn';
+      btn.textContent = 'Exit';
+      document.body.appendChild(btn);
+
+      // Keep the button clear of .page-wrapper's left border: sit 24px from
+      // the viewport edge while there's room for the whole button in that
+      // open margin; once the frame's border would be under (or past) it,
+      // tuck the button in just inside the frame instead (right of the
+      // border line) rather than let the border cut across it.
+      function positionExitBtn() {
+        var wrapper = document.querySelector('.page-wrapper');
+        if (!wrapper) return;
+        var wrapperLeft = wrapper.getBoundingClientRect().left;
+        var btnWidth    = btn.offsetWidth;
+        var MARGIN_GAP  = 24;
+        var INSET_GAP   = 16;
+        btn.style.left = (wrapperLeft - MARGIN_GAP >= btnWidth)
+          ? MARGIN_GAP + 'px'
+          : (wrapperLeft + INSET_GAP) + 'px';
+      }
+      positionExitBtn();
+      window.addEventListener('resize', positionExitBtn);
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(positionExitBtn);
+    })();
+  </script>
+
 </body>
 </html>

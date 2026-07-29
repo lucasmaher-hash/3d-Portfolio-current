@@ -17,9 +17,6 @@ scene.fog = new THREE.Fog(0x0d0d14, 10, 60)
 // moving. 0.1 is a 10x precision gain and ~10cm, closer than the player can get.
 const camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.1, 1000)
 camera.rotation.order = 'YXZ'
-window.__debugScene = scene
-window.__debugCamera = camera
-window.__debugTHREE = THREE
 
 // Renderer
 const isMobile = navigator.maxTouchPoints > 0
@@ -34,7 +31,6 @@ renderer.outputColorSpace = THREE.SRGBColorSpace
 renderer.toneMapping = THREE.ACESFilmicToneMapping
 renderer.toneMappingExposure = 0.3
 document.body.appendChild(renderer.domElement)
-window.__debugRenderer = renderer
 
 // Environment map — gives metalness/roughness materials something to reflect.
 // Without this, any metallic material renders black/dead (no IBL to sample).
@@ -316,7 +312,6 @@ loader.load(
         clickables.push(child)
     })
     console.log('Clickables gefunden:', clickables.length)
-    window.__debugClickables = clickables.map(o => o.name)
 
     const fixedClearance = size.y * 0.20
     const roofCutoff     = size.y * 0.35  // obere 35% = Dach, wird ausgeschlossen
@@ -364,13 +359,33 @@ loader.load(
     }
 
     // Fixed initial spawn (user-captured via the P debug key) — overrides
-    // the auto-detected floor-probe spawn point above so the page always
-    // opens at this exact position/angle instead. floorY/collidables from
-    // the probing above are kept as-is (still needed for live movement
+    // the auto-detected floor-probe spawn point above so the page normally
+    // opens at this exact position/angle. floorY/collidables from the
+    // probing above are kept as-is (still needed for live movement
     // collision + the per-frame floorY+playerHeight+bob height system).
-    camera.position.set(2.2970, -0.7653, 9.6615)
-    yaw = 2.3400
-    pitch = 0.0540
+    //
+    // EXCEPTION: if the user is returning from a project page's "Exit"
+    // button, restore the exact spot they clicked the object from instead
+    // (saved to sessionStorage right before navigating away — see the click
+    // handler below) so the scene continues where they left it rather than
+    // resetting to the fixed spawn every time.
+    let restoredReturnState = false
+    const returnStateRaw = sessionStorage.getItem('_3dReturnState')
+    sessionStorage.removeItem('_3dReturnState')
+    if (returnStateRaw) {
+      try {
+        const rs = JSON.parse(returnStateRaw)
+        camera.position.set(rs.x, rs.y, rs.z)
+        yaw = rs.yaw
+        pitch = rs.pitch
+        restoredReturnState = true
+      } catch (e) { /* malformed/stale — fall through to the fixed spawn */ }
+    }
+    if (!restoredReturnState) {
+      camera.position.set(2.2970, -0.7653, 9.6615)
+      yaw = 2.3400
+      pitch = 0.0540
+    }
     applyRotation()
     spawnPos = camera.position.clone()
     spawnYaw = yaw
@@ -665,6 +680,13 @@ renderer.domElement.addEventListener('click', e => {
   if (name) {
     const data = CONTENT[name]
     if (data.url) {
+      // Save the exact spot we're leaving from so the Exit button on the
+      // destination page can bring us right back to it (read back by the
+      // restore logic right after the GLTFLoader spawn block above).
+      sessionStorage.setItem('_3dReturnState', JSON.stringify({
+        x: camera.position.x, y: camera.position.y, z: camera.position.z,
+        yaw, pitch
+      }))
       // ?from=3d tells the destination page it was opened from the 3D scene,
       // so it swaps its usual nav bar for a fixed "Exit" button that returns
       // here — see the per-page <script> block that checks this param.
