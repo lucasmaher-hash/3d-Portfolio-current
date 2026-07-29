@@ -29,27 +29,136 @@ renderer.outputColorSpace = THREE.SRGBColorSpace
 // meant to read as glowing light sources) hard-clip to flat white instead of
 // rolling off, and that clipping was also blowing out walls/floor nearby.
 renderer.toneMapping = THREE.ACESFilmicToneMapping
-renderer.toneMappingExposure = 0.3
+// 0.3 was chosen back when 2.0 of the 2.5 total light intensity was flat ambient +
+// hemisphere fill; that much uniform fill needed crushing down to not look washed out.
+// Now that the rooms are lit by real PointLights at the ceiling fixtures (with proper
+// 1/d² falloff) there is far less light to tame, so the exposure comes back up.
+// This is the single best knob for overall "too bright / too dark" — adjust it first.
+renderer.toneMappingExposure = 0.55
 document.body.appendChild(renderer.domElement)
 
 // Environment map — gives metalness/roughness materials something to reflect.
 // Without this, any metallic material renders black/dead (no IBL to sample).
 const pmremGenerator = new THREE.PMREMGenerator(renderer)
 scene.environment = pmremGenerator.fromScene(new RoomEnvironment(), 0.04).texture
+// ...but RoomEnvironment is a BRIGHT studio-lit room, and as scene.environment it acts
+// as a full image-based light on every PBR material — not just the metals it was added
+// for. At full strength that is a large, perfectly uniform, direction-less flood which
+// is a major reason the rooms read as flat, and it is invisible to any amount of
+// trimming AmbientLight/HemisphereLight. Turning it down keeps metals alive (they still
+// have something to reflect) while letting the ceiling fixtures actually shape the room.
+// Raise this if metallic surfaces start looking dead; lower it for more contrast.
+scene.environmentIntensity = 0.22
 
 // Lights
-// The rooms are meant to read as lit by their emissive ceiling panels, so the key
-// light points straight DOWN and most of the illumination comes from ambient +
-// hemisphere fill. Previously a single strong angled DirectionalLight (intensity 2.0
-// from (5,8,5)) lit one side of the room only — measured, that made the centre
-// tower's flat faces swing ~1.6x in brightness across a 360° orbit, which reads as
-// "flickering light/dark" while walking around it. Overhead + fill measures ~1.35.
-scene.add(new THREE.AmbientLight(0xffffff, 0.6))
-scene.add(new THREE.HemisphereLight(0xffffff, 0xb0b0b0, 1.4))
-const dirLight = new THREE.DirectionalLight(0xffffff, 0.5)
+// The rooms are meant to read as lit by their emissive ceiling fixtures. That CANNOT
+// come from the emissive materials themselves — Three.js has no global illumination,
+// so an emissive surface glows visually but casts exactly zero light. The actual
+// illumination therefore comes from a real PointLight parked at each fixture's own
+// position; see addFixtureLights() in the model-load callback below.
+//
+// These three are FILL ONLY — they exist to keep unlit corners (and PinkRoom, which
+// has no emissive ceiling fixture at all) from going pure black. They are deliberately
+// tiny. Previously they were ambient 0.6 + hemisphere 1.4 + directional 0.5, i.e. 2.0
+// of the 2.5 total intensity was non-directional fill that lit every surface uniformly
+// with no falloff — which is why the rooms read as flat and the light appeared to come
+// from nowhere in particular. A DirectionalLight also emits parallel rays from
+// infinitely far away, so it can never read as a localised fixture no matter where
+// it is positioned; it is kept here only as a weak top-down shaper.
+scene.add(new THREE.AmbientLight(0xffffff, 0.08))
+scene.add(new THREE.HemisphereLight(0xffffff, 0xb0b0b0, 0.18))
+const dirLight = new THREE.DirectionalLight(0xffffff, 0.12)
 dirLight.position.set(0, 10, 0)
 dirLight.castShadow = true
 scene.add(dirLight)
+
+// ── Ceiling-fixture lighting ─────────────────────────────────────
+// One PointLight per emissive ceiling fixture, matched BY MESH NAME and positioned at
+// that mesh's own world position. Name-matching (rather than hardcoded coordinates) is
+// deliberate and load-bearing: the model is recentred at load time via
+// model.position.sub(center), so its world coordinates shift whenever the Blender
+// scene's bounding box changes — and Blender is Z-up while glTF is Y-up, so any
+// coordinate copied out of Blender would also need a (x, z, -y) swap. Matching on the
+// name sidesteps all three failure modes.
+//
+// TUNING: `intensity` is in candela and falls off as 1/d² (decay = 2), so illuminance
+// on a floor ~5 units below a fixture is intensity/25. `distance` is a hard cutoff —
+// it is kept just large enough to reach that room's own far corners, which also stops
+// one room's light bleeding through the walls into its neighbours (these lights cast
+// no shadows, so `distance` is the only thing containing them; 5 shadow-casting
+// PointLights would mean 5 cube shadow maps per frame, which is far too expensive).
+// Matched on the EMISSIVE MATERIAL name, not the mesh name. Two reasons, both learned
+// the hard way:
+//   1. A Blender object with two materials (base + emissive fixture) exports as one
+//      glTF mesh with two primitives, which Three.js splits into a Group whose children
+//      are named "<node>_0" / "<node>_1". So `name === 'Ceiling_Cassettes'` never
+//      matches any Mesh — the Group holds that name and Groups are not meshes.
+//      Ceiling_Cassettes and NewRoom_Ceiling are both 2-primitive nodes.
+//   2. The material IS the fixture's real identity; the mesh name is incidental.
+// Where a material is reused on non-ceiling geometry (BlueRoom_EmissivePanel is also on
+// the front wall, floor and podium tops) a mesh-name guard narrows it to the ceiling.
+const FIXTURE_LIGHTS = [
+  // MainRoom — cool white cassette ceiling, room radius ~10.6, fixture at z 5.2
+  { test: (n, mats) => mats.includes('Ceiling_Light'),
+    color: 0xf2f7ff, intensity: 70, distance: 15 },
+  // NewRoom / brown podium room — warm amber, room ~15.9 wide, fixture at z 5.25
+  { test: (n, mats) => mats.includes('NewRoom_CeilingLight_Warm'),
+    color: 0xffc773, intensity: 55, distance: 13 },
+  // YellowRoom — warm, TWO separate ceiling panels (YellowRoom_Ceiling + .001), each
+  // ~16 x 7.7, so this intentionally matches twice and yields two lights. The grid bars
+  // use material 'Grid', not 'Ceiling', so they are excluded by the material match alone.
+  { test: (n, mats) => mats.includes('Ceiling') && n.startsWith('YellowRoom_Ceiling'),
+    color: 0xffebc7, intensity: 45, distance: 12 },
+  // BlueRoom — cool blue panels, room ~11.8 x 10.7. Material guard + name guard.
+  { test: (n, mats) => mats.includes('BlueRoom_EmissivePanel') && n.includes('Ceiling'),
+    color: 0xb8dbff, intensity: 45, distance: 12 },
+]
+
+// Emissive fixtures are authored in Blender at wildly inconsistent strengths
+// (NewRoom_CeilingLight_Warm = 60, Ceiling_Light = 25, YellowRoom Ceiling = 5.5,
+// BlueRoom_EmissivePanel = 1.5). Blender exports those via KHR_materials_emissive_strength
+// and Three.js applies them as material.emissiveIntensity — so at 60 the fixture is
+// ~18x over pure white after tone mapping and hard-clips to a flat WHITE disc, losing
+// its warm colour entirely. Clamping the hot ones brings them back to a bright-but-
+// tinted glow. Small accent emissives (Lamp_* at 1.0, M_Purple at 0.18) are left alone.
+const EMISSIVE_CLAMP = 2.0
+
+function addFixtureLights(model) {
+  const seen = []
+  model.traverse(child => {
+    if (!child.isMesh) return
+
+    // Rein in over-bright emissives so the fixture reads as coloured light, not white.
+    const mats = Array.isArray(child.material) ? child.material : [child.material]
+    for (const m of mats) {
+      if (m && m.emissiveIntensity > EMISSIVE_CLAMP) m.emissiveIntensity = EMISSIVE_CLAMP
+    }
+
+    const matNames = mats.filter(Boolean).map(m => m.name)
+    const spec = FIXTURE_LIGHTS.find(f => f.test(child.name, matNames))
+    if (!spec) return
+
+    // Position from the GEOMETRY BOUNDING BOX, not getWorldPosition(). getWorldPosition
+    // returns the object's transform ORIGIN, and several of these fixtures have their
+    // Blender origin left at the world origin while the geometry itself sits tens of
+    // units away — NewRoom_Ceiling's origin is (0,0,0) but its geometry is at
+    // (-19.5, -1.2, 5.25), so using the origin would drop NewRoom's light into MainRoom.
+    const pos = new THREE.Box3().setFromObject(child).getCenter(new THREE.Vector3())
+    // Nudge the light just below the fixture surface so it lights the room rather
+    // than being co-planar with (and partly occluded by) the ceiling geometry.
+    pos.y -= 0.15
+
+    const light = new THREE.PointLight(spec.color, spec.intensity, spec.distance, 2)
+    light.position.copy(pos)
+    scene.add(light)
+    seen.push(`${child.name} @ ${pos.x.toFixed(1)},${pos.y.toFixed(1)},${pos.z.toFixed(1)}`)
+  })
+  console.log(`Fixture-Lichter: ${seen.length}`, seen)
+  if (seen.length === 0) {
+    console.warn('Keine Fixture-Lichter gefunden — Mesh-Namen im GLB haben sich geändert? ' +
+                 'FIXTURE_LIGHTS in src/main.js prüfen.')
+  }
+}
 
 // ── Camera rotation ──────────────────────────────────────────────
 let yaw   = 0
@@ -312,6 +421,11 @@ loader.load(
         clickables.push(child)
     })
     console.log('Clickables gefunden:', clickables.length)
+
+    // Place a PointLight at each emissive ceiling fixture (and clamp over-bright
+    // emissives). Must run AFTER model.position.sub(center) above, since it reads each
+    // fixture's final world position.
+    addFixtureLights(model)
 
     const fixedClearance = size.y * 0.20
     const roofCutoff     = size.y * 0.35  // obere 35% = Dach, wird ausgeschlossen
