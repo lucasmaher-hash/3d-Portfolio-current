@@ -133,6 +133,79 @@
       align-items: center;
       justify-content: center;
     }
+    /* ── Loading screen ─────────────────────────────────────────── */
+    #load-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 10000;
+      background: var(--bg-surface);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 1200ms ease;
+    }
+    #load-overlay.is-done { opacity: 0; pointer-events: none; }
+    #load-circle {
+      position: relative;
+      width: min(27.6vw, 27.6vh, 192px);
+      height: min(27.6vw, 27.6vh, 192px);
+      border-radius: 50%;
+      background: var(--bg-surface);
+      box-shadow: var(--shadow-pressed);
+      overflow: hidden;
+    }
+    #load-liquid {
+      position: absolute;
+      left: 0; bottom: 0;
+      width: 100%;
+      height: 0%;
+      background: #FF5C00;
+      transition: height 120ms linear;
+    }
+    /* wave surface: a wide rotating rounded square poking above the liquid */
+    #load-liquid::before {
+      content: '';
+      position: absolute;
+      top: -14px;
+      left: -50%;
+      width: 200%;
+      aspect-ratio: 1 / 1;
+      background: #FF5C00;
+      border-radius: 42%;
+      animation: loadWave 5s linear infinite;
+    }
+    @keyframes loadWave {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+    #load-count {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'VT323', monospace;
+      font-size: clamp(34px, 6vw, 56px);
+      color: var(--text-primary);
+      z-index: 2;
+      user-select: none;
+    }
+
+    /* ── Fullscreen controls intro (after loading screen) ───────── */
+    #intro-controls {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+      z-index: 9999; /* above nav (same value, later in DOM), below loader (10000) */
+      background: transparent; /* the page itself paints a translucent veil */
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 700ms ease;
+    }
+    #intro-controls.is-visible { opacity: 1; pointer-events: auto; }
+
     #joystick-thumb {
       width: 44px;
       height: 44px;
@@ -146,6 +219,49 @@
   </style>
   </head>
   <body>
+    <!-- Loading screen (currently shows on every reload for testing;
+         to restrict to first visit only, gate on sessionStorage here later) -->
+    <div id="load-overlay">
+      <div id="load-circle">
+        <div id="load-liquid"></div>
+        <div id="load-count">0%</div>
+      </div>
+    </div>
+    <script>
+      (function () {
+        var overlay = document.getElementById('load-overlay');
+        var liquid  = document.getElementById('load-liquid');
+        var count   = document.getElementById('load-count');
+        var target = 0;      // real progress 0..1 (set from main.js)
+        var shown  = 0;      // displayed, eased toward target
+        var doneRequested = false;
+
+        function frame() {
+          // ease displayed value toward target so it fills smoothly
+          var goal = doneRequested ? 1 : target;
+          shown += (goal - shown) * (doneRequested ? 0.14 : 0.06);
+          if (goal - shown < 0.001) shown = goal;
+          var pct = Math.round(shown * 100);
+          liquid.style.height = (shown * 100) + '%';
+          count.textContent = pct + '%';
+          if (doneRequested && pct >= 100) {
+            overlay.classList.add('is-done');
+            // reveal the controls intro beneath the fading loader
+            if (window._showIntroControls) window._showIntroControls();
+            setTimeout(function () { overlay.remove(); }, 1300);
+            return;
+          }
+          requestAnimationFrame(frame);
+        }
+        requestAnimationFrame(frame);
+
+        window._loader = {
+          progress: function (p) { target = Math.max(target, Math.min(p, 1)); },
+          done: function () { doneRequested = true; }
+        };
+      })();
+    </script>
+
     <div id="info-overlay">
       <div id="info-panel">
         <button id="info-close">&#x2715;</button>
@@ -156,6 +272,23 @@
     </div>
 
     <iframe id="top-bar" src="/top_row_permanent_V3.html" allowtransparency="true"></iframe>
+
+    <!-- Fullscreen controls intro — shown once the loader finishes; click/key dismisses -->
+    <iframe id="intro-controls" src="/controls_fullscreen3d.html" allowtransparency="true"></iframe>
+    <script>
+      (function () {
+        var intro = document.getElementById('intro-controls');
+        window._showIntroControls = function () {
+          intro.classList.add('is-visible');
+        };
+        window.addEventListener('message', function (e) {
+          if (e.data && e.data.type === 'intro-controls-dismiss') {
+            intro.classList.remove('is-visible');
+            setTimeout(function () { intro.remove(); }, 750);
+          }
+        });
+      })();
+    </script>
 
     <!-- Virtual joystick (touch only) -->
     <div id="joystick-container">

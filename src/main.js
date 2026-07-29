@@ -394,9 +394,18 @@ loader.load(
     console.log(`Modellgröße: x=${size.x.toFixed(2)} y=${size.y.toFixed(2)} z=${size.z.toFixed(2)}`)
     console.log(`floorY=${floorY.toFixed(3)} | playerHeight=${playerHeight.toFixed(4)} | spawnFound=${spawnFound}`)
     console.log(`Kamerastart: x=${camera.position.x.toFixed(2)} y=${camera.position.y.toFixed(2)} z=${camera.position.z.toFixed(2)}`)
+
+    if (window._loader) window._loader.done()
   },
-  undefined,
-  err => console.error('GLB load error:', err)
+  e => {
+    // Real download progress for the loading screen (e.total is 0 if the
+    // server sends no content-length — then the loader just eases on done())
+    if (window._loader && e.total) window._loader.progress(e.loaded / e.total)
+  },
+  err => {
+    console.error('GLB load error:', err)
+    if (window._loader) window._loader.done()
+  }
 )
 
 // ── Render loop ──────────────────────────────────────────────────
@@ -511,13 +520,8 @@ function closeControls() {
 
 controlsOverlay.addEventListener('click', e => { if (e.target === controlsOverlay) closeControls() })
 
-// First-ever visit only: greet with the instructions open. The flag is written
-// immediately and lives in localStorage (not sessionStorage) so a refresh — here
-// or on any other page — never re-triggers it.
-if (!localStorage.getItem('_seenIntro')) {
-  localStorage.setItem('_seenIntro', '1')
-  openControls()
-}
+// The first-visit greeting is now the fullscreen controls intro in index.html
+// (shown after the loading screen), so the windowed overlay no longer auto-opens.
 
 // Listen for message from floating button iframe
 window.addEventListener('message', e => {
