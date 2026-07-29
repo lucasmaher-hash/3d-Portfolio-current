@@ -217,33 +217,46 @@
       font-weight: 400;
       color: var(--text-primary);
       box-shadow: inset -6px -6px 15px rgba(255,255,255,1), inset 6px 6px 15px rgba(174,174,192,0.65);
+    }
+
+    /* ── Mobile ────────────────────────────────────────────────────────────
+       These rules used to sit as bare selectors INSIDE the .lm-button block
+       above, with no @media wrapper and no closing brace before them. Under CSS
+       nesting they resolved to `.lm-button body`, `.lm-button .container`, etc.
+       and matched nothing, so the whole mobile treatment silently never applied
+       — which is why phones kept the desktop `body { padding: 32px }` band and
+       the `.container` 1px border, and why the title overflowed (its base
+       `white-space: nowrap` was never overridden).
+
+       Layout now matches the fullscreen intro (controls_fullscreen3d.html),
+       minus that page's two full-screen-only devices: its translucent
+       rgba(220,220,227,0.85) veil and its 1px panel border. Here the surround is
+       the same opaque --bg-base as the panel, and with the border gone the
+       padding band is indistinguishable — one seamless surface.
+
+       Top padding clears the 57px .overlay-topbar (the ← / ✕ buttons), which the
+       fullscreen version has no equivalent of. */
+    @media (max-width: 700px) {
       html, body { height: auto; overflow-y: auto; }
-      body { padding: 0; justify-content: flex-start; }
+
+      body {
+        padding: 0;
+        justify-content: flex-start;
+      }
+
       .container {
         width: 100%;
+        height: auto;
+        overflow-y: auto;
         border: none;
         padding: 80px clamp(20px, 6vw, 40px) 64px;
         gap: 24px;
       }
+
       .header-title {
         font-size: clamp(28px, 8vw, 56px);
         white-space: normal;
         letter-spacing: 2px;
-      }
-      .grid {
-        grid-template-columns: 1fr;
-        grid-template-rows: auto;
-        gap: 16px;
-      }
-    }
-
-    @media (max-width: 700px) {
-      html, body { overflow-y: auto; }
-
-      .container {
-        height: auto;
-        overflow-y: auto;
-        padding: clamp(16px, 2.5vw, 32px) clamp(16px, 4vw, 40px);
       }
 
       .grid {

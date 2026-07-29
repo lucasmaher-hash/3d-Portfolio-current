@@ -437,6 +437,17 @@
     @media (min-aspect-ratio: 17/10) {
       .nav-island { max-width: 1330px; }
     }
+
+    /* ── Mobile only: readable language toggle ─────────────────────────────
+       "de / en" was 14px VT323 — effectively ~11-12px of a proportional face
+       given VT323's small x-height and 1px strokes, and it's a tap target.
+       Width-based query, so this is safe inside the iframe (unlike an
+       orientation query, which would resolve against the iframe's own
+       landscape-shaped 390x140 box rather than the device). Desktop keeps 14px. */
+    @media (max-width: 640px) {
+      .lang-btn,
+      .lang-sep { font-size: 16px; }
+    }
   </style>
 </head>
 

@@ -644,6 +644,31 @@
     @media (min-aspect-ratio: 17/10) {
       .page-wrapper { max-width: 1390px; }
     }
+
+    /* ── Mobile only: readable type scale ──────────────────────────────────
+       At 390px these all sat under the platform minimum — body copy was 14.4px,
+       the smallest text on the page despite carrying the most reading load
+       (iOS body default is 17px; Material's body-large is 16sp).
+       Tiers: 16px proportional body · 15px short-but-real content (meta values)
+       · 16px VT323 UI labels — VT323 has a small x-height and 1px strokes, so it
+       reads ~2-3px smaller than a proportional face at the same declared size.
+       Deliberately does NOT touch the coffee-machine iframe: its 8px/12px
+       Digital-7 readout is a simulated LCD, where small type is the point.
+       MUST stay last in the stylesheet: several of these selectors already set
+       font-size in earlier max-width blocks and these overrides have equal
+       specificity, so they win on source order alone. */
+    @media (max-width: 640px) {
+      /* proportional body copy */
+      .guide-text,
+      .result-copy,
+      .spin-copy { font-size: 16px; }
+      /* short but real content, kept below body size */
+      .meta-inset { font-size: 15px; }
+      /* VT323 UI labels */
+      .breadcrumb,
+      .project-nav-label,
+      .project-nav-number { font-size: 16px; }
+    }
   </style>
 </head>
 <body>

@@ -380,6 +380,24 @@
     @media (min-aspect-ratio: 17/10) {
       .page-wrapper { max-width: 1390px; }
     }
+
+    /* ── Mobile only: readable type scale ──────────────────────────────────
+       The intro paragraph was 15px italic Georgia in --text-secondary — the
+       least legible combination on the site (serif + italic + low-contrast
+       grey), and it's the first thing read on the page. Bumped to the same 16px
+       body tier used on the project pages. Desktop keeps 15px. */
+    @media (max-width: 640px) {
+      .text-inset p { font-size: 16px; }
+
+      /* Raise the accordion's open cap. .text-inset lives INSIDE .item-body, so
+         the 16px bump grows its content: German went from 631px to 697px against
+         the global 700px cap — 3px of headroom, i.e. one copy edit away from
+         silently clipping the text. 900px restores ~200px of slack while still
+         being a real number, since max-height can't transition to `none`
+         (the expand animation would stop working). Desktop keeps 700px, where
+         the wider viewport means fewer lines and the cap is never approached. */
+      .item.open .item-body { max-height: 900px; }
+    }
   </style>
 </head>
 <body>

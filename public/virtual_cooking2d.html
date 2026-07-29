@@ -541,7 +541,38 @@
       font-size: 14.4px;
       line-height: 1.7;
       color: var(--text-secondary);
+    }
+
+    /* Kicker + title + paragraph column inside a stagger row.
+       NOTE: the max-width lives HERE, not on .stagger-copy where it used to, so the
+       heading wraps on the same measure as the paragraph below it. Any responsive
+       override of this width must target .stagger-body too — see the 17/10 block. */
+    .stagger-body {
+      display: flex;
+      flex-direction: column;
+      gap: clamp(10px, 1.2vw, 14px);
       max-width: 440px;
+    }
+
+    /* Small orange label above a heading — ported from unify2d.html so the
+       kicker → OCR-A-BT title → text rhythm matches across project pages. */
+    .feature-kicker {
+      font-family: 'VT323', monospace;
+      font-size: 14px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent-orange);
+    }
+
+    /* Deliberately sized to match .result-subhead, NOT Unify's .feature-title
+       (clamp(22px, 3vw, 34px)). These are sub-items inside a section that already has a
+       .section-title at clamp(28px, 4vw, 44px), so they must stay clearly below it. */
+    .feature-title {
+      font-family: 'OCR-A-BT', monospace;
+      font-size: clamp(20px, 2.6vw, 26px);
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      color: var(--text-primary);
     }
 
     /* Process screenshots — constrained + staggered, caption above image */
@@ -603,7 +634,8 @@
       .stagger-row { max-width: 980px; gap: clamp(48px, 5vw, 96px); }
       .stagger-row.indent { margin-left: clamp(40px, 5vw, 110px); }
       .stagger-figure { width: clamp(320px, 25vw, 460px); }
-      .stagger-copy { max-width: 520px; font-size: 16px; }
+      .stagger-body { max-width: 520px; }
+      .stagger-copy { font-size: 16px; }
     }
     /* ── Reduced motion (apple-design §14): drop non-essential movement,
        keep layout + opacity cues. No effect unless the OS pref is set. */
@@ -625,6 +657,28 @@
        17/10 not 1.7 — Safari ignores the decimal aspect form. */
     @media (min-aspect-ratio: 17/10) {
       .page-wrapper { max-width: 1390px; }
+    }
+
+    /* ── Mobile only: readable type scale ──────────────────────────────────
+       At 390px these all sat under the platform minimum — body copy was 14.4px,
+       the smallest text on the page despite carrying the most reading load
+       (iOS body default is 17px; Material's body-large is 16sp).
+       Tiers: 16px proportional body · 15px short-but-real content (meta values)
+       · 16px VT323 UI labels — VT323 has a small x-height and 1px strokes, so it
+       reads ~2-3px smaller than a proportional face at the same declared size.
+       MUST stay last in the stylesheet: several of these selectors already set
+       font-size in earlier max-width blocks and these overrides have equal
+       specificity, so they win on source order alone. */
+    @media (max-width: 640px) {
+      /* proportional body copy */
+      .guide-text,
+      .stagger-copy { font-size: 16px; }
+      /* short but real content, kept below body size */
+      .meta-inset { font-size: 15px; }
+      /* VT323 UI labels */
+      .breadcrumb,
+      .project-nav-label,
+      .project-nav-number { font-size: 16px; }
     }
   </style>
 </head>
@@ -717,19 +771,31 @@
           <div class="stagger-figure">
             <img src="/images/vr-cookbook/Panel_Left.png" alt="Recipe panel render" />
           </div>
-          <p class="stagger-copy" data-i18n="panel-manual-text">The left panel is the instruction manual. A progress bar tracks which step of the recipe you're on, with the current step itself shown right beside it — always in view, never more than a glance away.</p>
+          <div class="stagger-body">
+            <span class="feature-kicker" data-i18n="panel-manual-kicker">01 — Manual</span>
+            <h3 class="feature-title" data-i18n="panel-manual-title">Every Step in View</h3>
+            <p class="stagger-copy" data-i18n="panel-manual-text">The left panel is the instruction manual. A progress bar tracks which step of the recipe you're on, with the current step itself shown right beside it — always in view, never more than a glance away.</p>
+          </div>
         </div>
         <div class="stagger-row right">
           <div class="stagger-figure">
             <img src="/images/vr-cookbook/Panel_Right.png" alt="Ingredients panel render" />
           </div>
-          <p class="stagger-copy" data-i18n="panel-ingredients-text">The right panel holds the ingredient list, with a control to adjust the serving size on the fly. Beside it, a running timer counts down visually — click it, and it opens into a full-screen timer view.</p>
+          <div class="stagger-body">
+            <span class="feature-kicker" data-i18n="panel-ingredients-kicker">02 — Ingredients</span>
+            <h3 class="feature-title" data-i18n="panel-ingredients-title">Ingredients That Scale</h3>
+            <p class="stagger-copy" data-i18n="panel-ingredients-text">The right panel holds the ingredient list, with a control to adjust the serving size on the fly. Beside it, a running timer counts down visually — click it, and it opens into a full-screen timer view.</p>
+          </div>
         </div>
         <div class="stagger-row indent">
           <div class="stagger-figure">
             <img src="/images/vr-cookbook/Stopwatch.png" alt="Timer render" />
           </div>
-          <p class="stagger-copy" data-i18n="panel-timer-text">Clicking the countdown on the right panel opens this full-screen timer, where the time can be set or adjusted with a simple gesture.</p>
+          <div class="stagger-body">
+            <span class="feature-kicker" data-i18n="panel-timer-kicker">03 — Timer</span>
+            <h3 class="feature-title" data-i18n="panel-timer-title">Set by Gesture</h3>
+            <p class="stagger-copy" data-i18n="panel-timer-text">Clicking the countdown on the right panel opens this full-screen timer, where the time can be set or adjusted with a simple gesture.</p>
+          </div>
         </div>
       </div>
 
@@ -920,8 +986,14 @@
         'problem-text-3': 'This is a concept, not a working product — today\'s VR/AR headsets are still too heavy and clunky to wear comfortably through an hour of cooking. But headsets keep getting lighter and less intrusive, and I think this becomes a genuinely viable idea once they do. It\'s also easy to imagine this mattering most somewhere other than a home kitchen: restaurants routinely cook for different numbers of people and switch between recipes all night — exactly the two things this concept is built to handle.',
         'section-process': 'Design process',
         'process-intro': 'Most VR interfaces are surprisingly flat — floating 2D windows dropped into a 3D space, using none of the depth VR actually offers. I wanted to actually build with the third dimension instead of ignoring it, and to give the whole interface a distinct visual identity: everything here is modeled with a brushed-metal look, echoing the pans, knives, and utensils already sitting on the counter. Every interaction is designed to work without a controller — clicks and simple hand gestures are the only input the whole concept ever asks for.',
+        'panel-manual-kicker': '01 — Manual',
+        'panel-manual-title': 'Every Step in View',
         'panel-manual-text': 'The left panel is the instruction manual. A progress bar tracks which step of the recipe you\'re on, with the current step itself shown right beside it — always in view, never more than a glance away.',
+        'panel-ingredients-kicker': '02 — Ingredients',
+        'panel-ingredients-title': 'Ingredients That Scale',
         'panel-ingredients-text': 'The right panel holds the ingredient list, with a control to adjust the serving size on the fly. Beside it, a running timer counts down visually — click it, and it opens into a full-screen timer view.',
+        'panel-timer-kicker': '03 — Timer',
+        'panel-timer-title': 'Set by Gesture',
         'panel-timer-text': 'Clicking the countdown on the right panel opens this full-screen timer, where the time can be set or adjusted with a simple gesture.',
         'process-blender-text': 'Each panel started as a 3D model in Blender, shaped into that brushed-metal form language before being exported into Three.js.',
         'process-vscode-text': 'From there, the scene came together in VS Code with Claude Code — a real background video shot on a GoPro, with the 3D panels layered on top and wired up to respond to clicks.',
@@ -948,8 +1020,14 @@
         'problem-text-3': 'Das hier ist ein Konzept, kein fertiges Produkt — heutige VR/AR-Headsets sind noch zu schwer und klobig, um sie eine Stunde lang beim Kochen bequem zu tragen. Aber Headsets werden stetig leichter und unauffälliger, und ich glaube, daraus wird eine echte Option, sobald das so weit ist. Es liegt auch nahe, dass die Idee außerhalb der heimischen Küche noch mehr Sinn ergibt: Restaurants kochen ständig für unterschiedlich viele Gäste und wechseln die ganze Nacht zwischen Rezepten — genau die zwei Dinge, auf die dieses Konzept ausgelegt ist.',
         'section-process': 'Designprozess',
         'process-intro': 'Die meisten VR-Oberflächen sind erstaunlich flach — schwebende 2D-Fenster in einem 3D-Raum, ohne dessen Tiefe zu nutzen. Ich wollte die dritte Dimension wirklich einsetzen und der Oberfläche eine eigenständige Identität geben: Alles ist im gebürsteten Metall-Look modelliert, angelehnt an Pfannen, Messer und Utensilien, die ohnehin auf der Arbeitsplatte liegen. Jede Interaktion funktioniert ganz ohne Controller — nur Klicks und einfache Handgesten.',
+        'panel-manual-kicker': '01 — Anleitung',
+        'panel-manual-title': 'Jeder Schritt im Blick',
         'panel-manual-text': 'Das linke Panel ist die Bedienungsanleitung. Ein Fortschrittsbalken zeigt den aktuellen Rezeptschritt direkt daneben — immer sichtbar, nie mehr als einen Blick entfernt.',
+        'panel-ingredients-kicker': '02 — Zutaten',
+        'panel-ingredients-title': 'Zutaten, die mitrechnen',
         'panel-ingredients-text': 'Das rechte Panel zeigt die Zutatenliste, mit einer Steuerung, um die Portionsgröße direkt anzupassen. Daneben zählt ein laufender Timer visuell herunter — ein Klick öffnet die Vollbild-Timeransicht.',
+        'panel-timer-kicker': '03 — Timer',
+        'panel-timer-title': 'Per Geste gestellt',
         'panel-timer-text': 'Ein Klick auf den Countdown öffnet diesen Vollbild-Timer, dessen Zeit sich per einfacher Geste einstellen lässt.',
         'process-blender-text': 'Jedes Panel begann als 3D-Modell in Blender, geformt in dieser gebürsteten Metall-Formsprache, bevor es nach Three.js exportiert wurde.',
         'process-vscode-text': 'Von dort aus entstand die Szene in VS Code mit Claude Code — ein echtes Hintergrundvideo, gefilmt mit einer GoPro, mit den 3D-Panels darüber gelegt und so verdrahtet, dass sie auf Klicks reagieren.',

@@ -350,38 +350,22 @@
     <script>
       // ── Page transitions ──────────────────────────────────────────
       (function() {
-        var KF = '@keyframes _sR{from{transform:translateX(100%)}to{transform:translateX(0)}}@keyframes _sL{from{transform:translateX(-100%)}to{transform:translateX(0)}}';
-        var s = document.createElement('style'); s.textContent = KF; document.head.appendChild(s);
-        var DUR = 380, EASE = 'cubic-bezier(0.4,0,0.2,1)';
-        var d = document.documentElement;
-        var OPP = {_sR:'_sL',_sL:'_sR'};
-
-        var dir = sessionStorage.getItem('_sv');
-        if (dir) {
-          sessionStorage.removeItem('_sv');
-          // Keep 3D page off-screen while it loads; top-bar counter-animated to stay put
-          d.style.transform = dir === 'right' ? 'translateX(100%)' : 'translateX(-100%)';
-          d.style.overflow = 'hidden';
-          var tb = document.getElementById('top-bar');
-          if (tb) tb.style.transform = dir === 'right' ? 'translateX(-100%)' : 'translateX(100%)';
-          var done = false;
-          function reveal() {
-            if (done) return; done = true;
-            requestAnimationFrame(function() {
-              var anim = (dir === 'right' ? '_sR' : '_sL');
-              d.style.transform = ''; d.style.overflow = '';
-              if (tb) tb.style.transform = '';
-              d.style.animation = anim + ' ' + DUR + 'ms ' + EASE + ' both';
-              if (tb) tb.style.animation = OPP[anim] + ' ' + DUR + 'ms ' + EASE + ' both';
-              setTimeout(function() {
-                d.style.animation = ''; d.style.overflow = '';
-                if (tb) tb.style.animation = '';
-              }, DUR + 60);
-            });
-          }
-          if (document.readyState === 'complete') reveal();
-          else { window.addEventListener('load', reveal); setTimeout(reveal, 800); }
-        }
+        // The 3D scene deliberately does NOT slide in — it just appears, and any wait is
+        // covered by the orange-bubble loading screen defined above.
+        //
+        // Removed: this page used to hold the entire <html> element off-screen at
+        // translateX(±100%) with overflow hidden, then animate it in over 380ms via
+        // injected _sR/_sL keyframes, with the #top-bar nav iframe counter-animated in the
+        // opposite direction so it appeared to stay put. Animating the root element fought
+        // the WebGL canvas and the loader, and the effect is redundant now that the loader
+        // covers the load. The 2D pages still slide in — that animation is separate and
+        // lives in each 2D page's own script (each defines its own _sR/_sL keyframes), so
+        // nothing here is shared with them.
+        //
+        // `_sv` is still CONSUMED here even though it is no longer used: a 2D page sets it
+        // on its way out, and if the 3D page did not clear it the flag would linger in
+        // sessionStorage and fire a stray slide on whatever page was visited next.
+        sessionStorage.removeItem('_sv');
 
         window._nav = function(url, into) {
           if (into !== 'right') { location.href = url; return; }

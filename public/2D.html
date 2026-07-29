@@ -200,6 +200,33 @@
       transform: scale(1.1);
     }
 
+    /* ── Mobile only: hero fills the screen, blob + title centred ──────── */
+    @media (max-width: 640px) {
+      /* Grow the section so its bottom border lands at the fold instead of
+         partway up the screen. 91px = .page-wrapper's 90px padding-top + its
+         1px border-top — those sit above the hero, so a plain 100svh would
+         overshoot the fold by exactly that much.
+         svh, not vh: on iOS Safari 100vh is the chrome-HIDDEN height, which
+         would push the border below the fold. svh is the chrome-visible height
+         and is stable — dvh would also fit but resizes mid-scroll as Safari's
+         bars collapse, reflowing the hero while you scroll. */
+      .hero-section {
+        min-height: calc(100svh - 91px);
+      }
+
+      /* Centre the blob. The base rule deliberately parks it high (top 65px +
+         translateY(-210px)) so it sat behind an off-centre title in the short
+         section; at full height that reads as floating near the top. The blob
+         shape is centred inside its own iframe (`place-items: center`), so
+         centring the iframe centres the visible shape.
+         The subtitle and title need no override — they're flex children of a
+         `justify-content: center` column, so they re-centre themselves. */
+      .hero-blob {
+        top: 50%;
+        transform: translate(-50%, -50%);
+      }
+    }
+
 
     /* Craft Section */
     .craft-header {
@@ -619,6 +646,24 @@
        17/10 not 1.7 — Safari ignores the decimal aspect form. */
     @media (min-aspect-ratio: 17/10) {
       .page-wrapper { max-width: 1390px; }
+    }
+
+    /* ── Mobile only: readable type scale ──────────────────────────────────
+       At 390px these sat under the platform minimum (iOS body default is 17px;
+       Material's body-large is 16sp). 16px for VT323 UI labels — VT323 has a
+       small x-height and 1px strokes, so it reads ~2-3px smaller than a
+       proportional face at the same declared size. 15px for the hero tagline:
+       real content rather than a label, so above the 14px secondary floor.
+       .copyright stays 14px — genuinely incidental.
+       MUST stay last in the stylesheet: .tag and .btn-view-work already set
+       font-size in the earlier max-width blocks and these overrides have equal
+       specificity, so they win on source order alone. */
+    @media (max-width: 640px) {
+      /* VT323 UI labels */
+      .tag,
+      .btn-view-work { font-size: 16px; }
+      /* hero tagline ("Von Material zu Pixel." + the About link) */
+      .tagline-block { font-size: 15px; }
     }
   </style>
 </head>
