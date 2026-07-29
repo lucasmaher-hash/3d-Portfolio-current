@@ -238,29 +238,24 @@
     .mobile-menu {
       position: fixed; inset: 0; z-index: 200;
       display: flex; align-items: center; justify-content: center;
-      background: rgba(0,0,0,0.35);
+      background: rgba(0,0,0,0.55);
       opacity: 0; pointer-events: none; transition: opacity 250ms ease;
-      --m-shadow-d: rgba(120,120,140,0.95);
-      --m-shadow-l: rgba(255,255,255,0.85);
-      --m-btn-bg: rgba(220,220,227,0.45);
     }
     .mobile-menu.open { opacity: 1; pointer-events: auto; }
     .mobile-menu-panel {
       width: 75%;
-      background: rgba(220,220,227,0.18);
-      backdrop-filter: blur(24px) saturate(1.4);
-      -webkit-backdrop-filter: blur(24px) saturate(1.4);
+      background: var(--bg-surface);
       border-radius: 28px;
-      border: 1px solid rgba(255,255,255,0.55);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.6), inset 0 -1px 0 rgba(174,174,192,0.15);
+      /* No outer shadow/highlight — a neumorphic glow would read as a halo
+         against the darkened backdrop. Depth lives on the buttons inside. */
       padding: 20px; display: flex; flex-direction: column; gap: 24px;
       transform: translateY(10px); transition: transform 250ms ease;
     }
     .mobile-menu.open .mobile-menu-panel { transform: translateY(0); }
     .mobile-view-toggle {
       display: grid; grid-template-columns: 1fr 1fr; gap: 5px;
-      background: rgba(220,220,227,0.45); border-radius: 9999px;
-      box-shadow: 5px 5px 16px var(--m-shadow-d), -5px -5px 16px var(--m-shadow-l);
+      background: var(--bg-surface); border-radius: 9999px;
+      box-shadow: var(--shadow-raised-sm);
       padding: 5px;
     }
     .mobile-mode-btn {
@@ -271,16 +266,16 @@
       transition: box-shadow 150ms ease, color 150ms ease, transform 150ms ease;
     }
     .mobile-mode-btn.is-active {
-      background: var(--m-btn-bg); color: #000;
-      box-shadow: inset 5px 5px 14px var(--m-shadow-d), inset -5px -5px 14px var(--m-shadow-l);
+      background: var(--bg-surface); color: #000;
+      box-shadow: var(--shadow-pressed);
     }
     .mobile-mode-btn:active:not(.is-active) {
-      box-shadow: inset 5px 5px 14px var(--m-shadow-d), inset -5px -5px 14px var(--m-shadow-l);
+      box-shadow: var(--shadow-pressed);
       transform: scale(0.96);
     }
     .mobile-nav-btn {
-      display: block; background: var(--m-btn-bg); border-radius: 9999px;
-      box-shadow: 5px 5px 16px var(--m-shadow-d), -5px -5px 16px var(--m-shadow-l);
+      display: block; background: var(--bg-surface); border-radius: 9999px;
+      box-shadow: var(--shadow-raised-sm);
       padding: 16px 24px; font-family: 'VT323', monospace; font-size: 22px;
       color: #555; text-transform: uppercase; text-decoration: none;
       text-align: center; cursor: pointer;
@@ -288,12 +283,12 @@
       transition: box-shadow 150ms ease, transform 150ms ease;
     }
     .mobile-nav-btn.is-active {
-      box-shadow: inset 5px 5px 14px var(--m-shadow-d), inset -5px -5px 14px var(--m-shadow-l);
+      box-shadow: var(--shadow-pressed);
       color: #000;
     }
     .mobile-nav-btn:active {
       transform: scale(0.98);
-      box-shadow: inset 5px 5px 14px var(--m-shadow-d), inset -5px -5px 14px var(--m-shadow-l);
+      box-shadow: var(--shadow-pressed);
     }
 
     html { scrollbar-width: none; }
@@ -453,20 +448,9 @@
 
     (function () {
       const menu = document.getElementById('mobile-menu');
-      function setMenuTheme() {
-        const bg = getComputedStyle(document.body).backgroundColor;
-        const m = bg.match(/[\d.]+/g);
-        let lum = 1;
-        if (m && m.length >= 3) {
-          const a = m[3] !== undefined ? +m[3] : 1;
-          if (a > 0.4) lum = (0.299 * +m[0] + 0.587 * +m[1] + 0.114 * +m[2]) / 255;
-        }
-        const dark = lum < 0.4;
-        menu.style.setProperty('--m-shadow-d', dark ? 'rgba(0,0,20,0.95)' : 'rgba(120,120,140,0.95)');
-        menu.style.setProperty('--m-shadow-l', dark ? 'rgba(255,255,255,0.38)' : 'rgba(255,255,255,0.85)');
-        menu.style.setProperty('--m-btn-bg',   dark ? 'rgba(220,220,227,0.68)' : 'rgba(220,220,227,0.45)');
-      }
-      setMenuTheme();
+      /* The mobile menu is an opaque neumorphic panel using the site's own
+         surface colour and shadow tokens, so it no longer adapts its shading
+         to the page behind it (that was needed only for the old glass look). */
       function openMenu()  { menu.classList.add('open'); }
       function closeMenu() { menu.classList.remove('open'); }
       window.addEventListener('message', e => {

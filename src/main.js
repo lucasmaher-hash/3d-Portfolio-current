@@ -69,24 +69,37 @@ scene.add(new THREE.AmbientLight(0xffffff, 0.08))
 scene.add(new THREE.HemisphereLight(0xffffff, 0xb0b0b0, 0.18))
 const dirLight = new THREE.DirectionalLight(0xffffff, 0.12)
 dirLight.position.set(0, 10, 0)
-dirLight.castShadow = true
+// castShadow deliberately OFF. It used to be true, but harmlessly so: nothing in the
+// scene had receiveShadow set, so no shadow was ever drawn. Now that the fixture spots
+// do enable receiveShadow on the model, leaving this on would start casting — and a
+// DirectionalLight's default shadow camera is a small orthographic box (~±5 units)
+// around the origin, far too small for a scene this size, which would clip into a hard
+// visible edge partway across MainRoom. This is only a weak 0.12 fill light; it does
+// not need to cast at all.
+dirLight.castShadow = false
 scene.add(dirLight)
 
 // ── Ceiling-fixture lighting ─────────────────────────────────────
-// One PointLight per emissive ceiling fixture, matched BY MESH NAME and positioned at
-// that mesh's own world position. Name-matching (rather than hardcoded coordinates) is
-// deliberate and load-bearing: the model is recentred at load time via
-// model.position.sub(center), so its world coordinates shift whenever the Blender
-// scene's bounding box changes — and Blender is Z-up while glTF is Y-up, so any
-// coordinate copied out of Blender would also need a (x, z, -y) swap. Matching on the
-// name sidesteps all three failure modes.
+// One light per emissive ceiling fixture, positioned at that fixture's own location.
+// Positions are found by matching, never hardcoded — deliberate and load-bearing: the
+// model is recentred at load time via model.position.sub(center), so its world
+// coordinates shift whenever the Blender scene's bounding box changes, and Blender is
+// Z-up while glTF is Y-up, so any coordinate copied out of Blender would also need a
+// (x, z, -y) swap. Matching sidesteps both failure modes.
+//
+// A fixture is a PointLight by default (lights the whole room evenly, no shadow). Add a
+// `spot: {...}` block to make it a downward SpotLight instead — a directed cone with a
+// real cast shadow, for fixtures meant to read as a hard downlight rather than an
+// ambient panel. A SpotLight needs only ONE 2D shadow map, whereas a shadow-casting
+// PointLight needs 6 cube faces, which is why spots are the affordable way to get
+// shadows here.
 //
 // TUNING: `intensity` is in candela and falls off as 1/d² (decay = 2), so illuminance
 // on a floor ~5 units below a fixture is intensity/25. `distance` is a hard cutoff —
-// it is kept just large enough to reach that room's own far corners, which also stops
-// one room's light bleeding through the walls into its neighbours (these lights cast
-// no shadows, so `distance` is the only thing containing them; 5 shadow-casting
-// PointLights would mean 5 cube shadow maps per frame, which is far too expensive).
+// kept just large enough to reach that room's own far corners, which also stops one
+// room's light bleeding through the walls into its neighbours (nothing else contains
+// them, since walls only block light where a shadow map is involved).
+//
 // Matched on the EMISSIVE MATERIAL name, not the mesh name. Two reasons, both learned
 // the hard way:
 //   1. A Blender object with two materials (base + emissive fixture) exports as one
@@ -101,9 +114,21 @@ const FIXTURE_LIGHTS = [
   // MainRoom — cool white cassette ceiling, room radius ~10.6, fixture at z 5.2
   { test: (n, mats) => mats.includes('Ceiling_Light'),
     color: 0xf2f7ff, intensity: 70, distance: 15 },
-  // NewRoom / brown podium room — warm amber, room ~15.9 wide, fixture at z 5.25
+  // NewRoom / brown podium room — warm amber, room ~15.9 wide, fixture at z 5.25.
+  // The only SPOTLIGHT so far: this fixture is a single circular aperture in a dark
+  // recessed ceiling, so it should read as a hard downlight onto the podium.
+  //   angle    — cone half-angle in radians. Pool radius on the floor is
+  //              tan(angle) * throw, and the throw here is ~5.3 units: 0.5 rad gives a
+  //              ~2.9-unit-radius pool, comfortably wider than the ~1.7-unit podium.
+  //              Narrow this for a tighter, more theatrical beam.
+  //   penumbra — 0 = razor edge, 1 = fully soft. 0.55 keeps the pool readable without
+  //              looking like a hard-edged stencil.
+  //   fill     — optional extra PointLight at the same spot, so the walls keep some of
+  //              their warm gradient instead of dropping to near-black. This is what
+  //              keeps the effect from being too drastic; set to 0 for a pure spotlight.
   { test: (n, mats) => mats.includes('NewRoom_CeilingLight_Warm'),
-    color: 0xffc773, intensity: 55, distance: 13 },
+    color: 0xffc773, intensity: 70, distance: 13,
+    spot: { angle: 0.5, penumbra: 0.55, fill: 16 } },
   // YellowRoom — warm, TWO separate ceiling panels (YellowRoom_Ceiling + .001), each
   // ~16 x 7.7, so this intentionally matches twice and yields two lights. The grid bars
   // use material 'Grid', not 'Ceiling', so they are excluded by the material match alone.
@@ -123,8 +148,18 @@ const FIXTURE_LIGHTS = [
 // tinted glow. Small accent emissives (Lamp_* at 1.0, M_Purple at 0.18) are left alone.
 const EMISSIVE_CLAMP = 2.0
 
+// A mesh only casts a shadow if it is smaller than this in every dimension. Architecture
+// (walls, floors, ceilings, the 20-unit cassette array) is excluded on purpose: it would
+// cast the room's own shell into the shadow map for no visual gain, and a ceiling casting
+// onto the light directly beneath it is an active hazard. Props — the bottle, the podium,
+// the lamp — are what actually need contact shadows.
+const SHADOW_CASTER_MAX_SIZE = 6
+
 function addFixtureLights(model) {
   const seen = []
+  const _box = new THREE.Box3()
+  const _size = new THREE.Vector3()
+
   model.traverse(child => {
     if (!child.isMesh) return
 
@@ -133,6 +168,13 @@ function addFixtureLights(model) {
     for (const m of mats) {
       if (m && m.emissiveIntensity > EMISSIVE_CLAMP) m.emissiveIntensity = EMISSIVE_CLAMP
     }
+
+    // Shadow participation. Everything receives; only small props cast (see above).
+    // Without receiveShadow set somewhere, a shadow-casting light draws nothing at all.
+    const box = _box.setFromObject(child)
+    box.getSize(_size)
+    child.receiveShadow = true
+    child.castShadow = Math.max(_size.x, _size.y, _size.z) < SHADOW_CASTER_MAX_SIZE
 
     const matNames = mats.filter(Boolean).map(m => m.name)
     const spec = FIXTURE_LIGHTS.find(f => f.test(child.name, matNames))
@@ -143,17 +185,52 @@ function addFixtureLights(model) {
     // Blender origin left at the world origin while the geometry itself sits tens of
     // units away — NewRoom_Ceiling's origin is (0,0,0) but its geometry is at
     // (-19.5, -1.2, 5.25), so using the origin would drop NewRoom's light into MainRoom.
-    const pos = new THREE.Box3().setFromObject(child).getCenter(new THREE.Vector3())
-    // Nudge the light just below the fixture surface so it lights the room rather
-    // than being co-planar with (and partly occluded by) the ceiling geometry.
-    pos.y -= 0.15
+    const pos = box.getCenter(new THREE.Vector3())
+    // Drop the light just BELOW the fixture's underside, not below its centre. The
+    // fixture slab is ~0.5 units thick, so centre-minus-a-nudge is still *inside* the
+    // mesh — which is invisible for a shadowless PointLight but would make a spot's own
+    // fixture geometry occlude its entire beam.
+    pos.y = box.min.y - 0.05
 
-    const light = new THREE.PointLight(spec.color, spec.intensity, spec.distance, 2)
-    light.position.copy(pos)
+    let light
+    if (spec.spot) {
+      light = new THREE.SpotLight(
+        spec.color, spec.intensity, spec.distance, spec.spot.angle, spec.spot.penumbra, 2
+      )
+      light.position.copy(pos)
+      // A SpotLight aims at light.target, which defaults to the world origin and must be
+      // added to the scene separately — miss either and this cone points sideways across
+      // the whole building instead of straight down, with no error.
+      light.target.position.set(pos.x, pos.y - 10, pos.z)
+      scene.add(light.target)
+
+      if (renderer.shadowMap.enabled) {
+        light.castShadow = true
+        light.shadow.mapSize.set(1024, 1024)
+        light.shadow.camera.near = 0.5
+        light.shadow.camera.far  = spec.distance
+        // normalBias offsets along the surface normal and handles large flat receivers
+        // (this room's floor) far better than a flat depth bias, which needs to be big
+        // enough to cause peter-panning before it clears the acne.
+        light.shadow.normalBias = 0.02
+      }
+
+      // Optional co-located PointLight so walls outside the cone keep some light.
+      if (spec.spot.fill > 0) {
+        const fill = new THREE.PointLight(spec.color, spec.spot.fill, spec.distance, 2)
+        fill.position.copy(pos)
+        scene.add(fill)
+      }
+    } else {
+      light = new THREE.PointLight(spec.color, spec.intensity, spec.distance, 2)
+      light.position.copy(pos)
+    }
+
     scene.add(light)
-    seen.push(`${child.name} @ ${pos.x.toFixed(1)},${pos.y.toFixed(1)},${pos.z.toFixed(1)}`)
+    const kind = spec.spot ? `spot(${spec.spot.angle}rad${spec.spot.fill ? '+fill' : ''})` : 'point'
+    seen.push(`${child.name} ${kind} @ ${pos.x.toFixed(1)},${pos.y.toFixed(1)},${pos.z.toFixed(1)}`)
   })
-  console.log(`Fixture-Lichter: ${seen.length}`, seen)
+  console.log(`Fixture-Lichter: ${seen.length} — ${seen.join(' | ')}`)
   if (seen.length === 0) {
     console.warn('Keine Fixture-Lichter gefunden — Mesh-Namen im GLB haben sich geändert? ' +
                  'FIXTURE_LIGHTS in src/main.js prüfen.')

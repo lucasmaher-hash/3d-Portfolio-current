@@ -27,26 +27,19 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: rgba(0, 0, 0, 0.35);
+      background: rgba(0, 0, 0, 0.55);
       opacity: 0;
       pointer-events: none;
       transition: opacity 250ms ease;
-      --m-shadow-d: rgba(120,120,140,0.95);
-      --m-shadow-l: rgba(255,255,255,0.85);
-      --m-btn-bg: rgba(220,220,227,0.45);
     }
     .mobile-menu.open { opacity: 1; pointer-events: auto; }
 
     .mobile-menu-panel {
       width: 75%;
-      background: rgba(220, 220, 227, 0.18);
-      backdrop-filter: blur(24px) saturate(1.4);
-      -webkit-backdrop-filter: blur(24px) saturate(1.4);
+      background: var(--bg-surface);
       border-radius: 28px;
-      border: 1px solid rgba(255, 255, 255, 0.55);
-      box-shadow:
-        inset 0 1px 0 rgba(255,255,255,0.6),
-        inset 0 -1px 0 rgba(174,174,192,0.15);
+      /* No outer shadow/highlight — a neumorphic glow would read as a halo
+         against the darkened backdrop. Depth lives on the buttons inside. */
       padding: 20px;
       display: flex;
       flex-direction: column;
@@ -60,9 +53,9 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 5px;
-      background: rgba(220, 220, 227, 0.45);
+      background: var(--bg-surface);
       border-radius: 9999px;
-      box-shadow: 5px 5px 16px var(--m-shadow-d), -5px -5px 16px var(--m-shadow-l);
+      box-shadow: var(--shadow-raised-sm);
       padding: 5px;
     }
     .mobile-mode-btn {
@@ -79,19 +72,19 @@
       transition: box-shadow 150ms ease, color 150ms ease, transform 150ms ease;
     }
     .mobile-mode-btn.is-active {
-      background: var(--m-btn-bg);
+      background: var(--bg-surface);
       color: #000;
-      box-shadow: inset 5px 5px 14px var(--m-shadow-d), inset -5px -5px 14px var(--m-shadow-l);
+      box-shadow: var(--shadow-pressed);
     }
     .mobile-mode-btn:active:not(.is-active) {
-      box-shadow: inset 5px 5px 14px var(--m-shadow-d), inset -5px -5px 14px var(--m-shadow-l);
+      box-shadow: var(--shadow-pressed);
       transform: scale(0.96);
     }
     .mobile-nav-btn {
       display: block;
-      background: var(--m-btn-bg);
+      background: var(--bg-surface);
       border-radius: 9999px;
-      box-shadow: 5px 5px 16px var(--m-shadow-d), -5px -5px 16px var(--m-shadow-l);
+      box-shadow: var(--shadow-raised-sm);
       padding: 16px 24px;
       font-family: 'VT323', monospace;
       font-size: 22px;
@@ -103,8 +96,8 @@
       -webkit-tap-highlight-color: transparent;
       transition: box-shadow 150ms ease, transform 150ms ease;
     }
-    .mobile-nav-btn.is-active { box-shadow: inset 5px 5px 14px var(--m-shadow-d), inset -5px -5px 14px var(--m-shadow-l); color: #000; }
-    .mobile-nav-btn:active { transform: scale(0.98); box-shadow: inset 5px 5px 14px var(--m-shadow-d), inset -5px -5px 14px var(--m-shadow-l); }
+    .mobile-nav-btn.is-active { box-shadow: var(--shadow-pressed); color: #000; }
+    .mobile-nav-btn:active { transform: scale(0.98); box-shadow: var(--shadow-pressed); }
 
     /* Virtual joystick — touch devices only */
     #joystick-container {
@@ -219,8 +212,32 @@
   </style>
   </head>
   <body>
-    <!-- Loading screen (currently shows on every reload for testing;
-         to restrict to first visit only, gate on sessionStorage here later) -->
+    <!-- Intro gate — decides ONCE per tab whether the loading screen and the fullscreen
+         controls intro run at all. Both consult window._introGate below.
+
+         sessionStorage is the right store here precisely because it is neither permanent
+         nor per-request: it survives reloads within the same tab, and the browser wipes it
+         when that tab is closed. So the intro is skipped on every reload (including a hard
+         reload) and on returning from a 2D project page in the same tab, but plays again
+         on a genuinely fresh tab. localStorage would be wrong — it would show the intro
+         once ever and then never again.
+
+         Known edge cases, all deliberate: restoring a session (Cmd+Shift+T / "reopen
+         windows from last time") and duplicating a tab both carry sessionStorage across,
+         so the intro stays skipped there. -->
+    <script>
+      (function () {
+        var KEY = 'introSeen';
+        var seen = false;
+        // Private mode / disabled storage must not break the page — fall back to showing.
+        try { seen = sessionStorage.getItem(KEY) === '1'; } catch (e) {}
+        // Set immediately, not when the loader finishes, so a reload part-way through the
+        // load still counts as "seen" and does not restart the whole intro.
+        if (!seen) { try { sessionStorage.setItem(KEY, '1'); } catch (e) {} }
+        window._introGate = { show: !seen };
+      })();
+    </script>
+
     <div id="load-overlay">
       <div id="load-circle">
         <div id="load-liquid"></div>
@@ -230,6 +247,12 @@
     <script>
       (function () {
         var overlay = document.getElementById('load-overlay');
+
+        // Reload / same-tab return: drop the loader entirely and never define
+        // window._loader. src/main.js already calls it defensively
+        // (`if (window._loader) ...`), so leaving it undefined is the whole opt-out.
+        if (!window._introGate.show) { overlay.remove(); return; }
+
         var liquid  = document.getElementById('load-liquid');
         var count   = document.getElementById('load-count');
         var target = 0;      // real progress 0..1 (set from main.js)
@@ -277,11 +300,21 @@
 
     <iframe id="top-bar" src="/top_row_permanent_V3.html" allowtransparency="true"></iframe>
 
-    <!-- Fullscreen controls intro — shown once the loader finishes; click/key dismisses -->
-    <iframe id="intro-controls" src="/controls_fullscreen3d.html" allowtransparency="true"></iframe>
+    <!-- Fullscreen controls intro — shown once the loader finishes; click/key dismisses.
+         src is set from JS below rather than here so that a gated reload does not fetch
+         the page at all. It is still assigned early enough to preload during the loader's
+         3s minimum fill, so showing it is instant. -->
+    <iframe id="intro-controls" allowtransparency="true"></iframe>
     <script>
       (function () {
         var intro = document.getElementById('intro-controls');
+
+        // Reload / same-tab return: no intro at all. Leaving _showIntroControls undefined
+        // is harmless — the loader only calls it behind an `if`, and the loader itself is
+        // already gone in this branch.
+        if (!window._introGate.show) { intro.remove(); return; }
+
+        intro.src = '/controls_fullscreen3d.html';
         window._showIntroControls = function () {
           intro.classList.add('is-visible');
         };
@@ -368,22 +401,9 @@
       (function () {
         const menu = document.getElementById('mobile-menu');
 
-        function setMenuTheme() {
-          const bg = getComputedStyle(document.body).backgroundColor;
-          const m = bg.match(/[\d.]+/g);
-          let lum = 1;
-          if (m && m.length >= 3) {
-            const a = m[3] !== undefined ? +m[3] : 1;
-            if (a > 0.4) lum = (0.299 * +m[0] + 0.587 * +m[1] + 0.114 * +m[2]) / 255;
-          }
-          if (document.querySelector('canvas')) lum = 0.1;
-          const dark = lum < 0.4;
-          menu.style.setProperty('--m-shadow-d', dark ? 'rgba(0,0,20,0.95)'     : 'rgba(120,120,140,0.95)');
-          menu.style.setProperty('--m-shadow-l', dark ? 'rgba(255,255,255,0.38)' : 'rgba(255,255,255,0.85)');
-          menu.style.setProperty('--m-btn-bg',   dark ? 'rgba(220,220,227,0.68)' : 'rgba(220,220,227,0.45)');
-        }
-
-        setMenuTheme();
+        /* The mobile menu is an opaque neumorphic panel using the site's own
+           surface colour and shadow tokens, so it no longer adapts its shading
+           to the page behind it (that was needed only for the old glass look). */
 
         function openMenu()  { menu.classList.add('open'); }
         function closeMenu() { menu.classList.remove('open'); }

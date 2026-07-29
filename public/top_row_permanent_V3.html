@@ -395,6 +395,16 @@
       border: none;
       cursor: pointer;
       flex-shrink: 0;
+      /* A <button> does NOT inherit font-family — browsers force their own
+         system UA font on form controls. .logo can't supply it either (its font
+         properties were dropped when the logo text became an <img>), so the "?"
+         must set the pixel font itself or it renders in system sans. The
+         explicit colour also overrides iOS's default blue button text. */
+      font-family: 'VT323', monospace;
+      font-size: 18px;
+      line-height: 1;
+      color: var(--text-primary);
+      -webkit-tap-highlight-color: transparent;
     }
 
     @media (pointer: coarse) and (orientation: landscape) {
@@ -417,21 +427,10 @@
       }
     }
 
-    /* ── Mobile 3D: collapsible island ──────────────────────── */
-    @media (pointer: coarse) {
-      .top-row.is-collapsible {
-        justify-content: flex-start;
-      }
-      .nav-island.is-collapsible {
-        padding: 8px;
-        max-width: 60px;
-        overflow: hidden;
-        transition: max-width 380ms cubic-bezier(0.4, 0, 0.2, 1);
-      }
-      .nav-island.is-collapsible.is-open {
-        max-width: calc(100vw - 28px);
-      }
-    }
+    /* Mobile 3D used to collapse the island behind the LM button until tapped
+       (.is-collapsible / .is-open). Removed — the bar now stays fully open on
+       mobile 3D, same as everywhere else. Desktop never used this. */
+
     /* Wide-aspect monitors only: widen the nav bar 12px each side (1306→1330)
        — it grows a little while the content card comes in. 17/10 not 1.7
        (Safari ignores the decimal aspect form). */
@@ -493,10 +492,6 @@
       e.preventDefault();
       const parentPath = window.top.location.pathname;
       const is2DView = parentPath.includes('2D') || parentPath.includes('about2d') || parentPath.includes('contact2d') || parentPath.includes('vaccine2d') || parentPath.includes('mac-lamp2d') || parentPath.includes('kaffeemaschine2d') || parentPath.includes('virtual_cooking2d') || parentPath.includes('unify2d');
-      if (!is2DView && navigator.maxTouchPoints > 0) {
-        document.querySelector('.nav-island').classList.toggle('is-open');
-        return;
-      }
       if (is2DView) {
         if (window.top.location.pathname === '/2D.html') {
           window.top.scrollTo({ top: 0, behavior: 'smooth' });
@@ -520,12 +515,6 @@
       const isUnify2D = parentPath.includes('unify2d');
       const is2DView = is2D || isAbout2D || isContact2D || isVaccine2D || isMacLamp2D || isKaffeemaschine2D || isVirtualCooking2D || isUnify2D;
       const navIsland = document.querySelector('.nav-island');
-
-      // Mobile 3D: collapse island behind LM button by default
-      if (!is2DView && navigator.maxTouchPoints > 0) {
-        document.querySelector('.top-row').classList.add('is-collapsible');
-        navIsland.classList.add('is-collapsible');
-      }
 
       // 3D view: clip hover shadow bleed to the island's own rounded edge
       // (see .nav-island.is-3d-view rule above) — not needed in 2D.
