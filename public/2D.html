@@ -793,7 +793,7 @@
       en: ['Interface Designer...','Product Designer...','Detail Obsessed Designer...','3D & UI Hybrid...','Motion & Interface Designer...','Interaction Designer...'],
       de: ['Interface Designer...','Produktdesigner...','Detailbesessener Designer...','3D & UI Designer...','Motion & Interface Designer...','Interaktionsdesigner...'],
     };
-    let currentTitles = TITLES_BY_LANG[localStorage.getItem('lang') || 'en'];
+    let currentTitles = TITLES_BY_LANG[localStorage.getItem('lang') || 'de'];
     const typeEl = document.getElementById('typewriter');
     let titleIdx = 0, charIdx = 0, deleting = false, typeTimer = null;
 
@@ -997,7 +997,7 @@
       document.querySelectorAll('[data-i18n-html]').forEach(el => { if (t[el.dataset.i18nHtml] !== undefined) el.innerHTML = t[el.dataset.i18nHtml]; });
       restartTypewriter(lang);
     }
-    applyLang(localStorage.getItem('lang') || 'en');
+    applyLang(localStorage.getItem('lang') || 'de');
 
     window.addEventListener('message', function(e) {
       if (!e.data || !e.data.type) return;

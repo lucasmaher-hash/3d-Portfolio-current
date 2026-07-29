@@ -664,7 +664,7 @@
         });
       }
       // French was removed — coerce any old stored 'fr' preference back to English
-      let initLang = localStorage.getItem('lang') || 'en';
+      let initLang = localStorage.getItem('lang') || 'de';
       if (initLang === 'fr') { initLang = 'en'; localStorage.setItem('lang', 'en'); }
       applyNavLang(initLang);
       document.querySelectorAll('.lang-btn').forEach(btn => {
@@ -676,7 +676,7 @@
         });
       });
       setTimeout(() => {
-        try { window.parent.postMessage({ type: 'lang-change', lang: localStorage.getItem('lang') || 'en' }, '*'); } catch(e) {}
+        try { window.parent.postMessage({ type: 'lang-change', lang: localStorage.getItem('lang') || 'de' }, '*'); } catch(e) {}
       }, 100);
     })();
 

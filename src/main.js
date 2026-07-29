@@ -511,6 +511,14 @@ function closeControls() {
 
 controlsOverlay.addEventListener('click', e => { if (e.target === controlsOverlay) closeControls() })
 
+// First-ever visit only: greet with the instructions open. The flag is written
+// immediately and lives in localStorage (not sessionStorage) so a refresh — here
+// or on any other page — never re-triggers it.
+if (!localStorage.getItem('_seenIntro')) {
+  localStorage.setItem('_seenIntro', '1')
+  openControls()
+}
+
 // Listen for message from floating button iframe
 window.addEventListener('message', e => {
   if (e.data.type === 'openControls') {

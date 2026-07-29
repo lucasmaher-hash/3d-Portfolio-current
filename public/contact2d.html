@@ -520,7 +520,7 @@
       const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
       document.querySelectorAll('[data-i18n]').forEach(el => { if (t[el.dataset.i18n] !== undefined) el.textContent = t[el.dataset.i18n]; });
     }
-    applyLang(localStorage.getItem('lang') || 'en');
+    applyLang(localStorage.getItem('lang') || 'de');
 
     window.addEventListener('message', function(e) {
       if (!e.data || !e.data.type) return;

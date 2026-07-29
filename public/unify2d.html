@@ -1015,7 +1015,7 @@
         </div>
         <div class="color-box">
           <div class="color-swatch" style="background: #F9F2EB;">
-            <span class="color-swatch-code">F9F2EB</span>
+            <span class="color-swatch-code" style="color: #1A1A1A;">F9F2EB</span>
           </div>
         </div>
         <div class="color-box">
@@ -1404,7 +1404,7 @@
       document.querySelectorAll('[data-i18n]').forEach(el => { if (t[el.dataset.i18n] !== undefined) el.textContent = t[el.dataset.i18n]; });
       document.querySelectorAll('[data-i18n-html]').forEach(el => { if (t[el.dataset.i18nHtml] !== undefined) el.innerHTML = t[el.dataset.i18nHtml]; });
     }
-    applyLang(localStorage.getItem('lang') || 'en');
+    applyLang(localStorage.getItem('lang') || 'de');
 
     window.addEventListener('message', function(e) {
       if (!e.data || !e.data.type) return;
