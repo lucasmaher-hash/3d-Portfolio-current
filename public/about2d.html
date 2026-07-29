@@ -79,7 +79,7 @@
     }
 
     .page-wrapper {
-      padding-top: 90px;
+      padding-top: 12px;
       padding-bottom: 12px;
       border: 1px solid var(--border-color);
       margin: 12px auto;
@@ -87,6 +87,13 @@
          Only bites above ~1550px — 13"/14" MacBooks stay edge-to-edge. */
       max-width: 1440px;
       overflow: hidden;
+      /* Fill the frame vertically and centre the header + accordion in the
+         middle of it, matching contact2d.html's layout now that there's no
+         photo pushing the page taller than the viewport. */
+      min-height: calc(100vh - 24px);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
     }
 
     /* About Section */
@@ -94,7 +101,8 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 32px clamp(20px, 6vw, 80px) 96px;
+      /* symmetric vertical padding so the wrapper centres the content truly */
+      padding: 32px clamp(20px, 6vw, 80px);
     }
 
     .content {
@@ -453,8 +461,6 @@
           </div>
 
         </div>
-
-        <img src="/images/about/57FBA5B1-E3B8-45B1-BC19-9A45E0AA39C4.JPEG" class="anim anim-5" alt="Lucas Maher" style="width: 100%; aspect-ratio: 3/2; object-fit: cover; object-position: left center; display: block;" />
 
       </div>
     </div>

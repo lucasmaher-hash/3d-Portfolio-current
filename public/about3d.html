@@ -28,19 +28,20 @@
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { width: 100%; }
-    /* Content (accordion + photo) is legitimately taller than the fixed
-       #about-wrapper box it's embedded in via iframe in the 3D scene, so it
+    /* Accordion items can expand taller than the viewport, so the document
        needs to stay scrollable — just without showing the native scrollbar,
        matching the same hide-scrollbar convention used on the 2D pages. */
     html { scrollbar-width: none; }
     html::-webkit-scrollbar { display: none; }
-    body { background: var(--bg-base); font-family: 'VT323', monospace; padding: 32px; display: flex; justify-content: center; }
+    body { background: var(--bg-base); font-family: 'VT323', monospace; padding: 32px; display: flex; justify-content: center; min-height: 100%; }
 
     .container {
       width: min(100%, 804px);
       max-width: 100%;
+      min-height: calc(100vh - 64px);
       display: flex;
       flex-direction: column;
+      justify-content: center;
       padding: clamp(32px, 5vw, 64px) clamp(32px, 8vw, 80px);
       gap: 16px;
       border: 1px solid #6f6f6f;
@@ -72,7 +73,7 @@
       display: flex;
       flex-direction: column;
       gap: clamp(16px, 3vw, 40px);
-      margin-top: clamp(32px, 6vh, 60px);
+      margin-top: clamp(24px, 4vh, 40px);
     }
 
     .item {
@@ -165,14 +166,6 @@
       line-height: 1.7;
       color: var(--text-secondary);
     }
-
-    .photo {
-      width: 100%;
-      aspect-ratio: 3/2;
-      object-fit: cover;
-      object-position: left center;
-      display: block;
-    }
   </style>
 </head>
 <body>
@@ -225,8 +218,6 @@
       </div>
 
     </div>
-
-    <img src="/images/about/57FBA5B1-E3B8-45B1-BC19-9A45E0AA39C4.JPEG" class="photo" alt="Lucas Maher" />
 
   </div>
 
