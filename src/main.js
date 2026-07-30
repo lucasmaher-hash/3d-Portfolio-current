@@ -528,47 +528,85 @@ function addFixtureLights(model) {
     const grad = VERTEX_GRADIENTS.find(gr =>
       mats.some(m => m && m.name === gr.material) && _size.y > (gr.minHeight ?? 0))
     if (grad && !child.geometry.userData._gradApplied) {
-      const radial = grad.mode === 'radial'
-      // radial mode ramps by horizontal distance from the mesh's own centre (same
-      // model-local frame as the matrixWorld-transformed vertices below).
-      const cx = (box.min.x + box.max.x) / 2
-      const cz = (box.min.z + box.max.z) / 2
       const posAttr = child.geometry.attributes.position
       const v = new THREE.Vector3()
-      const ys = new Float32Array(posAttr.count)   // per-vertex key: height, or radius
-      let yMin = Infinity, yMax = -Infinity
-      for (let i = 0; i < posAttr.count; i++) {
-        v.fromBufferAttribute(posAttr, i).applyMatrix4(child.matrixWorld)
-        const k = radial ? Math.hypot(v.x - cx, v.z - cz) : v.y
-        ys[i] = k
-        if (k < yMin) yMin = k
-        if (k > yMax) yMax = k
+
+      if (grad.mode === 'radial') {
+        // Per-FRAGMENT radial pool via a generated texture + planar UVs — NOT vertex
+        // colours. This floor is triangulated as a fan from its rim: all its vertices
+        // sit at radius ~10 with ZERO interior vertices, so a per-vertex ramp has
+        // nowhere to store the bright centre (the first attempt logged radius keys of
+        // 10.0..10.0 — erratic rim factors, no pool). Planar UVs are exact here despite
+        // rim-only vertices: planar mapping is linear and per-triangle UV interpolation
+        // is linear, so the interior UVs land precisely where a dense mesh's would.
+        const iw = 1 / Math.max(box.max.x - box.min.x, 1e-6)
+        const id = 1 / Math.max(box.max.z - box.min.z, 1e-6)
+        const uv = new Float32Array(posAttr.count * 2)
+        for (let i = 0; i < posAttr.count; i++) {
+          v.fromBufferAttribute(posAttr, i).applyMatrix4(child.matrixWorld)
+          uv[i * 2] = (v.x - box.min.x) * iw
+          uv[i * 2 + 1] = (v.z - box.min.z) * id
+        }
+        child.geometry.setAttribute('uv', new THREE.BufferAttribute(uv, 2))
+
+        // A texture tops out at white (1.0), so the centre's >1 boost moves into
+        // material.color (multiplied by `centre`) and the texture itself carries only
+        // the centre->rim RATIO, sRGB-encoded to match its colorSpace. Net result:
+        // centre = authored colour x centre-factor, rim = authored x rim-factor.
+        const ratio = grad.rim / grad.centre
+        const cvs = document.createElement('canvas')
+        cvs.width = cvs.height = 256
+        const g2d = cvs.getContext('2d')
+        const rg = g2d.createRadialGradient(128, 128, 0, 128, 128, 128)
+        const rimByte = Math.round(255 * Math.pow(ratio, 1 / 2.2))
+        rg.addColorStop(0, '#ffffff')
+        rg.addColorStop(1, `rgb(${rimByte},${rimByte},${rimByte})`)
+        g2d.fillStyle = rg
+        g2d.fillRect(0, 0, 256, 256)
+        const tex = new THREE.CanvasTexture(cvs)
+        tex.colorSpace = THREE.SRGBColorSpace
+        for (const m of mats) {
+          if (!m) continue
+          m.map = tex
+          m.color.multiplyScalar(grad.centre)
+          // Recompiles this material's program (USE_MAP/USE_UV), but material.id is
+          // unchanged so the opaque sort order is stable — see the entry's comment on
+          // why that keeps the centre-tower flicker trap out of reach.
+          m.needsUpdate = true
+        }
+        child.geometry.userData._gradApplied = true
+        gradApplied.push(`${child.name} radial-tex ${grad.centre}->${grad.rim}`)
+      } else {
+        const ys = new Float32Array(posAttr.count)
+        let yMin = Infinity, yMax = -Infinity
+        for (let i = 0; i < posAttr.count; i++) {
+          v.fromBufferAttribute(posAttr, i).applyMatrix4(child.matrixWorld)
+          ys[i] = v.y
+          if (v.y < yMin) yMin = v.y
+          if (v.y > yMax) yMax = v.y
+        }
+        const span = Math.max(yMax - yMin, 1e-6)
+        // Keep the existing attribute's itemSize (4 = RGBA on these GLB meshes): the
+        // USE_COLOR_ALPHA shader define depends on it, and changing it would compile a
+        // new program — the exact thing this approach is built to avoid.
+        const old = child.geometry.attributes.color
+        const itemSize = old ? old.itemSize : 3
+        const out = new Float32Array(posAttr.count * itemSize)
+        for (let i = 0; i < posAttr.count; i++) {
+          const f = grad.bottom + (grad.top - grad.bottom) * ((ys[i] - yMin) / span)
+          out[i * itemSize] = f
+          out[i * itemSize + 1] = f
+          out[i * itemSize + 2] = f
+          if (itemSize === 4) out[i * itemSize + 3] = 1
+        }
+        child.geometry.setAttribute('color', new THREE.BufferAttribute(out, itemSize))
+        for (const m of mats) {
+          if (m && !m.vertexColors) { m.vertexColors = true; m.needsUpdate = true }
+        }
+        child.geometry.userData._gradApplied = true
+        gradApplied.push(`${child.name} vertical ${yMin.toFixed(1)}..${yMax.toFixed(1)} ` +
+                         `${grad.bottom}->${grad.top}`)
       }
-      const span = Math.max(yMax - yMin, 1e-6)
-      // vertical: bottom value at yMin -> top value at yMax.
-      // radial:   centre value at radius 0 -> rim value at max radius.
-      const fFrom = radial ? grad.centre : grad.bottom
-      const fTo   = radial ? grad.rim    : grad.top
-      // Keep the existing attribute's itemSize (4 = RGBA on these GLB meshes): the
-      // USE_COLOR_ALPHA shader define depends on it, and changing it would compile a
-      // new program — the exact thing this approach is built to avoid.
-      const old = child.geometry.attributes.color
-      const itemSize = old ? old.itemSize : 3
-      const out = new Float32Array(posAttr.count * itemSize)
-      for (let i = 0; i < posAttr.count; i++) {
-        const f = fFrom + (fTo - fFrom) * ((ys[i] - yMin) / span)
-        out[i * itemSize] = f
-        out[i * itemSize + 1] = f
-        out[i * itemSize + 2] = f
-        if (itemSize === 4) out[i * itemSize + 3] = 1
-      }
-      child.geometry.setAttribute('color', new THREE.BufferAttribute(out, itemSize))
-      for (const m of mats) {
-        if (m && !m.vertexColors) { m.vertexColors = true; m.needsUpdate = true }
-      }
-      child.geometry.userData._gradApplied = true
-      gradApplied.push(`${child.name} ${radial ? 'radial' : 'vertical'} ` +
-                       `${yMin.toFixed(1)}..${yMax.toFixed(1)} ${fFrom}->${fTo}`)
     }
 
     const matNames = mats.filter(Boolean).map(m => m.name)

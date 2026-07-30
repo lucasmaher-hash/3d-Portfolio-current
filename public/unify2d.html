@@ -1268,6 +1268,15 @@
       .character-figure { width: 150px; }
       .character-row.right  .character-figure { align-self: flex-end; }
       .character-row.indent .character-figure { align-self: center; }
+
+      /* 5. DESIGN PROCESS — the "Choosing the right colorpalette" heading carries
+         an inline `margin-top: 190px`, a fixed spacer that reads as deliberate air
+         under the section head in the 1440px layout. At 390px it is ~26% of the
+         whole section's height and lands as a dead hole between the dotted divider
+         and the heading, with nothing in it. Structural selector rather than the
+         data-i18n key: this is the only .process-title that directly follows a
+         divider. !important because the 190px is an inline style. */
+      .process-section .dot-divider + .process-title { margin-top: 40px !important; }
     }
   </style>
 </head>
