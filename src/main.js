@@ -1,7 +1,6 @@
 import './style.css'
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
-import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js'
 
 // Scene
 const scene = new THREE.Scene()
@@ -52,29 +51,31 @@ document.body.appendChild(renderer.domElement)
 // So: keep an environment (metals still need something to reflect) but make it genuinely
 // uniform — a single flat colour in every direction. Because the source is constant, the
 // usual roughness-blur concern is moot; every mip is the same colour.
+// Built with fromScene (a box seen from the inside), NOT fromEquirectangular on a small
+// DataTexture: PMREM sizes its output from the source, so a tiny 8x4 equirect produced a
+// degenerate 336x8 cubeUV with no usable mip chain, which contributed no light at all and
+// made environmentIntensity a no-op. fromScene is the same path RoomEnvironment used and
+// yields a full-resolution PMREM.
 function uniformEnvironment(hex) {
-  const c = new THREE.Color(hex)
-  const px = new Uint8Array(8 * 4 * 4)
-  for (let i = 0; i < 8 * 4; i++) {
-    px[i * 4 + 0] = Math.round(c.r * 255)
-    px[i * 4 + 1] = Math.round(c.g * 255)
-    px[i * 4 + 2] = Math.round(c.b * 255)
-    px[i * 4 + 3] = 255
-  }
-  const tex = new THREE.DataTexture(px, 8, 4)
-  tex.mapping = THREE.EquirectangularReflectionMapping
-  tex.colorSpace = THREE.SRGBColorSpace
-  tex.needsUpdate = true
+  const envScene = new THREE.Scene()
+  const shell = new THREE.Mesh(
+    new THREE.BoxGeometry(20, 20, 20),
+    new THREE.MeshBasicMaterial({ color: hex, side: THREE.BackSide })
+  )
+  envScene.add(shell)
   const pmrem = new THREE.PMREMGenerator(renderer)
-  const rt = pmrem.fromEquirectangular(tex)
+  const rt = pmrem.fromScene(envScene, 0.04)
   pmrem.dispose()
-  tex.dispose()
+  shell.geometry.dispose()
+  shell.material.dispose()
   return rt.texture
 }
 scene.environment = uniformEnvironment(0xffffff)
-// Tuned so the walls keep the brightness they had with RoomEnvironment (measured wall
-// mean luminance ~62.8/255) while being evenly lit. Raise if metals look dead.
-scene.environmentIntensity = 0.30
+// Calibrated, not guessed: with RoomEnvironment at 0.22 the reference wall measured a mean
+// luminance of 62.8/255. A flat white shell is dimmer than RoomEnvironment's emissive
+// panels per unit intensity, so this is NOT 0.22 — sweeping 0.14/0.18/0.30/0.60/0.90 gave
+// 57.3/63.5/80.4/113.7/137.8, and 0.175 interpolates to 62.8. Raise if metals look dead.
+scene.environmentIntensity = 0.175
 
 // Lights
 // The rooms are meant to read as lit by their emissive ceiling fixtures. That CANNOT
@@ -243,7 +244,10 @@ function addFixtureLights(model) {
     // fixture slab is ~0.5 units thick, so centre-minus-a-nudge is still *inside* the
     // mesh — which is invisible for a shadowless PointLight but would make a spot's own
     // fixture geometry occlude its entire beam.
-    pos.y = box.min.y - 0.05
+    // `+ model.position.y` for the same model-local -> world reason as above. Without it
+    // this assignment silently threw away the Y half of the offset and left every fixture
+    // 2.72 units too high — above its own ceiling, so the room below stayed dark.
+    pos.y = box.min.y + model.position.y - 0.05
 
     let light
     if (spec.spot) {
@@ -446,36 +450,6 @@ const COLLISION_DIST = 0.4
 // less deep (currently ~0.77 units below the floor).
 let playerHeight = -1.3601 * 0.8 * 0.8 * 0.9
 let floorY       = 0
-
-// TEMP DEBUG HOOK — for diagnosing the wall lighting. REMOVE BEFORE COMMIT.
-window._dbg = {
-  get THREE() { return THREE },
-  get scene() { return scene },
-  get camera() { return camera },
-  get renderer() { return renderer },
-  setView(x, y, z, yw, pt) {
-    camera.position.set(x, y, z)
-    yaw = yw; pitch = pt; clampPitch(); applyRotation()
-    floorY = y - playerHeight        // pin the per-frame height to this eye level
-  },
-  bbox(name) {
-    let hit = null
-    scene.traverse(o => { if (o.name === name) hit = o })
-    if (!hit) return null
-    const b = new THREE.Box3().setFromObject(hit)
-    return { min: b.min.toArray(), max: b.max.toArray(),
-             center: b.getCenter(new THREE.Vector3()).toArray() }
-  },
-  lights() {
-    const out = []
-    scene.traverse(o => {
-      if (o.isLight) out.push({ type: o.type, name: o.name,
-                                pos: o.position.toArray().map(v => +v.toFixed(2)),
-                                intensity: o.intensity, distance: o.distance ?? null })
-    })
-    return out
-  },
-}
 
 // R = höher, F = tiefer (live, kein Reload nötig)
 window.addEventListener('keydown', e => {
