@@ -386,13 +386,6 @@
       gap: clamp(16px, 2vw, 22px);
     }
 
-    .feature-kicker {
-      font-family: 'VT323', monospace;
-      font-size: 14px;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--accent-orange);
-    }
 
     .feature-title {
       font-family: 'OCR-A-BT', monospace;
@@ -946,7 +939,6 @@
       .meta-inset { font-size: 15px; }
       /* VT323 UI labels */
       .breadcrumb,
-      .feature-kicker,
       .project-nav-label,
       .project-nav-number,
       .color-swatch-code { font-size: 16px; }
@@ -1124,7 +1116,6 @@
           </video>
         </div>
         <div class="feature-copy">
-          <span class="feature-kicker" data-i18n="feat-home-kicker">01 — Home</span>
           <h2 class="feature-title" data-i18n="feat-home-title">Your Day at a Glance</h2>
           <p class="guide-text" data-i18n="feat-home-text">The home screen is your quick daily overview. At a glance it shows who you can meet up with right now or in your next break — which friends are free, and exactly when. Below that sit the day's social activities, and a map of how many friends are around you at this moment. Everything important lives on one scrollable page; when something catches your eye, the dedicated pages let you dig into the detail.</p>
         </div>
@@ -1151,12 +1142,10 @@
         </div>
         <div class="scrolly-copy">
           <div class="scrolly-panel is-active" data-step="timetable">
-            <span class="feature-kicker" data-i18n="feat-timetable-kicker">02 — Timetable</span>
             <h2 class="feature-title" data-i18n="feat-timetable-title">Your Timetable, and Everyone's</h2>
             <p class="guide-text" data-i18n="feat-timetable-text">See your own timetable alongside your friends', and who shares each course. Your schedule splits in two: pink for regular courses, beige for the social activities you add from the Socials page. Below it sit your friends' timetables — and thanks to location tracking, the app knows when you're on campus: the room you're in glows green and pushes you up the list, while a grey room means you're away.</p>
           </div>
           <div class="scrolly-panel" data-step="socials">
-            <span class="feature-kicker" data-i18n="feat-socials-kicker">03 — Socials</span>
             <h2 class="feature-title" data-i18n="feat-socials-title">Beyond the Group Chat</h2>
             <p class="guide-text" data-i18n="feat-socials-text">Every uni has that one group chat where events and social plans get buried under hundreds of messages. Socials replaces it — activities get posted here instead, so nothing slips through. Scroll through the week, and when something appeals to you, add it straight to your timetable in a tap.</p>
           </div>
@@ -1184,12 +1173,10 @@
         </div>
         <div class="scrolly-copy">
           <div class="scrolly-panel is-active" data-step="friends">
-            <span class="feature-kicker" data-i18n="feat-friends-kicker">04 — Friends</span>
             <h2 class="feature-title" data-i18n="feat-friends-title">Find Your Friends Indoors</h2>
             <p class="guide-text" data-i18n="feat-friends-text">Apps like Find My are great for locating friends — until everyone's inside the same building and the map turns useless. Unify syncs room-level location with the university's floor plans, so you can see exactly who's around you on the map, or search for someone specific from the menu.</p>
           </div>
           <div class="scrolly-panel" data-step="courses">
-            <span class="feature-kicker" data-i18n="feat-courses-kicker">05 — Navigation</span>
             <h2 class="feature-title" data-i18n="feat-courses-title">Find the Right Room</h2>
             <p class="guide-text" data-i18n="feat-courses-text">The same idea, now for your courses. Universities are huge — hundreds of rooms across sprawling buildings — and working out where each class is can be overwhelming, especially when you're new. Unify syncs with your timetable to plot every course room on the map; tap one to see the full details of that class.</p>
           </div>
@@ -1207,7 +1194,6 @@
           </video>
         </div>
         <div class="feature-copy">
-          <span class="feature-kicker" data-i18n="feat-settings-kicker">06 — Settings</span>
           <h2 class="feature-title" data-i18n="feat-settings-title">Profile &amp; Friends</h2>
           <p class="guide-text" data-i18n="feat-settings-text">The menu is where you set yourself up. Customise your profile, and connect your courses in one step — everything syncs automatically from your matriculation number. It's also home to your friends list, where you add or remove people whenever you need.</p>
         </div>
@@ -1358,17 +1344,17 @@
         'glance-core-label': 'Core idea', 'glance-core-value': 'Automatic timetable matching surfaces the overlaps that make meeting up easy.',
         'glance-nav-label': 'Navigation', 'glance-nav-value': 'Live friend locations plus interactive campus and building navigation.',
         'glance-status-label': 'Status', 'glance-status-value': '[ Placeholder — add specifics later ]',
-        'feat-home-kicker': '01 — Home', 'feat-home-title': 'Your Day at a Glance',
+        'feat-home-title': 'Your Day at a Glance',
         'feat-home-text': 'The home screen is your quick daily overview. At a glance it shows who you can meet up with right now or in your next break — which friends are free, and exactly when. Below that sit the day\'s social activities, and a map of how many friends are around you at this moment. Everything important lives on one scrollable page; when something catches your eye, the dedicated pages let you dig into the detail.',
-        'feat-timetable-kicker': '02 — Timetable', 'feat-timetable-title': 'Your Timetable, and Everyone\'s',
+        'feat-timetable-title': "Your Timetable, and Everyone's",
         'feat-timetable-text': 'See your own timetable alongside your friends\', and who shares each course. Your schedule splits in two: pink for regular courses, beige for the social activities you add from the Socials page. Below it sit your friends\' timetables — and thanks to location tracking, the app knows when you\'re on campus: the room you\'re in glows green and pushes you up the list, while a grey room means you\'re away.',
-        'feat-courses-kicker': '05 — Navigation', 'feat-courses-title': 'Find the Right Room',
+        'feat-courses-title': 'Find the Right Room',
         'feat-courses-text': 'The same idea, now for your courses. Universities are huge — hundreds of rooms across sprawling buildings — and working out where each class is can be overwhelming, especially when you\'re new. Unify syncs with your timetable to plot every course room on the map; tap one to see the full details of that class.',
-        'feat-friends-kicker': '04 — Friends', 'feat-friends-title': 'Find Your Friends Indoors',
+        'feat-friends-title': 'Find Your Friends Indoors',
         'feat-friends-text': 'Apps like Find My are great for locating friends — until everyone\'s inside the same building and the map turns useless. Unify syncs room-level location with the university\'s floor plans, so you can see exactly who\'s around you on the map, or search for someone specific from the menu.',
-        'feat-socials-kicker': '03 — Socials', 'feat-socials-title': 'Beyond the Group Chat',
+        'feat-socials-title': 'Beyond the Group Chat',
         'feat-socials-text': 'Every uni has that one group chat where events and social plans get buried under hundreds of messages. Socials replaces it — activities get posted here instead, so nothing slips through. Scroll through the week, and when something appeals to you, add it straight to your timetable in a tap.',
-        'feat-settings-kicker': '06 — Settings', 'feat-settings-title': 'Profile & Friends',
+        'feat-settings-title': 'Profile & Friends',
         'feat-settings-text': 'The menu is where you set yourself up. Customise your profile, and connect your courses in one step — everything syncs automatically from your matriculation number. It\'s also home to your friends list, where you add or remove people whenever you need.',
         'nav-next': 'NEXT >>',
         'nav-virtual-cooking': 'Virtual Cooking',
@@ -1399,17 +1385,17 @@
         'glance-core-label': 'Kernidee', 'glance-core-value': 'Der automatische Stundenplan-Abgleich zeigt die Überschneidungen, die das Treffen leicht machen.',
         'glance-nav-label': 'Navigation', 'glance-nav-value': 'Live-Standorte von Freunden plus interaktive Campus- und Gebäudenavigation.',
         'glance-status-label': 'Status', 'glance-status-value': '[ Platzhalter — Details folgen ]',
-        'feat-home-kicker': '01 — Start', 'feat-home-title': 'Dein Tag auf einen Blick',
+        'feat-home-title': 'Dein Tag auf einen Blick',
         'feat-home-text': 'Der Startbildschirm ist deine schnelle Tagesübersicht. Auf einen Blick zeigt er, mit wem du dich jetzt gerade oder in deiner nächsten Pause treffen kannst — welche Freunde frei sind und von wann bis wann. Darunter siehst du die sozialen Aktivitäten des Tages und auf der Karte, wie viele Freunde gerade in deiner Nähe sind. Alles Wichtige liegt auf einer scrollbaren Seite; wenn dich etwas interessiert, kannst du auf den anderen Seiten tiefer ins Detail gehen.',
-        'feat-timetable-kicker': '02 — Stundenplan', 'feat-timetable-title': 'Dein Stundenplan — und der deiner Freunde',
+        'feat-timetable-title': 'Dein Stundenplan, und alle anderen',
         'feat-timetable-text': 'Du siehst deinen Stundenplan neben dem deiner Freunde — und wer welchen Kurs mit dir teilt. Dein Plan ist zweigeteilt: Pink für reguläre Kurse, Beige für Aktivitäten von der Socials-Seite. Darunter stehen die Stundenpläne deiner Freunde — dank Standort-Tracking leuchtet dein aktueller Raum grün und rückt in der Liste nach oben, ein grauer Raum heisst, du bist weg.',
-        'feat-courses-kicker': '05 — Navigation', 'feat-courses-title': 'Den richtigen Raum finden',
+        'feat-courses-title': 'Den richtigen Raum finden',
         'feat-courses-text': 'Dasselbe Prinzip, jetzt für deine Kurse. Universitäten sind riesig — hunderte Räume in weitläufigen Gebäuden — und herauszufinden, wo jeder Kurs stattfindet, kann schnell überwältigend sein, gerade am Anfang. Unify synchronisiert sich mit deinem Stundenplan und zeigt jeden Kursraum auf der Karte; tippst du einen an, siehst du alle Details zum Kurs.',
-        'feat-friends-kicker': '04 — Freunde', 'feat-friends-title': 'Freunde finden — auch drinnen',
+        'feat-friends-title': 'Freunde drinnen finden',
         'feat-friends-text': 'Viele nutzen Apps wie „Wo ist“, um Freunde zu orten — nur drinnen, im selben Gebäude, wird die Karte nutzlos. Unify synchronisiert die Rauminformationen mit den Gebäudeplänen der Uni und zeigt sie auf der Karte. So siehst du genau, wer gerade um dich herum ist, oder suchst im Menü gezielt nach bestimmten Leuten.',
-        'feat-socials-kicker': '03 — Soziales', 'feat-socials-title': 'Mehr als der Gruppenchat',
+        'feat-socials-title': 'Mehr als der Gruppenchat',
         'feat-socials-text': 'Jede Uni hat den einen Gruppenchat, in dem Events zwischen hunderten Nachrichten untergehen. Socials ersetzt ihn — Aktivitäten landen stattdessen hier. Scroll durch die Woche und füge Gefallendes per Tipp direkt zu deinem Stundenplan hinzu.',
-        'feat-settings-kicker': '06 — Einstellungen', 'feat-settings-title': 'Profil & Freunde',
+        'feat-settings-title': 'Profil & Freunde',
         'feat-settings-text': 'Im Menü richtest du dich ein. Passe dein Profil an und verbinde deine Kurse in einem Schritt — alles synchronisiert sich automatisch über deine Matrikelnummer. Hier liegt auch deine Freundesliste, in der du jederzeit Leute hinzufügen oder entfernen kannst.',
         'nav-next': 'WEITER >>',
         'nav-virtual-cooking': 'Virtual Cooking',

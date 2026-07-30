@@ -251,7 +251,7 @@ Organized by project for clarity:
 - ✅ Scroll-driven dual-video scrollytelling; mobile fallback at ≤860px
 - ✅ NEW design-story sections (Design Process/colors, Typography, Character design, Final Product)
 - ✅ Meta tiles filled (Timeline/Team/Role/Skills)
-- ✅ All 6 feature copy filled (EN+DE); titles updated
+- ✅ All 6 feature copy filled (EN+DE). **The 6 `feat-*-title` keys were missing from `TRANSLATIONS` entirely until 2026-07-30** — they had `data-i18n` in the markup but no entry in either language block, so German visitors always saw the English heading. The translated orange kicker above them partly masked it; removing the kickers exposed it. Now present in both blocks (55 keys each, verified symmetric).
 - ✅ Design-story section copy (colors/typography/characters/Final Product heading) now wired into `TRANSLATIONS` with German (was English-only); also caught and fixed 3 pre-existing German blocks (`overview-text`, `feat-timetable-text`, `feat-socials-text`) that were translated but overflowed their English line count by 1–3 lines undetected until this pass
 
 **Virtual Cooking (02):**
@@ -421,6 +421,36 @@ Previous session's work (French removal, Unify design-story sections, hero blob,
     - **PinkRoom has no emissive ceiling fixture at all**, so it gets no fixture light and reads darker than the others. Needs an emissive ceiling material in Blender plus a `FIXTURE_LIGHTS` entry if that's unwanted.
     - **Intro gate** — loading screen + controls intro now run once per tab via `sessionStorage.introSeen`. See the "Intro gate" bullet under item 43.
     - **3D-page horizontal slide-in REMOVED** (`index.html`). Arriving at the 3D page used to hold the entire `<html>` element off-screen at `translateX(±100%)` with `overflow: hidden`, then animate it in over 380ms via injected `_sR`/`_sL` keyframes, with `#top-bar` counter-animated in the opposite direction so the nav appeared stationary. All of it deleted along with its now-unused `KF`/`DUR`/`EASE`/`OPP` locals — the scene just appears, and the orange-bubble loader covers any wait. **`sessionStorage.removeItem('_sv')` is still called on load and must stay:** a 2D page sets `_sv` on its way out, and without the 3D page consuming it the flag would linger and fire a stray slide on whatever page was visited next. **The 2D pages still slide in** — that is a separate implementation living in each 2D page's own script (each animates a wrapper element, guards on `prefers-reduced-motion`, and defines its own `_sR`/`_sL` keyframes), so nothing was shared with the 3D page and nothing there was touched. Verified over CDP: 14 samples across the load window show zero transform/animation on `<html>` or `#top-bar`.
+
+## Project-page section sub-headings (`.feature-title`)
+
+Sub-headings inside a project section, above a per-item image/video. **OCR-A-BT only — there is no orange kicker.** Unify originally had a `.feature-kicker` (small orange VT323 label like `03 — SOZIALES`) above each title; that pattern was extended to Virtual Cooking and Mac-Lamp and then **removed everywhere on 2026-07-30 per Lucas — the orange label didn't work for him. Do not reintroduce it.** Zero `feature-kicker` references remain site-wide.
+
+```css
+.feature-title {
+  font-family: 'OCR-A-BT', monospace;
+  font-size: clamp(20px, 2.6vw, 26px);   /* NOT Unify's clamp(22px, 3vw, 34px) */
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+```
+
+**Size matters:** on Virtual Cooking / Mac-Lamp these are sub-items inside a section that already has a `.section-title` at `clamp(28px, 4vw, 44px)`, so they use the smaller ramp (matching `.result-subhead`) to stay below it. Unify's are top-level per-feature headings and keep the larger ramp.
+
+**Where they are, and where they deliberately are NOT.** Only content that is genuinely *one discrete named item per visual* gets a heading:
+- **Unify** — 6 feature panels (`feat-home/timetable/socials/friends/courses/settings-title`)
+- **Virtual Cooking** — the 3 `.stagger-row` panel blocks in "Design process" (`panel-manual/ingredients/timer-title`)
+- **Mac-Lamp** — the 4 Process stages (`process-cad/print/cut/sand-title`)
+- **Cybercoffee** — none, by explicit decision
+- **Double Packaging** — not done yet
+- **Skipped on every page:** At a Glance, meta grids, `.section-title`s (they already carry the shared OCR-A-BT + dotted-divider rhythm), multi-paragraph prose sections (kickers/headings fragment a single continuous argument), and "Final result" demo blocks.
+
+**Two retrofit gotchas, both hit in practice:**
+1. `.stagger-copy` (Virtual Cooking) and `.lamp-scrolly-panel` (Mac-Lamp) were `<p>` elements — they cannot hold a heading. Each needed a container. For **`.lamp-scrolly-panel` the class and its `data-step` must stay on the container**: the scrolly JS toggles `.is-active` by matching `p.dataset.step`, and the CSS positions/fades that element. The body copy moves to an inner `<p class="guide-text">`.
+2. Moving a `max-width` off the old paragraph onto the new wrapper means **every responsive override of that width must move too** — Virtual Cooking's `@media (min-width:1600px) and (min-aspect-ratio:17/10)` had to split into separate `.stagger-body` and `.stagger-copy` rules, or the text column silently loses its constraint on wide monitors.
+
+**`data-i18n` is applied with `textContent`, not `innerHTML`** — so a translation value must contain a real `&`, never `&amp;`, or the entity renders literally as "Profil &amp; Freunde". Use `data-i18n-html` if a value genuinely needs markup.
 
 ## 3D Mode: Lighting
 

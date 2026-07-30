@@ -327,6 +327,31 @@
       })();
     </script>
 
+    <script>
+      /* ── Shrink overlay frames to their content (touch only) ───────────────
+         The overlay wrappers are a fixed 85vh on touch devices, which left a lot
+         of empty panel below short content. The embedded page measures itself and
+         posts its height (see the reporter at the bottom of about3d.html); we
+         apply it here, because an <iframe> can't size itself to its content.
+
+         Touch-only on purpose: desktop keeps its 66.66vw x 66.66vh box, so the
+         `pointer: coarse` guard is what keeps this change off the desktop view.
+         Clamped to 85vh — the old fixed height becomes the ceiling, so a tall
+         state (an open accordion item) can never exceed the screen and just
+         scrolls inside the frame exactly as it does today. */
+      (function () {
+        var MAX_VH = 0.85;
+        window.addEventListener('message', function (e) {
+          var d = e.data;
+          if (!d || d.type !== 'overlay-autoheight' || !d.height) return;
+          if (!window.matchMedia('(pointer: coarse)').matches) return;
+          var wrap = document.getElementById(d.frame + '-wrapper');
+          if (!wrap) return;
+          wrap.style.height = Math.min(d.height, Math.round(window.innerHeight * MAX_VH)) + 'px';
+        });
+      })();
+    </script>
+
     <!-- Virtual joystick (touch only) -->
     <div id="joystick-container">
       <div id="joystick-base">
@@ -463,27 +488,33 @@
     </script>
     <iframe id="floating-button" src="/Questionmark_Button3d.html" allowtransparency="true"></iframe>
 
+    <!-- About / Contact / Craft / Controls have no .overlay-topbar: the ← / ✕ bar
+         was mobile-only chrome (it renders only under `pointer: coarse`) and it
+         sat semi-transparent over the panel. These four dismiss by tapping the
+         backdrop instead — see the `if (e.target === overlay) close…()` handlers
+         in src/main.js. Kaffeemaschine below deliberately keeps its bar, since
+         its iframe is an interactive app that fills the frame edge to edge and
+         leaves no backdrop worth tapping.
+         The close/back wiring in main.js uses optional chaining (`?.`), so the
+         now-absent button IDs are a no-op rather than an error, and restoring a
+         bar here would re-activate it with no JS change. -->
     <div id="about-overlay">
       <div id="about-wrapper">
-        <div class="overlay-topbar"><button class="overlay-back" id="about-back-btn">←</button><button class="overlay-close" id="about-close-btn">✕</button></div>
         <iframe id="about-frame" data-src="/about3d.html" loading="lazy"></iframe>
       </div>
     </div>
     <div id="contact-overlay">
       <div id="contact-wrapper">
-        <div class="overlay-topbar"><button class="overlay-back" id="contact-back-btn">←</button><button class="overlay-close" id="contact-close-btn">✕</button></div>
         <iframe id="contact-frame" data-src="/contact3d.html" loading="lazy"></iframe>
       </div>
     </div>
     <div id="craft-overlay">
       <div id="craft-wrapper">
-        <div class="overlay-topbar"><button class="overlay-back" id="craft-back-btn">←</button><button class="overlay-close" id="craft-close-btn">✕</button></div>
         <iframe id="craft-frame" data-src="/craft3d.html" loading="lazy"></iframe>
       </div>
     </div>
     <div id="controls-overlay">
       <div id="controls-wrapper">
-        <div class="overlay-topbar"><button class="overlay-back" id="controls-back-btn">←</button><button class="overlay-close" id="controls-close-btn">✕</button></div>
         <iframe id="controls-frame" data-src="/controls_open3d.html" loading="lazy"></iframe>
       </div>
     </div>

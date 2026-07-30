@@ -645,15 +645,6 @@
       display: block;
     }
 
-    /* Small orange label + OCR-A-BT heading above a process step — ported from
-       unify2d.html so the kicker → title → text rhythm matches across project pages. */
-    .feature-kicker {
-      font-family: 'VT323', monospace;
-      font-size: 14px;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--accent-orange);
-    }
 
     /* Sized to sit clearly BELOW .section-title (clamp(28px, 4vw, 44px)) — these are
        sub-items inside a section that already carries its own big heading, so this
@@ -666,13 +657,6 @@
       color: var(--text-primary);
     }
 
-    /* Pairs the kicker tight to its title, independent of the looser gap the parent
-       .process-shot / .lamp-scrolly-panel uses between head, media and body text. */
-    .feature-head {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
 
     /* Process stills — constrained + staggered, caption above image */
     .process-shot {
@@ -725,15 +709,30 @@
 
     .lamp-scrolly-vid { cursor: pointer; border-radius: 16px; overflow: hidden; box-shadow: var(--shadow-pressed); }
 
+    /* Video size is driven by HEIGHT (width: auto), but .lamp-scrolly-copy beside it is
+       sized by WIDTH (38%). Those two don't talk to each other, and because
+       .lamp-scrolly-media is position:absolute it is out of flex flow, so nothing stops
+       them colliding: as the window narrowed, the media's share of the row grew
+       (57.8% at 1920px → 88.9% at 1000px) and slid under the text. Measured overlap was
+       3px at 1920px but 50px at 1440px and 124px at 1000px.
+       Fix: take the smallest of three caps.
+         75.3vh  — the original height-driven size, keeps tall windows feeling generous
+         42vw    — shrinks the media as the window NARROWS (this is what fixes 1000-1440px)
+         720px   — a hard ceiling, and it must be ABSOLUTE, not vw. .page-wrapper is
+                   max-width: 1440px, so past that viewport width the row stops growing
+                   at ~1280px while any vw term keeps growing — which is exactly why a
+                   vw-only cap still left 27px of overlap at 1920px and 32px at 2560px.
+       The old clamp()'s 538px FLOOR is deliberately gone: a floor is precisely what
+       prevented the media from shrinking at the narrow widths that needed it most. */
     .lamp-scrolly-vid video {
       display: block;
       width: auto;
-      height: calc(clamp(538px, 75.3vh, 817px) * 0.6);
+      height: calc(min(75.3vh, 42vw, 720px) * 0.6);
       transition: height 480ms cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .lamp-scrolly-vid.is-active video {
-      height: clamp(538px, 75.3vh, 817px);
+      height: min(75.3vh, 42vw, 720px);
     }
 
     .lamp-scrolly-copy {
@@ -742,7 +741,7 @@
          the sticky row's only flex child — cap its width to roughly the
          left two-thirds so text never runs under the video pair. */
       flex: 0 1 auto;
-      width: 38%;
+      width: calc(38% - 30px);   /* 30px narrower so the copy clears the video pair */
       min-width: 0;
       align-self: center;
       min-height: 140px;
@@ -904,10 +903,7 @@
       <div class="dot-divider" style="margin-bottom: clamp(20px, 3vw, 28px);"></div>
 
       <div class="process-shot shift-right">
-        <div class="feature-head">
-          <span class="feature-kicker" data-i18n="process-cad-kicker">01 — CAD</span>
-          <h3 class="feature-title" data-i18n="process-cad-title">Modeled Around Real Hardware</h3>
-        </div>
+        <h3 class="feature-title" data-i18n="process-cad-title">Modeled Around Real Hardware</h3>
         <div class="guide-media">
           <img src="/images/mac-lamp/1.png" alt="CAD render of the housing" />
         </div>
@@ -915,10 +911,7 @@
       </div>
 
       <div class="process-shot shift-left" style="margin-top: clamp(72px, 11vw, 96px); margin-bottom: clamp(72px, 11vw, 96px);">
-        <div class="feature-head">
-          <span class="feature-kicker" data-i18n="process-print-kicker">02 — 3D Printing</span>
-          <h3 class="feature-title" data-i18n="process-print-title">Printed to Glow</h3>
-        </div>
+        <h3 class="feature-title" data-i18n="process-print-title">Printed to Glow</h3>
         <div class="guide-media">
           <video src="/videos/mac-lamp/2.MOV" autoplay loop muted playsinline></video>
         </div>
@@ -943,17 +936,11 @@
           </div>
           <div class="lamp-scrolly-copy">
             <div class="lamp-scrolly-panel is-active" data-step="cut">
-              <div class="feature-head">
-                <span class="feature-kicker" data-i18n="process-cut-kicker">03 — Cutting</span>
-                <h3 class="feature-title" data-i18n="process-cut-title">Cut From the Original Shell</h3>
-              </div>
+              <h3 class="feature-title" data-i18n="process-cut-title">Cut From the Original Shell</h3>
               <p class="guide-text" data-i18n="process-cut">The salvaged MacBook's own aluminium shell was cut down on a bandsaw — reusing the real hardware rather than just referencing its look was the whole point.</p>
             </div>
             <div class="lamp-scrolly-panel" data-step="sand">
-              <div class="feature-head">
-                <span class="feature-kicker" data-i18n="process-sand-kicker">04 — Sanding</span>
-                <h3 class="feature-title" data-i18n="process-sand-title">Sanded Flush by Hand</h3>
-              </div>
+              <h3 class="feature-title" data-i18n="process-sand-title">Sanded Flush by Hand</h3>
               <p class="guide-text" data-i18n="process-sand">Every cut edge was sanded smooth by hand, so the reused aluminium sits flush against the printed housing instead of looking bolted on.</p>
             </div>
           </div>
@@ -1120,16 +1107,12 @@
         'section-result': 'Final result',
         'result-text': 'The finished lamp does what I set out to do: the trackpad clicks on and off like a real button, and once it\'s lit, the trackpad and the Apple logo glow through the orange housing the same way the display and logo used to on the machine it came from. It\'s less a tribute to one specific MacBook than to a whole era of translucent, colorful Apple hardware I grew up loving.',
         'section-process': 'Process',
-        'process-cut-kicker': '03 — Cutting',
         'process-cut-title': 'Cut From the Original Shell',
         'process-cut': 'The salvaged MacBook\'s own aluminium shell was cut down on a bandsaw — reusing the real hardware rather than just referencing its look was the whole point.',
-        'process-sand-kicker': '04 — Sanding',
         'process-sand-title': 'Sanded Flush by Hand',
         'process-sand': 'Every cut edge was sanded smooth by hand, so the reused aluminium sits flush against the printed housing instead of looking bolted on.',
-        'process-cad-kicker': '01 — CAD',
         'process-cad-title': 'Modeled Around Real Hardware',
         'process-cad': 'Every part was modeled in Blender around the exact dimensions of a salvaged, broken MacBook — including cutouts over the trackpad and the Apple logo, the two areas designed to glow once the lamp was built.',
-        'process-print-kicker': '02 — 3D Printing',
         'process-print-title': 'Printed to Glow',
         'process-print': '3D printing was something I\'d wanted to try for a while, so the whole housing was printed rather than machined — in a transparent orange filament chosen specifically to let light pass through it as cleanly as possible.',
         'section-gallery': 'Gallery', 'gallery-meta': '3 Videos · 6 Photos',
@@ -1148,16 +1131,12 @@
         'section-result': 'Endergebnis',
         'result-text': 'Die fertige Lampe schafft genau das, was ich wollte: Das Trackpad klickt wie ein echter Taster ein und aus, und sobald sie leuchtet, scheinen Trackpad und Apple-Logo durch das orange Gehäuse, genau wie einst Display und Logo auf dem Gerät, aus dem sie stammen. Es ist weniger eine Hommage an ein bestimmtes MacBook als an eine ganze Ära bunter, durchscheinender Apple-Hardware, mit der ich aufgewachsen bin.',
         'section-process': 'Prozess',
-        'process-cut-kicker': '03 — Zuschnitt',
         'process-cut-title': 'Aus der Originalhülle',
         'process-cut': 'Die eigentliche Aluminiumhülle des geretteten MacBooks wurde mit einer Bandsäge zugeschnitten — die echte Hardware wiederzuverwenden statt nur ihren Look zu zitieren, war der ganze Punkt.',
-        'process-sand-kicker': '04 — Schliff',
         'process-sand-title': 'Von Hand bündig geschliffen',
         'process-sand': 'Jede Schnittkante wurde von Hand glatt geschliffen, damit das wiederverwendete Aluminium bündig am gedruckten Gehäuse sitzt statt angeschraubt zu wirken.',
-        'process-cad-kicker': '01 — CAD',
         'process-cad-title': 'Gebaut um echte Hardware',
         'process-cad': 'Jedes Teil wurde in Blender exakt nach den Maßen eines geretteten, kaputten MacBooks modelliert — inklusive Aussparungen über Trackpad und Apple-Logo, den beiden Stellen, die später leuchten sollten.',
-        'process-print-kicker': '02 — 3D-Druck',
         'process-print-title': 'Gedruckt, um zu leuchten',
         'process-print': '3D-Druck wollte ich schon lange ausprobieren, also wurde das ganze Gehäuse gedruckt statt gefräst — in einem transparenten orangen Filament, gewählt, damit Licht möglichst sauber hindurchscheint.',
         'section-gallery': 'Galerie', 'gallery-meta': '3 Videos · 6 Fotos',

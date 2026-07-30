@@ -119,6 +119,34 @@
       color: #f0f0f2;
       pointer-events: none;
     }
+
+    /* ── Mobile ────────────────────────────────────────────────────────────
+       This page had no @media block at all, so phones got the full desktop
+       chrome: the 32px body padding band, the .container 1px border, and a
+       header sitting 65px down instead of the 28px used by the other overlays.
+
+       min-height PINS the frame instead of letting it hug the content. This page
+       is only a header plus one hint line (~150px), so hugging would make its
+       overlay visibly smaller than About's and Contact's. 340px matches Über
+       mich's measured height so the panels read as one consistent size — this is
+       the one number to edit if that reference height ever changes. */
+    @media (max-width: 700px) {
+      html, body {
+        height: auto;
+        min-height: 0;
+        overflow: visible;
+      }
+
+      body { padding: 0; }
+
+      .container {
+        width: 100%;
+        height: auto;
+        min-height: 340px;
+        border: none;
+        padding: 28px 20px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -144,6 +172,29 @@
       }
       apply(localStorage.getItem('lang') || 'de');
       window.addEventListener('storage', function (e) { if (e.key === 'lang') apply(e.newValue || 'de'); });
+    })();
+  </script>
+
+  <script>
+    /* ── Report content height to the 3D-view parent ───────────────────────
+       Same reporter as about3d / contact3d; the listener in index.html keys off
+       `frame` to pick the wrapper, so no parent change is needed. Here the
+       measured height is the 340px min-height floor rather than the real content
+       height, which is exactly the intent — the frame stays the same size as the
+       other overlays. */
+    (function () {
+      var el = document.querySelector('.container');
+      if (!el || window.parent === window) return;
+      var last = -1;
+      function report() {
+        var h = Math.ceil(el.getBoundingClientRect().height);
+        if (h === 0 || h === last) return;
+        last = h;
+        window.parent.postMessage({ type: 'overlay-autoheight', frame: 'craft', height: h }, '*');
+      }
+      if (window.ResizeObserver) new ResizeObserver(report).observe(el);
+      window.addEventListener('load', report);
+      report();
     })();
   </script>
 </body>

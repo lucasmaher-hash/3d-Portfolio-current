@@ -119,6 +119,51 @@
       color: #f0f0f2;
       pointer-events: none;
     }
+
+    /* ── Mobile ────────────────────────────────────────────────────────────
+       This page had no @media block at all, so phones inherited the desktop
+       chrome: the 32px body padding band and the .container 1px border. With
+       .overlay-topbar now removed from index.html there's also no bar to clear,
+       so the panel fills the overlay window as one seamless opaque surface —
+       same treatment as controls_open3d.html and about3d.html. */
+    @media (max-width: 700px) {
+      /* Hug the content vertically so the parent can shrink #contact-wrapper to
+         fit (see the reporter script at the bottom of this file). The base rules
+         pin html/body/.container to height:100%, which would keep the document a
+         full viewport tall and defeat the measurement. */
+      html, body {
+        height: auto;
+        min-height: 0;
+        overflow: visible;
+      }
+
+      body { padding: 0; }
+
+      .container {
+        width: 100%;
+        height: auto;
+        border: none;
+        padding: 28px 20px;
+      }
+
+      /* Desktop has `flex: 1` + `justify-content: center` so the three links
+         spread over a wide, short box. In the tall, narrow mobile overlay that
+         same rule stretched the list to full height and centred the links,
+         leaving ~500px blank above them. Size to content and sit under the
+         header instead — with the frame now hugging the content, the panel as a
+         whole is what ends up centred on screen. */
+      .contact-list {
+        flex: 0 0 auto;
+        justify-content: flex-start;
+      }
+
+      /* Row labels: clamp(16px, 2vw, 20px) resolves to its 16px floor at this
+         width (2vw of 332px ≈ 6.6px), so they read noticeably smaller than the
+         mobile menu's buttons. 22px matches .mobile-nav-btn in index.html
+         exactly — these are the same kind of control, so they should be the
+         same size. */
+      .contact-label { font-size: 22px; }
+    }
   </style>
 </head>
 <body>
@@ -167,6 +212,33 @@
       }
       apply(localStorage.getItem('lang') || 'de');
       window.addEventListener('storage', function (e) { if (e.key === 'lang') apply(e.newValue || 'de'); });
+    })();
+  </script>
+
+  <script>
+    /* ── Report content height to the 3D-view parent ───────────────────────
+       Identical to the reporter in about3d.html; the parent listener in
+       index.html keys off `frame` to pick the wrapper, so this needs no parent
+       change. An <iframe> has no content-based intrinsic height, so the parent
+       cannot shrink #contact-wrapper to fit unless it's told.
+
+       A ResizeObserver on .container catches first paint, the webfont swap and
+       the language switch (DE labels wrap differently) in one place. Nothing
+       here expands like About's accordion, but the observer costs nothing and
+       keeps the two pages identical. */
+    (function () {
+      var el = document.querySelector('.container');
+      if (!el || window.parent === window) return;
+      var last = -1;
+      function report() {
+        var h = Math.ceil(el.getBoundingClientRect().height);
+        if (h === 0 || h === last) return;   // 0 = not laid out yet; RO also fires on width-only changes
+        last = h;
+        window.parent.postMessage({ type: 'overlay-autoheight', frame: 'contact', height: h }, '*');
+      }
+      if (window.ResizeObserver) new ResizeObserver(report).observe(el);
+      window.addEventListener('load', report);
+      report();
     })();
   </script>
 </body>

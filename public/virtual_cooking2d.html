@@ -554,15 +554,6 @@
       max-width: 440px;
     }
 
-    /* Small orange label above a heading — ported from unify2d.html so the
-       kicker → OCR-A-BT title → text rhythm matches across project pages. */
-    .feature-kicker {
-      font-family: 'VT323', monospace;
-      font-size: 14px;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--accent-orange);
-    }
 
     /* Deliberately sized to match .result-subhead, NOT Unify's .feature-title
        (clamp(22px, 3vw, 34px)). These are sub-items inside a section that already has a
@@ -772,7 +763,6 @@
             <img src="/images/vr-cookbook/Panel_Left.png" alt="Recipe panel render" />
           </div>
           <div class="stagger-body">
-            <span class="feature-kicker" data-i18n="panel-manual-kicker">01 — Manual</span>
             <h3 class="feature-title" data-i18n="panel-manual-title">Every Step in View</h3>
             <p class="stagger-copy" data-i18n="panel-manual-text">The left panel is the instruction manual. A progress bar tracks which step of the recipe you're on, with the current step itself shown right beside it — always in view, never more than a glance away.</p>
           </div>
@@ -782,7 +772,6 @@
             <img src="/images/vr-cookbook/Panel_Right.png" alt="Ingredients panel render" />
           </div>
           <div class="stagger-body">
-            <span class="feature-kicker" data-i18n="panel-ingredients-kicker">02 — Ingredients</span>
             <h3 class="feature-title" data-i18n="panel-ingredients-title">Ingredients That Scale</h3>
             <p class="stagger-copy" data-i18n="panel-ingredients-text">The right panel holds the ingredient list, with a control to adjust the serving size on the fly. Beside it, a running timer counts down visually — click it, and it opens into a full-screen timer view.</p>
           </div>
@@ -792,7 +781,6 @@
             <img src="/images/vr-cookbook/Stopwatch.png" alt="Timer render" />
           </div>
           <div class="stagger-body">
-            <span class="feature-kicker" data-i18n="panel-timer-kicker">03 — Timer</span>
             <h3 class="feature-title" data-i18n="panel-timer-title">Set by Gesture</h3>
             <p class="stagger-copy" data-i18n="panel-timer-text">Clicking the countdown on the right panel opens this full-screen timer, where the time can be set or adjusted with a simple gesture.</p>
           </div>
@@ -986,13 +974,10 @@
         'problem-text-3': 'This is a concept, not a working product — today\'s VR/AR headsets are still too heavy and clunky to wear comfortably through an hour of cooking. But headsets keep getting lighter and less intrusive, and I think this becomes a genuinely viable idea once they do. It\'s also easy to imagine this mattering most somewhere other than a home kitchen: restaurants routinely cook for different numbers of people and switch between recipes all night — exactly the two things this concept is built to handle.',
         'section-process': 'Design process',
         'process-intro': 'Most VR interfaces are surprisingly flat — floating 2D windows dropped into a 3D space, using none of the depth VR actually offers. I wanted to actually build with the third dimension instead of ignoring it, and to give the whole interface a distinct visual identity: everything here is modeled with a brushed-metal look, echoing the pans, knives, and utensils already sitting on the counter. Every interaction is designed to work without a controller — clicks and simple hand gestures are the only input the whole concept ever asks for.',
-        'panel-manual-kicker': '01 — Manual',
         'panel-manual-title': 'Every Step in View',
         'panel-manual-text': 'The left panel is the instruction manual. A progress bar tracks which step of the recipe you\'re on, with the current step itself shown right beside it — always in view, never more than a glance away.',
-        'panel-ingredients-kicker': '02 — Ingredients',
         'panel-ingredients-title': 'Ingredients That Scale',
         'panel-ingredients-text': 'The right panel holds the ingredient list, with a control to adjust the serving size on the fly. Beside it, a running timer counts down visually — click it, and it opens into a full-screen timer view.',
-        'panel-timer-kicker': '03 — Timer',
         'panel-timer-title': 'Set by Gesture',
         'panel-timer-text': 'Clicking the countdown on the right panel opens this full-screen timer, where the time can be set or adjusted with a simple gesture.',
         'process-blender-text': 'Each panel started as a 3D model in Blender, shaped into that brushed-metal form language before being exported into Three.js.',
@@ -1020,13 +1005,10 @@
         'problem-text-3': 'Das hier ist ein Konzept, kein fertiges Produkt — heutige VR/AR-Headsets sind noch zu schwer und klobig, um sie eine Stunde lang beim Kochen bequem zu tragen. Aber Headsets werden stetig leichter und unauffälliger, und ich glaube, daraus wird eine echte Option, sobald das so weit ist. Es liegt auch nahe, dass die Idee außerhalb der heimischen Küche noch mehr Sinn ergibt: Restaurants kochen ständig für unterschiedlich viele Gäste und wechseln die ganze Nacht zwischen Rezepten — genau die zwei Dinge, auf die dieses Konzept ausgelegt ist.',
         'section-process': 'Designprozess',
         'process-intro': 'Die meisten VR-Oberflächen sind erstaunlich flach — schwebende 2D-Fenster in einem 3D-Raum, ohne dessen Tiefe zu nutzen. Ich wollte die dritte Dimension wirklich einsetzen und der Oberfläche eine eigenständige Identität geben: Alles ist im gebürsteten Metall-Look modelliert, angelehnt an Pfannen, Messer und Utensilien, die ohnehin auf der Arbeitsplatte liegen. Jede Interaktion funktioniert ganz ohne Controller — nur Klicks und einfache Handgesten.',
-        'panel-manual-kicker': '01 — Anleitung',
         'panel-manual-title': 'Jeder Schritt im Blick',
         'panel-manual-text': 'Das linke Panel ist die Bedienungsanleitung. Ein Fortschrittsbalken zeigt den aktuellen Rezeptschritt direkt daneben — immer sichtbar, nie mehr als einen Blick entfernt.',
-        'panel-ingredients-kicker': '02 — Zutaten',
         'panel-ingredients-title': 'Zutaten, die mitrechnen',
         'panel-ingredients-text': 'Das rechte Panel zeigt die Zutatenliste, mit einer Steuerung, um die Portionsgröße direkt anzupassen. Daneben zählt ein laufender Timer visuell herunter — ein Klick öffnet die Vollbild-Timeransicht.',
-        'panel-timer-kicker': '03 — Timer',
         'panel-timer-title': 'Per Geste gestellt',
         'panel-timer-text': 'Ein Klick auf den Countdown öffnet diesen Vollbild-Timer, dessen Zeit sich per einfacher Geste einstellen lässt.',
         'process-blender-text': 'Jedes Panel begann als 3D-Modell in Blender, geformt in dieser gebürsteten Metall-Formsprache, bevor es nach Three.js exportiert wurde.',

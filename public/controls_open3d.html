@@ -234,8 +234,10 @@
        the same opaque --bg-base as the panel, and with the border gone the
        padding band is indistinguishable — one seamless surface.
 
-       Top padding clears the 57px .overlay-topbar (the ← / ✕ buttons), which the
-       fullscreen version has no equivalent of. */
+       Padding matches the fullscreen panel's mobile value (28px 20px). It used to
+       be `80px … 64px` to clear the 57px .overlay-topbar, but that bar has since
+       been removed from this overlay in index.html, so the clearance is dead
+       space — if a top bar is ever restored here, restore the 80px top too. */
     @media (max-width: 700px) {
       html, body { height: auto; overflow-y: auto; }
 
@@ -249,7 +251,7 @@
         height: auto;
         overflow-y: auto;
         border: none;
-        padding: 80px clamp(20px, 6vw, 40px) 64px;
+        padding: 28px 20px;
         gap: 24px;
       }
 
@@ -267,6 +269,18 @@
 
       .card {
         height: auto;
+      }
+
+      /* The round "LM" badge in the RESET card was 56px — oversized next to the
+         other cards' icons at this width. 44px is the site's standard circular
+         button size (nav .logo, footer "top" button) and still meets the 44px
+         minimum tap target, though this badge isn't interactive. Inset shadow
+         scaled down with it so the neumorphic depth stays proportional. */
+      .lm-button {
+        width: 44px;
+        height: 44px;
+        font-size: 18px;
+        box-shadow: inset -5px -5px 12px rgba(255,255,255,1), inset 5px 5px 12px rgba(174,174,192,0.65);
       }
     }
   </style>
@@ -363,6 +377,30 @@
       }
       apply(localStorage.getItem('lang') || 'de');
       window.addEventListener('storage', function (e) { if (e.key === 'lang') apply(e.newValue || 'de'); });
+    })();
+  </script>
+
+  <script>
+    /* ── Report content height to the 3D-view parent ───────────────────────
+       Same reporter as the other overlay pages. This page has the most content
+       of the four (~577px at the in-overlay width vs About's ~340px), so it
+       shrinks least — from the fixed 85vh (717px) down to roughly 560-580px
+       depending on language. Still under the 85vh ceiling, so it fits without
+       scrolling; if copy ever grows past that the clamp takes over and it
+       scrolls inside the frame as before. */
+    (function () {
+      var el = document.querySelector('.container');
+      if (!el || window.parent === window) return;
+      var last = -1;
+      function report() {
+        var h = Math.ceil(el.getBoundingClientRect().height);
+        if (h === 0 || h === last) return;
+        last = h;
+        window.parent.postMessage({ type: 'overlay-autoheight', frame: 'controls', height: h }, '*');
+      }
+      if (window.ResizeObserver) new ResizeObserver(report).observe(el);
+      window.addEventListener('load', report);
+      report();
     })();
   </script>
 </body>

@@ -39,16 +39,42 @@ document.body.appendChild(renderer.domElement)
 
 // Environment map — gives metalness/roughness materials something to reflect.
 // Without this, any metallic material renders black/dead (no IBL to sample).
-const pmremGenerator = new THREE.PMREMGenerator(renderer)
-scene.environment = pmremGenerator.fromScene(new RoomEnvironment(), 0.04).texture
-// ...but RoomEnvironment is a BRIGHT studio-lit room, and as scene.environment it acts
-// as a full image-based light on every PBR material — not just the metals it was added
-// for. At full strength that is a large, perfectly uniform, direction-less flood which
-// is a major reason the rooms read as flat, and it is invisible to any amount of
-// trimming AmbientLight/HemisphereLight. Turning it down keeps metals alive (they still
-// have something to reflect) while letting the ceiling fixtures actually shape the room.
-// Raise this if metallic surfaces start looking dead; lower it for more contrast.
-scene.environmentIntensity = 0.22
+//
+// This used to be `PMREMGenerator.fromScene(new RoomEnvironment())`, described here as
+// "a perfectly uniform, direction-less flood". It is NOT uniform: RoomEnvironment is a
+// studio-lit BOX with bright emissive panels on particular faces, so as an IBL its
+// contribution depends strongly on surface normal. On the curved walls of these rooms the
+// normal sweeps across those panels and produces broad bright/dim patches that track the
+// camera and correspond to no light in the scene — measured on NewRoom's wall it supplied
+// ~55% of the total illumination and 100% of the left-to-right unevenness (a 29.6%-of-mean
+// spread; removing it dropped the spread to 3.0%).
+//
+// So: keep an environment (metals still need something to reflect) but make it genuinely
+// uniform — a single flat colour in every direction. Because the source is constant, the
+// usual roughness-blur concern is moot; every mip is the same colour.
+function uniformEnvironment(hex) {
+  const c = new THREE.Color(hex)
+  const px = new Uint8Array(8 * 4 * 4)
+  for (let i = 0; i < 8 * 4; i++) {
+    px[i * 4 + 0] = Math.round(c.r * 255)
+    px[i * 4 + 1] = Math.round(c.g * 255)
+    px[i * 4 + 2] = Math.round(c.b * 255)
+    px[i * 4 + 3] = 255
+  }
+  const tex = new THREE.DataTexture(px, 8, 4)
+  tex.mapping = THREE.EquirectangularReflectionMapping
+  tex.colorSpace = THREE.SRGBColorSpace
+  tex.needsUpdate = true
+  const pmrem = new THREE.PMREMGenerator(renderer)
+  const rt = pmrem.fromEquirectangular(tex)
+  pmrem.dispose()
+  tex.dispose()
+  return rt.texture
+}
+scene.environment = uniformEnvironment(0xffffff)
+// Tuned so the walls keep the brightness they had with RoomEnvironment (measured wall
+// mean luminance ~62.8/255) while being evenly lit. Raise if metals look dead.
+scene.environmentIntensity = 0.30
 
 // Lights
 // The rooms are meant to read as lit by their emissive ceiling fixtures. That CANNOT
@@ -112,8 +138,13 @@ scene.add(dirLight)
 // the front wall, floor and podium tops) a mesh-name guard narrows it to the ceiling.
 const FIXTURE_LIGHTS = [
   // MainRoom — cool white cassette ceiling, room radius ~10.6, fixture at z 5.2
+  // `distance` is the containment knob (see above): MainRoom's own radius is ~10.6, but
+  // at distance 15 this light reached ~3.3 units PAST NewRoom's near wall and, since
+  // walls don't block light without a shadow map, flooded NewRoom from one side — the
+  // single biggest cause of NewRoom's uneven wall. 11.5 still covers MainRoom fully
+  // while stopping at the wall between them.
   { test: (n, mats) => mats.includes('Ceiling_Light'),
-    color: 0xf2f7ff, intensity: 70, distance: 15 },
+    color: 0xf2f7ff, intensity: 70, distance: 11.5 },
   // NewRoom / brown podium room — warm amber, room ~15.9 wide, fixture at z 5.25.
   // The only SPOTLIGHT so far: this fixture is a single circular aperture in a dark
   // recessed ceiling, so it should read as a hard downlight onto the podium.
@@ -126,9 +157,14 @@ const FIXTURE_LIGHTS = [
   //   fill     — optional extra PointLight at the same spot, so the walls keep some of
   //              their warm gradient instead of dropping to near-black. This is what
   //              keeps the effect from being too drastic; set to 0 for a pure spotlight.
+  // Deliberately a PLAIN POINT LIGHT, not the spot described above. The spot never
+  // actually lit this room — the matrixWorld bug put it 16.6 units outside — so the look
+  // it would produce (a hard pool on the podium, walls falling off to near-black) has
+  // never been on the site. A centred PointLight lights the cylindrical wall evenly all
+  // the way round, which is what was asked for. Re-add a `spot: {...}` block here to get
+  // the theatrical downlight (and the only cast shadow in the scene) instead.
   { test: (n, mats) => mats.includes('NewRoom_CeilingLight_Warm'),
-    color: 0xffc773, intensity: 70, distance: 13,
-    spot: { angle: 0.5, penumbra: 0.55, fill: 16 } },
+    color: 0xffc773, intensity: 42, distance: 13 },
   // YellowRoom — warm, TWO separate ceiling panels (YellowRoom_Ceiling + .001), each
   // ~16 x 7.7, so this intentionally matches twice and yields two lights. The grid bars
   // use material 'Grid', not 'Ceiling', so they are excluded by the material match alone.
@@ -185,7 +221,24 @@ function addFixtureLights(model) {
     // Blender origin left at the world origin while the geometry itself sits tens of
     // units away — NewRoom_Ceiling's origin is (0,0,0) but its geometry is at
     // (-19.5, -1.2, 5.25), so using the origin would drop NewRoom's light into MainRoom.
-    const pos = box.getCenter(new THREE.Vector3())
+    //
+    // `.add(model.position)` is load-bearing. Assigning model.position does NOT recompute
+    // model.matrixWorld, and Box3.setFromObject(child) calls updateWorldMatrix(false,
+    // true) — updateParents=false, so it reuses the parent's stale matrix. model.matrixWorld
+    // is therefore still identity here and `box` comes back in MODEL-LOCAL (pre-recentre)
+    // space. Adding model.position converts it to world space; the model carries no
+    // rotation or scale, so a translation is the whole transform.
+    //
+    // Do NOT "fix" this with model.updateMatrixWorld(true) before this call. The spawn
+    // floor-probe further down raycasts the same geometry and has always run against these
+    // same un-refreshed matrices — that is where floorY (0.018) and hence the tuned eye
+    // height come from. Refreshing the matrices corrects the lights but simultaneously
+    // moves the probe's answer and drops the camera outside the rooms. Tried it; it does.
+    //
+    // Without the offset every fixture light sat 16.6 units away at (4.36, 2.72, -15.81)
+    // from where it belonged, outside its own room, leaving each room lit by whichever
+    // neighbour's displaced light happened to be in range.
+    const pos = box.getCenter(new THREE.Vector3()).add(model.position)
     // Drop the light just BELOW the fixture's underside, not below its centre. The
     // fixture slab is ~0.5 units thick, so centre-minus-a-nudge is still *inside* the
     // mesh — which is invisible for a shadowless PointLight but would make a spot's own
@@ -394,6 +447,36 @@ const COLLISION_DIST = 0.4
 let playerHeight = -1.3601 * 0.8 * 0.8 * 0.9
 let floorY       = 0
 
+// TEMP DEBUG HOOK — for diagnosing the wall lighting. REMOVE BEFORE COMMIT.
+window._dbg = {
+  get THREE() { return THREE },
+  get scene() { return scene },
+  get camera() { return camera },
+  get renderer() { return renderer },
+  setView(x, y, z, yw, pt) {
+    camera.position.set(x, y, z)
+    yaw = yw; pitch = pt; clampPitch(); applyRotation()
+    floorY = y - playerHeight        // pin the per-frame height to this eye level
+  },
+  bbox(name) {
+    let hit = null
+    scene.traverse(o => { if (o.name === name) hit = o })
+    if (!hit) return null
+    const b = new THREE.Box3().setFromObject(hit)
+    return { min: b.min.toArray(), max: b.max.toArray(),
+             center: b.getCenter(new THREE.Vector3()).toArray() }
+  },
+  lights() {
+    const out = []
+    scene.traverse(o => {
+      if (o.isLight) out.push({ type: o.type, name: o.name,
+                                pos: o.position.toArray().map(v => +v.toFixed(2)),
+                                intensity: o.intensity, distance: o.distance ?? null })
+    })
+    return out
+  },
+}
+
 // R = höher, F = tiefer (live, kein Reload nötig)
 window.addEventListener('keydown', e => {
   if (e.code === 'KeyR') {
@@ -502,6 +585,10 @@ loader.load(
     // Place a PointLight at each emissive ceiling fixture (and clamp over-bright
     // emissives). Must run AFTER model.position.sub(center) above, since it reads each
     // fixture's final world position.
+    //
+    // ...but running after the assignment is NOT sufficient on its own — see the
+    // `.add(model.position)` note inside addFixtureLights for why, and why the fix must
+    // NOT be a model.updateMatrixWorld() call here.
     addFixtureLights(model)
 
     const fixedClearance = size.y * 0.20

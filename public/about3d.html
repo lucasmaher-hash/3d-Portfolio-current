@@ -166,6 +166,55 @@
       line-height: 1.7;
       color: var(--text-secondary);
     }
+
+    /* ── Mobile ────────────────────────────────────────────────────────────
+       This page had no @media block at all, so phones inherited the desktop
+       chrome: the 32px body padding band and the .container 1px border. With
+       .overlay-topbar now removed from index.html there's also no bar to clear,
+       so the panel fills the overlay window as one seamless opaque surface —
+       same treatment as controls_open3d.html.
+       min-height loses its `- 64px` term because that existed purely to offset
+       the body padding this block sets to 0. */
+    @media (max-width: 700px) {
+      html, body { min-height: 0; }
+      body { padding: 0; }
+
+      .container {
+        width: 100%;
+        /* Hug the content rather than fill the viewport. The parent measures
+           this element and shrinks #about-wrapper to match, so ANY min-height
+           here becomes the frame's floor and reintroduces the dead space this
+           is meant to remove. */
+        min-height: 0;
+        border: none;
+        padding: 28px 20px;
+        /* Vertical centring is now done by the frame hugging the content (the
+           whole panel is centred in the viewport by #about-overlay's flex), so
+           this can stay flex-start. Deliberate: `center` on a flex container
+           that overflows clips the top of the content instead of scrolling to
+           it, which would bite whenever an accordion item is open and the frame
+           has hit its 85vh ceiling. */
+        justify-content: flex-start;
+      }
+
+      /* At this width the accordion bodies need 752px (Hintergrund) and 848px
+         (Was ich liebe) — the desktop 700px cap was silently clipping both, in
+         EN and DE alike. Raised with headroom. Can't be `none`: max-height has
+         to stay a length or the expand transition stops animating. */
+      .item.open .item-body { max-height: 1000px; }
+
+      /* 1.4vw bottoms out at the 12px clamp floor in a ~332px-wide overlay,
+         making this the smallest body text in the 3D view. Matches the 16px
+         mobile body tier used on about2d.html. */
+      .text-inset p { font-size: 16px; }
+
+      /* Row labels: clamp(16px, 2vw, 20px) resolves to its 16px floor at this
+         width (2vw of 332px ≈ 6.6px), so they read noticeably smaller than the
+         mobile menu's buttons. 22px matches .mobile-nav-btn in index.html
+         exactly — these are the same kind of control, so they should be the
+         same size. */
+      .item-label { font-size: 22px; }
+    }
   </style>
 </head>
 <body>
@@ -278,6 +327,34 @@
         }
       });
     });
+  </script>
+
+  <script>
+    /* ── Report content height to the 3D-view parent ───────────────────────
+       An <iframe> has no content-based intrinsic height, so the parent cannot
+       shrink #about-wrapper to fit — it has to be told. Same postMessage-resize
+       pattern the nav bar already uses (nav-expand / nav-collapse).
+
+       A ResizeObserver on .container covers every cause of a height change at
+       once — first paint, webfont swap, language switch via the `storage` event,
+       and each frame of the accordion's 0.35s max-height transition — without
+       hooking into any of them individually. That last one is why it's an
+       observer and not a one-shot measure: the frame then resizes in step with
+       the accordion instead of snapping after it. */
+    (function () {
+      var el = document.querySelector('.container');
+      if (!el || window.parent === window) return;
+      var last = -1;
+      function report() {
+        var h = Math.ceil(el.getBoundingClientRect().height);
+        if (h === 0 || h === last) return;   // 0 = not laid out yet; RO also fires on width-only changes
+        last = h;
+        window.parent.postMessage({ type: 'overlay-autoheight', frame: 'about', height: h }, '*');
+      }
+      if (window.ResizeObserver) new ResizeObserver(report).observe(el);
+      window.addEventListener('load', report);
+      report();
+    })();
   </script>
 </body>
 </html>
