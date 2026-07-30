@@ -186,30 +186,36 @@ const FIXTURE_LIGHTS = [
 const EMISSIVE_CLAMP = 2.0
 
 // ── Per-material fix-ups ─────────────────────────────────────────
-// The vaccine bottle read as dark and unlit no matter how bright its room got, because
-// every part of it is lit by the ENVIRONMENT rather than by lights:
-//   transparent_V2 (glass body) — KHR_materials_transmission 1.0, so it is rendered by
-//                                 sampling what is behind it; direct lights barely register
-//   blue metal     (cap)        — metalness 1.0, and a fully metallic surface has NO
-//                                 diffuse term at all, only specular reflection of the env
-//   label                       — metalness 1.0 AND roughness 1.0
-// So adding a PointLight above the bottle does almost nothing — envMapIntensity is the
-// knob that actually moves these materials. This got worse when scene.environment became
-// a uniform shell: RoomEnvironment's bright emissive panels used to give the metals strong
-// highlights, and a flat colour does not.
+// The vaccine bottle read as dark and unlit. Its three materials as authored in the .blend:
+//   transparent_V2 (glass body) — KHR_materials_transmission 1.0, ior 1.45, rough 0.03
+//   blue metal     (cap)        — metalness 1.0, rough 0.34
+//   label                       — metalness 1.0, rough 1.0
 //
-// metalness 1.0 on a paper label is an authoring slip in the .blend — a label is a
-// dielectric. At metal 1 / rough 1 it is physically a dark rough metal, which is exactly
-// how it rendered. Setting it to 0 lets it take diffuse light from the ceiling fixture.
-// Worth fixing in Blender too, but that needs an export cycle; this override does not.
+// `label` at metalness 1.0 is an authoring slip: a paper label is a dielectric. A fully
+// metallic surface has NO diffuse term at all — only specular reflection of the environment
+// — so at metal 1 / rough 1 it is physically a dark rough metal, which is exactly how it
+// rendered. Setting it to 0 makes it a plain white diffuse surface that takes light from the
+// ceiling fixture normally. Measured on a fixed close-up of the podium bottle, region mean
+// luminance 63.8 -> 73.2 and p95 84 -> 105, with no pixel clipping. Worth fixing in Blender
+// too, but that needs an export cycle; this override does not.
 //
-// Keyed on MATERIAL name, not mesh name (same reasoning as FIXTURE_LIGHTS). Each of these
-// three is used by exactly two nodes — the podium bottle and the second bottle instance —
-// so both instances stay consistent and nothing else in the scene is touched.
+// Deliberately NOT setting envMapIntensity here. It looks like the obvious lever for the
+// glass and the metal cap (both env-dependent), but it was measured to do *nothing* in this
+// scene: envMapIntensity 1.0 vs 6.0 produced byte-identical frames. The likely reason is
+// that these materials have no envMap of their own and inherit scene.environment, whose
+// contribution is scaled by scene.environmentIntensity instead. So the global
+// scene.environmentIntensity — not a per-material value — is the knob for env-lit surfaces.
+//
+// If the bottle ever needs to be brighter still: now that the label is metalness 0 it does
+// respond to lights, so a small dedicated PointLight near the podium would work (it would
+// NOT have, while the label was metallic). The remaining dimness is the glass transmitting
+// the dark brown room behind it, which is a room-colour question, not a material bug.
+//
+// Keyed on MATERIAL name, not mesh name (same reasoning as FIXTURE_LIGHTS). 'label' is used
+// by exactly two nodes — the podium bottle and the second bottle instance — so both stay
+// consistent and nothing else in the scene is touched.
 const MATERIAL_FIXUPS = {
-  'label':          { metalness: 0.0, envMapIntensity: 2.5 },
-  'blue metal':     { envMapIntensity: 2.5 },
-  'transparent_V2': { envMapIntensity: 2.5 },
+  'label': { metalness: 0.0 },
 }
 
 // A mesh only casts a shadow if it is smaller than this in every dimension. Architecture
@@ -221,6 +227,7 @@ const SHADOW_CASTER_MAX_SIZE = 6
 
 function addFixtureLights(model) {
   const seen = []
+  const fixedUp = []
   const _box = new THREE.Box3()
   const _size = new THREE.Vector3()
 
@@ -236,9 +243,12 @@ function addFixtureLights(model) {
       // the two bottle instances, so guard against applying the same patch twice.
       const fix = m && MATERIAL_FIXUPS[m.name]
       if (fix && !m.userData._fixedUp) {
+        const before = { metalness: m.metalness, envMapIntensity: m.envMapIntensity }
         Object.assign(m, fix)
         m.userData._fixedUp = true
         m.needsUpdate = true
+        fixedUp.push(`${m.name}[${m.type}] metalness ${before.metalness}->${m.metalness}` +
+                     ` envMapIntensity ${before.envMapIntensity}->${m.envMapIntensity}`)
       }
     }
 
@@ -323,6 +333,7 @@ function addFixtureLights(model) {
     const kind = spec.spot ? `spot(${spec.spot.angle}rad${spec.spot.fill ? '+fill' : ''})` : 'point'
     seen.push(`${child.name} ${kind} @ ${pos.x.toFixed(1)},${pos.y.toFixed(1)},${pos.z.toFixed(1)}`)
   })
+  console.log(`Material-Fixups: ${fixedUp.length} — ${fixedUp.join(' | ')}`)
   console.log(`Fixture-Lichter: ${seen.length} — ${seen.join(' | ')}`)
   if (seen.length === 0) {
     console.warn('Keine Fixture-Lichter gefunden — Mesh-Namen im GLB haben sich geändert? ' +
