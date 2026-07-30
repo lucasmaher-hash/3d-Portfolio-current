@@ -211,11 +211,37 @@ const EMISSIVE_CLAMP = 2.0
 // NOT have, while the label was metallic). The remaining dimness is the glass transmitting
 // the dark brown room behind it, which is a room-colour question, not a material bug.
 //
-// Keyed on MATERIAL name, not mesh name (same reasoning as FIXTURE_LIGHTS). 'label' is used
-// by exactly two nodes — the podium bottle and the second bottle instance — so both stay
+// Keyed on MATERIAL name, not mesh name (same reasoning as FIXTURE_LIGHTS). Each of these is
+// used by exactly two nodes — the podium bottle and the second bottle instance — so both stay
 // consistent and nothing else in the scene is touched.
+//
+// ── BRIGHTNESS KNOBS (these two numbers are the whole dial) ──────
+// `emissiveIntensity` lifts each part on its own, without touching the room, the podium or
+// any other object — which is why this is done per-material instead of by adding a light.
+// Emissive is added on top of normal shading, so it cannot be "unlit" by a dark room.
+//   label      0.35  — raise for a brighter white label, lower if it starts looking
+//                      self-lit/flat. The printed text is SEPARATE geometry with its own
+//                      material (this material has no texture and no vertex colours), so
+//                      brightening the backing does not wash the text out.
+//   blue metal 0.50  — the cap. Blue contributes only ~7% of perceived luminance, so it
+//                      needs a higher number than the label to read as equally lifted.
+// Emissive colours deliberately match each part's own base colour, so this reads as "more
+// light on it" rather than a colour shift.
 const MATERIAL_FIXUPS = {
-  'label': { metalness: 0.0 },
+  'label': {
+    metalness: 0.0,                 // the real fix — see above; a label is a dielectric
+    emissive: 0xffffff,
+    emissiveIntensity: 0.35,
+  },
+  'blue metal': {
+    // Same root cause as the label: at metalness 1.0 the cap has NO diffuse term, so the
+    // ceiling fixture cannot light it at all and it stays dark wherever it is not mirroring
+    // something bright. 0.30 is plastic-like (this is a medicine bottle cap, not chrome) and
+    // lets it take diffuse light normally. Put it back to 1.0 for the old mirror-metal look.
+    metalness: 0.30,
+    emissive: 0x2a12e0,             // same blue family as its base colour (0.021, 0, 0.8)
+    emissiveIntensity: 0.50,
+  },
 }
 
 // A mesh only casts a shadow if it is smaller than this in every dimension. Architecture
@@ -243,12 +269,19 @@ function addFixtureLights(model) {
       // the two bottle instances, so guard against applying the same patch twice.
       const fix = m && MATERIAL_FIXUPS[m.name]
       if (fix && !m.userData._fixedUp) {
-        const before = { metalness: m.metalness, envMapIntensity: m.envMapIntensity }
-        Object.assign(m, fix)
+        const before = `metalness ${m.metalness} emissive #${m.emissive?.getHexString?.() ?? '—'}` +
+                       ` @${m.emissiveIntensity}`
+        // NOT Object.assign: `color` and `emissive` are THREE.Color instances, and
+        // overwriting one with a hex number silently breaks the material (the renderer
+        // reads .r/.g/.b off it). Colour-valued keys have to go through .set().
+        for (const [k, v] of Object.entries(fix)) {
+          if (m[k] && m[k].isColor) m[k].set(v)
+          else m[k] = v
+        }
         m.userData._fixedUp = true
         m.needsUpdate = true
-        fixedUp.push(`${m.name}[${m.type}] metalness ${before.metalness}->${m.metalness}` +
-                     ` envMapIntensity ${before.envMapIntensity}->${m.envMapIntensity}`)
+        fixedUp.push(`${m.name}[${m.type}] ${before} -> metalness ${m.metalness}` +
+                     ` emissive #${m.emissive?.getHexString?.() ?? '—'} @${m.emissiveIntensity}`)
       }
     }
 
