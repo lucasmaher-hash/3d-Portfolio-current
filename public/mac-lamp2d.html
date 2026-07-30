@@ -494,10 +494,17 @@
     }
     .mobile-mode-btn.is-active {
       background: var(--bg-surface); color: #000;
-      box-shadow: var(--shadow-pressed);
+      /* --shadow-pressed's 5px offset / 10px blur reduced 35%, matching the
+         desktop nav's .pill__seg.is-active in top_row_permanent_V3.html so the
+         2D/3D toggle reads the same on both. Scoped to the segments INSIDE the
+         toggle — .mobile-view-toggle's own raised track shadow is untouched,
+         mirroring the desktop .pill track. */
+      box-shadow: inset 3.25px 3.25px 6.5px rgba(174, 174, 192, 0.6), inset -3.25px -3.25px 6.5px rgba(255, 255, 255, 1);
     }
     .mobile-mode-btn:active:not(.is-active) {
-      box-shadow: var(--shadow-pressed);
+      /* Same reduced spread, so tapping the inactive half doesn't flash a wider
+         inset than the settled state it lands in. */
+      box-shadow: inset 3.25px 3.25px 6.5px rgba(174, 174, 192, 0.6), inset -3.25px -3.25px 6.5px rgba(255, 255, 255, 1);
       transform: scale(0.96);
     }
     .mobile-nav-btn {
@@ -829,6 +836,91 @@
       .breadcrumb,
       .project-nav-label,
       .project-nav-number { font-size: 16px; }
+    }
+    /* Comma carriers inserted before each <br> in the meta values by the script at
+       the bottom of this file. Hidden by default so DESKTOP is untouched — it keeps
+       the <br> and its stacked values. The mobile block below swaps which of the two
+       is visible. They are inserted unconditionally rather than only under the media
+       query, which is what makes resizing across 640px work in both directions. */
+    .meta-sep { display: none; }
+
+    /* ── Mobile: meta tiles as a spec list ──────────────────────────────────────
+       Replaces the 2x2 tile grid, which struggles on a phone: every tile is locked
+       to height: 155px so a one-word value leaves most of its inset empty; a raised
+       tile wrapping a pressed inset puts two opposing shadow systems inside a
+       ~170px-wide box, which reads as noise at that size; and two columns leave each
+       value ~150px wide, so dates wrap mid-phrase.
+       One pressed card now holds four label/value rows, hairline-separated — same
+       tokens (VT323 orange labels, --text-secondary values), no nesting, height
+       driven by content.
+       Appended LAST on purpose: it beats the earlier mobile rules
+       (grid-template-columns + height: 155px) on source order alone, and deleting
+       this block restores the previous design exactly. No markup or data-i18n
+       changes are involved. */
+    @media (max-width: 640px) {
+      .meta-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        background: var(--bg-surface);
+        border-radius: 24px;
+        /* Pressed, not raised: the card reads as a recess holding the rows. Same
+           token the old per-tile .meta-inset panels used — the depth just moved from
+           four small insets to one big one. */
+        box-shadow: var(--shadow-pressed);
+        padding: 6px 18px;
+      }
+
+      .meta-tile {
+        display: grid;
+        /* 88px fits the widest label in either language — measured at 18px VT323 the
+           longest is "Fähigkeiten" at 80px. Fixed rather than auto because each tile
+           is its own grid, so an auto track would size per row and the values would
+           not line up with each other. */
+        grid-template-columns: 88px 1fr;
+        align-items: start;
+        gap: 14px;
+        height: auto;
+        min-height: 0;
+        padding: 14px 0;
+        background: none;
+        border-radius: 0;
+        box-shadow: none;
+      }
+
+      /* A real border on a full-width row spans it exactly — no pseudo-element
+         offsets to get wrong, and no dotted-divider JS to wire up (the site's
+         .dot-divider needs a measured exact-divisor script to avoid half dots). */
+      .meta-tile + .meta-tile {
+        border-top: 1px solid rgba(111, 111, 111, 0.18);
+      }
+
+      .meta-label {
+        font-size: 18px;
+        line-height: 1.25;
+      }
+
+      /* Values run inline, comma-separated, instead of one per line. Hiding the <br>
+         un-breaks them; the comma itself is a real .meta-sep node inserted by the
+         script at the bottom of this file. That split is necessary, not incidental —
+         measured in Blink:
+           · br{display:none} / br{display:contents} -> one line, but the runs merge
+             into "CAD Modeling3D PrintingMetal Tooling" with nothing between them;
+           · br::after{content:", "}                 -> adds 0px, i.e. generated
+             content on a <br> never renders;
+           · <br> as a flex item                     -> still forces the break.
+         So CSS alone cannot supply the comma. */
+      .meta-inset {
+        flex: none;
+        padding: 0;
+        background: none;
+        border-radius: 0;
+        box-shadow: none;
+        line-height: 1.5;
+      }
+
+      .meta-inset br { display: none; }
+      .meta-sep { display: inline; }
     }
   </style>
 </head>
@@ -1406,6 +1498,46 @@
       positionExitBtn();
       window.addEventListener('resize', positionExitBtn);
       if (document.fonts && document.fonts.ready) document.fonts.ready.then(positionExitBtn);
+    })();
+  </script>
+
+  <script>
+    /* Insert a comma carrier before every <br> in the meta values.
+       Needed because CSS cannot supply that comma: a <br> can be un-broken with
+       display:none/contents, but generated content on a <br> renders nowhere in
+       Blink or WebKit (measured: br::after adds 0px), and as a flex item it still
+       forces the break. So the separator has to be a real node.
+       Deliberately NOT gated on the viewport: the nodes are always present and
+       `.meta-sep { display: none }` hides them on desktop, so resizing across 640px
+       works in both directions with no JS involvement.
+       The MutationObserver is required, not defensive — the i18n layer reassigns
+       innerHTML from TRANSLATIONS on every language switch, which drops the carriers
+       and restores the raw <br>s. It self-terminates: after a pass every <br>
+       already has a carrier, so the guard makes the next callback a no-op. */
+    (function () {
+      var insets = document.querySelectorAll('.meta-inset');
+      if (!insets.length) return;
+
+      function addSeps(el) {
+        el.querySelectorAll('br').forEach(function (br) {
+          var prev = br.previousSibling;
+          if (prev && prev.nodeType === 1 && prev.classList.contains('meta-sep')) return;
+          var before = (prev && prev.nodeType === 3) ? prev.textContent.replace(/\s+$/, '') : '';
+          var sep = document.createElement('span');
+          sep.className = 'meta-sep';
+          /* A comma is wrong where the text already ends in punctuation that joins
+             the two halves — Timeline reads "Jan 2026 —" / "Apr 2026", which a comma
+             turns into "Jan 2026 —, Apr 2026". Fall back to a plain space there. */
+          sep.textContent = /[—–,;:/-]$/.test(before) ? ' ' : ', ';
+          br.parentNode.insertBefore(sep, br);
+        });
+      }
+
+      insets.forEach(function (el) {
+        addSeps(el);
+        new MutationObserver(function () { addSeps(el); })
+          .observe(el, { childList: true });
+      });
     })();
   </script>
 

@@ -74,10 +74,17 @@
     .mobile-mode-btn.is-active {
       background: var(--bg-surface);
       color: #000;
-      box-shadow: var(--shadow-pressed);
+      /* --shadow-pressed's 5px offset / 10px blur reduced 35%, matching the
+         desktop nav's .pill__seg.is-active in top_row_permanent_V3.html so the
+         2D/3D toggle reads the same on both. Scoped to the segments INSIDE the
+         toggle — .mobile-view-toggle's own raised track shadow is untouched,
+         mirroring the desktop .pill track. */
+      box-shadow: inset 3.25px 3.25px 6.5px rgba(174, 174, 192, 0.6), inset -3.25px -3.25px 6.5px rgba(255, 255, 255, 1);
     }
     .mobile-mode-btn:active:not(.is-active) {
-      box-shadow: var(--shadow-pressed);
+      /* Same reduced spread, so tapping the inactive half doesn't flash a wider
+         inset than the settled state it lands in. */
+      box-shadow: inset 3.25px 3.25px 6.5px rgba(174, 174, 192, 0.6), inset -3.25px -3.25px 6.5px rgba(255, 255, 255, 1);
       transform: scale(0.96);
     }
     .mobile-nav-btn {

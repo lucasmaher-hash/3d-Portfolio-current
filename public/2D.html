@@ -396,7 +396,11 @@
         display: flex;
         flex-direction: column;
         gap: 16px;
-        padding: 24px 20px;
+        /* 60px top/bottom (24px originally, then 44px): with the section stacked
+           as title > image > pills, this padding is what separates the title
+           from the divider above it and the pills from the divider below, so it
+           sets the breathing room between projects. Horizontal stays 20px. */
+        padding: 60px 20px;
         align-items: stretch;
       }
 
@@ -405,9 +409,18 @@
         display: contents;
       }
 
-      .project-title-block { order: 1; }
+      /* Uniform stacking for every project: title, then media, then the four tags.
+         The title is order -1, NOT the media at order 1 — and that is load-bearing.
+         Two DOM shapes exist here: three projects wrap the tile in an <a> (so the <a>
+         is the flex item, at default order 0, and an order on .project-tile never
+         applies) while Mac-Lamp and Double Packaging have .project-tile as the direct
+         child. Since the wrapping <a> can't be reached through .project-tile, the media
+         is pinned at 0 for both shapes and the title has to go BELOW it. Ordering the
+         media to 1 instead would move only the two direct-child tiles and leave the
+         other three above the title. */
+      .project-title-block { order: -1; }
       .project-tags        { order: 2; gap: 5px; }
-      .project-tile        { order: 3; width: 100%; aspect-ratio: 16/10; }
+      .project-tile        { order: 0; width: 100%; aspect-ratio: 16/10; }
 
       /* No "View Work" button on mobile — every tile is already wrapped in an <a> to the
          same project page, so the button was a second affordance for the same tap target.
@@ -415,18 +428,86 @@
          font-size rule for .btn-view-work in the last @media block below is now inert. */
       .btn-view-work { display: none; }
 
-      /* Unify (688x1406, portrait) and Cybercoffee (1064x1104, near-square) letterbox
-         badly inside the 16/10 tile: both are HEIGHT-constrained there, so the video
-         renders at the tile's height and leaves dead space left and right. 16/10 -> 16/15
-         makes the tile exactly 1.5x taller, so both videos render 50% larger — reusing
-         the vertical space the removed button freed up.
-         Do not push past ~16/15.4: beyond that Cybercoffee's near-square video becomes
-         WIDTH-constrained and stops growing, while Unify keeps going. */
-      .project-tile.tile-tall-media { aspect-ratio: 16/15; }
+      /* Unify and Cybercoffee: tile ratio set to the video's OWN intrinsic ratio, so
+         the video fills the tile edge to edge with no letterboxing and no crop. Both
+         previously used a squarer tile (16/15 and 16/21) that their portrait /
+         near-square videos could not fill, leaving dead space left and right.
+
+         Matching the ratio — rather than switching to object-fit: cover in the existing
+         box — is deliberate for BOTH, for two different reasons:
+           · Unify's video carries a clip-path measured to the phone bezel in
+             homepage.mov (it hides the grey baked around the phone). Those insets are
+             percentages of the element box, so they only line up while the box keeps
+             the video's ratio. cover would also crop top/bottom rather than the sides,
+             leaving exactly the grey side margins the clip-path exists to remove.
+           · Cybercoffee has no clip-path, but its video is near-square, so cover in a
+             wider box would crop real content off the top and bottom for no reason.
+
+         Ratios are the files' measured pixel dimensions (mdls), not the intrinsic ratio
+         CSS could infer — a tile can't read its child's ratio. If either video is
+         re-exported at a different size, these two numbers must be updated with it. */
+      .project-tile.tile-tall-media { aspect-ratio: 1064 / 1104; }  /* Cybercoffee */
+      .project-tile.tile-xl-media   { aspect-ratio: 688 / 1406; }   /* Unify */
+
+      /* Cybercoffee's video has #D7D7DE (215,215,222) baked in behind the machine
+         while the page is #DCDCE3 (220,220,227) — a uniform +5 per channel. Once the
+         video fills the tile edge to edge (ratio match above) that 5-level step meets
+         the page directly and reads as a visible flat patch. brightness() is
+         multiplicative and lands it exactly: 215 x 1.023 = 219.9 -> 220 and
+         222 x 1.023 = 227.1 -> 227. The same 2.3% lift on the artwork is
+         imperceptible (near-black outlines go 26 -> 27).
+
+         ENGINE SPLIT — do not "correct" this from a Chrome measurement:
+           · iOS Safari renders the video's RAW baked value, so the seam is real
+             there and this filter removes it. Confirmed on device.
+           · Chromium colour-manages the video's BT.709 profile and already
+             composites the background to #DCDCE3 on its own, so measuring the
+             composited pixel in Chrome shows NO seam, and this filter measures
+             +5 light there (#E1E1E7).
+         Reading the raw frame via canvas drawImage() gives #D7D7DE in Chrome too —
+         i.e. the decode and the composite disagree, which is what makes Chrome the
+         wrong place to calibrate this. The device is the source of truth. */
+      .tile-tall-media video { filter: brightness(1.023); }
+
+      /* Virtual Cooking, Mac-Lamp, Double Packaging: a TALLER tile, so object-fit: cover
+         crops the LEFT AND RIGHT only. This replaces an earlier transform: scale(), which
+         was wrong — a scale zooms uniformly and therefore crops all four sides while
+         leaving the aspect ratio unchanged. Here the box shape itself changes.
+
+         Mechanics: with cover, whichever axis is relatively short gets filled and the other
+         overflows. Once the box is TALLER than the media's own ratio, cover fills the box
+         height exactly (vertical crop drops to ZERO) and overflows horizontally, which is
+         the side crop. Amount per side = (1 - R_box / r_media) / 2.
+
+         21/20 (1.05) is one SHARED ratio so all three tiles stay the same height (333px at
+         a 350px-wide tile), which the uniform-layout requirement needs. The three media have
+         different intrinsic ratios, so the crop lands slightly differently on each — no
+         single box ratio can give exactly 12% on all three:
+           Virtual Cooking  4000x2791 (r 1.433) -> 13.4% per side
+           Mac-Lamp         3941x2956 (r 1.333) -> 10.6% per side
+           Double Packaging 1920x1400 (r 1.371) -> 11.7% per side
+         Average ~11.9%. For exactly 12% each they would need 12/11, 1.013 and 1.042
+         respectively — i.e. three different tile heights. */
+      .project-tile.tile-crop-sides { aspect-ratio: 21/20; }
+
+      /* Kill any inline vertical transform on these three. Double Packaging's video carries
+         transform: translateY(-15px) inline, which framed the old 16/10 box where cover
+         overflowed vertically and there was spare image to shift into. Now that cover fits
+         the height exactly, shifting up would expose the inner <a>'s black background as a
+         15px strip along the bottom. !important is required to beat the inline style. */
+      .tile-crop-sides img,
+      .tile-crop-sides video { transform: none !important; }
 
       .tag { flex: 1; text-align: center; font-size: 14px; padding: 6px 4px; }
       .project-title { font-size: 29px; }
-      .project-label { font-size: 26px !important; }
+
+      /* No "Project 01" kicker on mobile — the numbering is redundant next to the
+         title once the section is a single stacked column. Hidden rather than
+         deleted from the markup so desktop keeps it, and so the data-i18n keys
+         (label-project-01..05) stay wired for both languages.
+         display is safe to set here: the element's inline style only pins
+         font-family and font-size, so there is nothing to fight. */
+      .project-label { display: none; }
 
       #scroll-top-btn { display: none !important; }
       .footer-column { display: none !important; }
@@ -503,11 +584,18 @@
     .mobile-mode-btn.is-active {
       background: var(--bg-surface);
       color: #000;
-      box-shadow: var(--shadow-pressed);
+      /* --shadow-pressed's 5px offset / 10px blur reduced 35%, matching the
+         desktop nav's .pill__seg.is-active in top_row_permanent_V3.html so the
+         2D/3D toggle reads the same on both. Scoped to the segments INSIDE the
+         toggle — .mobile-view-toggle's own raised track shadow is untouched,
+         mirroring the desktop .pill track. */
+      box-shadow: inset 3.25px 3.25px 6.5px rgba(174, 174, 192, 0.6), inset -3.25px -3.25px 6.5px rgba(255, 255, 255, 1);
     }
 
     .mobile-mode-btn:active:not(.is-active) {
-      box-shadow: var(--shadow-pressed);
+      /* Same reduced spread, so tapping the inactive half doesn't flash a wider
+         inset than the settled state it lands in. */
+      box-shadow: inset 3.25px 3.25px 6.5px rgba(174, 174, 192, 0.6), inset -3.25px -3.25px 6.5px rgba(255, 255, 255, 1);
       transform: scale(0.96);
     }
 
@@ -739,7 +827,7 @@
         <a href="/unify2d.html" class="btn-view-work" data-i18n="btn-view-work" style="margin-top: auto; align-self: flex-start;">View Work</a>
       </div>
       <a href="/unify2d.html" style="display:block;">
-        <div class="project-tile tile-tall-media" style="box-shadow: none; overflow: hidden; cursor: pointer; display: flex; align-items: center; justify-content: center; background: transparent;">
+        <div class="project-tile tile-xl-media" style="box-shadow: none; overflow: hidden; cursor: pointer; display: flex; align-items: center; justify-content: center; background: transparent;">
           <!-- clip-path matches homepage.mov's measured phone bounds on unify2d.html,
                so the grey baked into the video never shows against the page. -->
           <video autoplay loop muted playsinline style="height: 100%; width: auto; max-width: 100%; object-fit: contain; display: block; clip-path: inset(0.50% 1.46% 0.29% 1.75% round 15.9% / 7.8%);">
@@ -752,7 +840,7 @@
     <!-- Project 02 -->
     <div class="project-section reverse" style="align-items: stretch;">
       <a href="/virtual_cooking2d.html" style="display:block;">
-        <div class="project-tile" style="box-shadow: none; overflow: hidden; cursor: pointer;">
+        <div class="project-tile tile-crop-sides" style="box-shadow: none; overflow: hidden; cursor: pointer;">
           <img src="/images/vr-cookbook/side_v1_final_V1.png" alt="Virtual Cooking" style="width: 100%; height: 100%; object-fit: cover; display: block;" />
         </div>
       </a>
@@ -797,7 +885,7 @@
 
     <!-- Project 04 -->
     <div class="project-section reverse" style="align-items: stretch;">
-      <div class="project-tile" style="position: relative;">
+      <div class="project-tile tile-crop-sides" style="position: relative;">
         <a href="/mac-lamp2d.html" style="position: absolute; inset: 0; overflow: hidden; border-radius: 16px; text-decoration: none; display: block;">
           <img src="/images/mac-lamp/IMG_3729_SnapseedCopy.jpeg" alt="Mac-Lamp" style="width: 100%; height: 100%; object-fit: cover; display: block;" />
         </a>
@@ -832,7 +920,7 @@
         </div>
         <a href="/vaccine2d.html" class="btn-view-work" data-i18n="btn-view-work" style="margin-top: auto; align-self: flex-start;">View Work</a>
       </div>
-      <div class="project-tile" style="position: relative;">
+      <div class="project-tile tile-crop-sides" style="position: relative;">
         <a href="/vaccine2d.html" style="position: absolute; inset: 0; overflow: hidden; border-radius: 16px; background: #000; text-decoration: none;">
           <video autoplay muted loop playsinline style="width: 100%; height: 100%; object-fit: cover; display: block; transform: translateY(-15px);">
             <source src="/videos/vaccine/vaccine_render_V1.mov" type="video/quicktime" />

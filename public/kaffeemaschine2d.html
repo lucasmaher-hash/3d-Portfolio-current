@@ -307,12 +307,17 @@
       color: var(--text-secondary);
     }
 
+    /* Currently UNUSED on this page (no .step-heading in the markup) — kept, and kept in
+       sync with vaccine2d.html, so that if a step heading is ever added here it inherits
+       OCR-A-BT like every other project page rather than the pixel font this rule used to
+       specify. VT323 here was the source of the Double Packaging inconsistency. */
     .step-heading {
-      font-family: 'VT323', monospace;
-      font-size: 26px;
+      font-family: 'OCR-A-BT', monospace;
+      font-size: clamp(20px, 2.6vw, 26px);
       color: var(--text-primary);
       text-transform: uppercase;
-      line-height: 1;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
     }
 
     /* ── Process steps — alternating stagger-row / process-shot,
@@ -496,15 +501,38 @@
         gap: 32px;
       }
       .result-copy { order: 2; }
-      /* Sticky spin → static stacked block on small screens (no pin/slide) */
-      .spin-scrolly { height: auto; }
-      .spin-sticky { position: static; height: auto; }
+      /* Sticky spin on small screens: layout goes STACKED (machine above caption)
+         but the pin is KEPT, so the section holds still until the full 56-frame
+         turn has played instead of scrolling past mid-spin.
+         .spin-scrolly deliberately does NOT get `height: auto` here — it inherits
+         the 240vh spacer that gives the pin its scroll room. The slide/fade phases
+         are still skipped (that is the innerWidth check in initSpin), so the spin
+         is remapped to span the WHOLE pinned range on mobile rather than finishing
+         at SPIN_END = 0.55 and then holding you for another 45% doing nothing.
+         min-height rather than height: the stacked machine + caption is content-sized,
+         so this centres it in the viewport when it fits and simply grows if it doesn't,
+         instead of overflowing a hard 100vh box on a short phone. svh (not vh) so the
+         mobile browser's collapsing toolbar can't make it jump. */
+      .spin-sticky {
+        position: sticky; top: 0;
+        height: auto;
+        min-height: 100vh;
+        min-height: 100svh;
+      }
       .spin-stage {
         position: static; width: 100%; height: auto;
         display: flex; flex-direction: column; align-items: center; gap: 18px;
       }
       .spin-copy { position: static; transform: none; opacity: 1; width: 100%; order: 2; }
-      .spin { position: static; transform: none; width: min(320px, 78%); order: 1; }
+      /* 96% not 78%: the frames are 640x619, i.e. nearly square, so width is what
+         drives height here. At 78% the machine was only 264px tall and the stacked
+         block came to 418px inside an 844px pinned box — 213px of dead space above
+         AND below it. Widening to 96% is the only real lever: shrinking the pinned
+         box instead BACKFIRES, because the sticky element is the only child of the
+         240vh spacer, so whatever height it gives up shows as blank spacer below it
+         during the pin — making the gap under the caption bigger, not smaller. */
+      .spin { position: static; transform: none; width: min(520px, 96%); order: 1; }
+      .spin-stage { gap: 12px; }
     }
 
     /* Reduced motion: collapse the pinned spin to the same static stacked
@@ -541,6 +569,28 @@
       .stagger-row.right { flex-direction: column; align-items: flex-start; gap: 18px; }
       .stagger-figure { width: min(320px, 100%); }
       .machine-frame-wrap { width: min(300px, 82vw); }
+
+      /* Hero extended 30% taller, with the added band ABOVE the image so the flat
+         dark area at the top of the render simply continues upward.
+         16/9 -> 160/117 (= 16/11.7) is exactly +30% height at the same width.
+         #141B30 is sampled from the image's own top row — measured (20,27,48), and
+         that row is flat to within ±3 across its full width — so the band and the
+         image read as one continuous surface rather than two tones.
+         The image keeps its ORIGINAL box: 9/11.7 = 76.9231% of the new height,
+         anchored to the bottom. That matters — leaving it at height:100% would let
+         object-fit: cover re-crop the render to the taller box instead of just
+         adding space above it. The +2px / -1px preserves the existing overscan
+         that hides sub-pixel gaps at the edges (see .hero img above). */
+      .hero {
+        aspect-ratio: 160 / 117;
+        background: #141B30;
+      }
+
+      .hero img {
+        top: auto;
+        bottom: -1px;
+        height: calc(76.9231% + 2px);
+      }
     }
 
     /* ── Mobile menu overlay ── */
@@ -576,10 +626,17 @@
     }
     .mobile-mode-btn.is-active {
       background: var(--bg-surface); color: #000;
-      box-shadow: var(--shadow-pressed);
+      /* --shadow-pressed's 5px offset / 10px blur reduced 35%, matching the
+         desktop nav's .pill__seg.is-active in top_row_permanent_V3.html so the
+         2D/3D toggle reads the same on both. Scoped to the segments INSIDE the
+         toggle — .mobile-view-toggle's own raised track shadow is untouched,
+         mirroring the desktop .pill track. */
+      box-shadow: inset 3.25px 3.25px 6.5px rgba(174, 174, 192, 0.6), inset -3.25px -3.25px 6.5px rgba(255, 255, 255, 1);
     }
     .mobile-mode-btn:active:not(.is-active) {
-      box-shadow: var(--shadow-pressed);
+      /* Same reduced spread, so tapping the inactive half doesn't flash a wider
+         inset than the settled state it lands in. */
+      box-shadow: inset 3.25px 3.25px 6.5px rgba(174, 174, 192, 0.6), inset -3.25px -3.25px 6.5px rgba(255, 255, 255, 1);
       transform: scale(0.96);
     }
     .mobile-nav-btn {
@@ -668,6 +725,106 @@
       .breadcrumb,
       .project-nav-label,
       .project-nav-number { font-size: 16px; }
+    }
+
+    /* Comma carriers inserted before each <br> in the meta values by the script at
+       the bottom of this file. Hidden by default so DESKTOP is untouched — it keeps
+       the <br> and its stacked values. The mobile block below swaps which of the two
+       is visible. Inserting them unconditionally (rather than only under the media
+       query) is what makes resizing across 640px work in both directions. */
+    .meta-sep { display: none; }
+
+    /* ── TRIAL (mobile only, this page only): meta tiles as a spec list ─────────
+       Why the 2x2 tile grid struggles on a phone:
+         · every tile is locked to height: 155px, so a one-word value like "Nur ich"
+           leaves most of its inset empty while the block still costs ~700px;
+         · a raised tile wrapping a pressed inset puts two opposing shadow systems
+           inside a ~170px-wide box — at that size the depth reads as noise, not
+           hierarchy;
+         · two columns leave each value ~150px wide, so "Mai 2026 — Jun. 2026"
+           wraps mid-phrase.
+
+       This replaces it with ONE raised card holding four label/value rows,
+       hairline-separated — same tokens (--shadow-raised, VT323 orange labels,
+       --text-secondary values), no nesting, height driven by content.
+
+       Measured at 390px: 321px -> 307px, so this is NOT a space saving — it is a
+       legibility one. What actually improves is the value column, 169px -> 212px
+       (+25%), and each row now costs only what its content needs (Team 52px vs the
+       old flat 155px) instead of every tile paying for the tallest.
+
+       Deliberately CSS-only and appended LAST: the markup and every data-i18n key
+       are untouched, and this sits after the earlier mobile rules it overrides
+       (grid-template-columns + height: 155px, ~line 542) so it wins on source
+       order alone. Deleting this one block restores the previous design exactly. */
+    @media (max-width: 640px) {
+      .meta-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        background: var(--bg-surface);
+        border-radius: 24px;
+        /* Pressed, not raised: the card reads as a recess holding the spec rows
+           rather than a slab sitting on top of the page. --shadow-pressed is the
+           same token the old .meta-inset panels used, so the depth language is
+           unchanged — it just moved from four small insets to one big one. */
+        box-shadow: var(--shadow-pressed);
+        padding: 6px 18px;
+      }
+
+      /* Strip the per-tile card: the row is now just layout, the card is the parent */
+      .meta-tile {
+        display: grid;
+        grid-template-columns: 88px 1fr;
+        align-items: start;
+        gap: 14px;
+        height: auto;
+        min-height: 0;
+        padding: 14px 0;
+        background: none;
+        border-radius: 0;
+        box-shadow: none;
+      }
+
+      /* A real border on a full-width row spans it exactly — no pseudo-element
+         offsets to get wrong, and no dotted-divider JS to wire up (the site's
+         .dot-divider needs a measured exact-divisor script to avoid half dots). */
+      .meta-tile + .meta-tile {
+        border-top: 1px solid rgba(111, 111, 111, 0.18);
+      }
+
+      /* 24px VT323 would overrun an 88px column — "WERKZEUGE" is 9 characters */
+      .meta-label {
+        font-size: 18px;
+        line-height: 1.25;
+      }
+
+      /* Was the pressed panel; now plain value text. font-size stays 15px from
+         the type-scale block above.
+
+         The pieces run inline, comma-separated, instead of one per line.
+         Hiding the <br> is what un-breaks them; the comma comes from a real
+         .meta-sep node the script at the bottom of this file inserts before each
+         <br>. That split is necessary, not incidental — measured in Blink:
+           · br{display:none} / br{display:contents}  -> one line, but the runs
+             merge into "FigmaPrototypingClaude Code" with nothing between them;
+           · br::after{content:", "}                  -> adds 0px, i.e. generated
+             content on a <br> never renders, so CSS alone cannot supply the comma;
+           · <br> as a flex item                      -> still forces the break.
+         So the separator has to exist in the DOM, and CSS only decides whether to
+         show it. Desktop hides .meta-sep and keeps the <br>, so it stacks exactly
+         as before — no TRANSLATIONS value or data-i18n key changes either. */
+      .meta-inset {
+        flex: none;
+        padding: 0;
+        background: none;
+        border-radius: 0;
+        box-shadow: none;
+        line-height: 1.5;
+      }
+
+      .meta-inset br { display: none; }
+      .meta-sep { display: inline; }
     }
   </style>
 </head>
@@ -959,11 +1116,17 @@
         // frame from pinned progress
         const range = scrolly.offsetHeight - window.innerHeight;
         const p = clamp(-scrolly.getBoundingClientRect().top / (range > 0 ? range : 1), 0, 1);
-        const idx = Math.min(COUNT - 1, Math.round(clamp(p / SPIN_END, 0, 1) * (COUNT - 1)));
+
+        // Small screens keep the pin but skip the slide/fade phases, so the spin gets the
+        // WHOLE pinned range (spinEnd = 1) instead of finishing at SPIN_END and leaving the
+        // remaining 45% of the scroll pinned on a motionless machine.
+        const narrow = window.innerWidth <= 860;
+        const spinEnd = narrow ? 1 : SPIN_END;
+        const idx = Math.min(COUNT - 1, Math.round(clamp(p / spinEnd, 0, 1) * (COUNT - 1)));
         if (idx !== current) { current = idx; spinImg.src = src(idx); }
 
-        // small screens: static stacked layout, no slide/fade
-        if (window.innerWidth <= 860) {
+        // small screens: stacked layout, no slide/fade (pin itself stays — see CSS)
+        if (narrow) {
           spinEl.style.transform = '';
           copy.style.opacity = '';
           copy.style.transform = '';
@@ -1140,6 +1303,47 @@
       positionExitBtn();
       window.addEventListener('resize', positionExitBtn);
       if (document.fonts && document.fonts.ready) document.fonts.ready.then(positionExitBtn);
+    })();
+  </script>
+
+  <script>
+    /* Insert a comma carrier before every <br> in the meta values.
+       Needed because CSS cannot supply that comma: a <br> can be un-broken with
+       display:none/contents, but generated content on a <br> renders nowhere in
+       Blink or WebKit (measured: br::after adds 0px), and as a flex item it still
+       forces the break. So the separator has to be a real node.
+       Deliberately NOT gated on the viewport: the nodes are always present and
+       `.meta-sep { display: none }` hides them on desktop, so resizing across
+       640px works in both directions with no JS involvement.
+       The MutationObserver is required, not defensive — the i18n layer reassigns
+       innerHTML from TRANSLATIONS on every language switch, which drops the
+       carriers and restores the raw <br>s. It self-terminates: after a pass every
+       <br> already has a carrier, so the guard below makes the next callback a
+       no-op. */
+    (function () {
+      var insets = document.querySelectorAll('.meta-inset');
+      if (!insets.length) return;
+
+      function addSeps(el) {
+        el.querySelectorAll('br').forEach(function (br) {
+          var prev = br.previousSibling;
+          if (prev && prev.nodeType === 1 && prev.classList.contains('meta-sep')) return;
+          var before = (prev && prev.nodeType === 3) ? prev.textContent.replace(/\s+$/, '') : '';
+          var sep = document.createElement('span');
+          sep.className = 'meta-sep';
+          /* A comma is wrong where the text already ends in punctuation that joins
+             the two halves — Timeline reads "May 2026 —" / "Jun 2026", which a comma
+             turns into "May 2026 —, Jun 2026". Fall back to a plain space there. */
+          sep.textContent = /[—–,;:/-]$/.test(before) ? ' ' : ', ';
+          br.parentNode.insertBefore(sep, br);
+        });
+      }
+
+      insets.forEach(function (el) {
+        addSeps(el);
+        new MutationObserver(function () { addSeps(el); })
+          .observe(el, { childList: true });
+      });
     })();
   </script>
 

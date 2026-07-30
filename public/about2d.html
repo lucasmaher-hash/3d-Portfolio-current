@@ -314,10 +314,17 @@
     }
     .mobile-mode-btn.is-active {
       background: var(--bg-surface); color: #000;
-      box-shadow: var(--shadow-pressed);
+      /* --shadow-pressed's 5px offset / 10px blur reduced 35%, matching the
+         desktop nav's .pill__seg.is-active in top_row_permanent_V3.html so the
+         2D/3D toggle reads the same on both. Scoped to the segments INSIDE the
+         toggle — .mobile-view-toggle's own raised track shadow is untouched,
+         mirroring the desktop .pill track. */
+      box-shadow: inset 3.25px 3.25px 6.5px rgba(174, 174, 192, 0.6), inset -3.25px -3.25px 6.5px rgba(255, 255, 255, 1);
     }
     .mobile-mode-btn:active:not(.is-active) {
-      box-shadow: var(--shadow-pressed);
+      /* Same reduced spread, so tapping the inactive half doesn't flash a wider
+         inset than the settled state it lands in. */
+      box-shadow: inset 3.25px 3.25px 6.5px rgba(174, 174, 192, 0.6), inset -3.25px -3.25px 6.5px rgba(255, 255, 255, 1);
       transform: scale(0.96);
     }
     .mobile-nav-btn {
@@ -397,6 +404,16 @@
          (the expand animation would stop working). Desktop keeps 700px, where
          the wider viewport means fewer lines and the cap is never approached. */
       .item.open .item-body { max-height: 900px; }
+
+      /* MUST come after the rule above, and must not be deleted.
+         Collapsing works by adding .closing while .open is still present — the
+         script only removes .open inside a `transitionend` listener for
+         max-height (see closeItem below). Both selectors are 3 classes, so
+         precedence is pure source order: without this re-assertion the .open
+         override above beats the base `.item.closing .item-body { max-height: 0 }`,
+         so max-height never changes, no transition runs, transitionend never
+         fires, the classes are never cleared, and the card is stuck open. */
+      .item.closing .item-body { max-height: 0; }
     }
   </style>
 </head>

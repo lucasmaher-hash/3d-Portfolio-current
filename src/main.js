@@ -171,9 +171,107 @@ const FIXTURE_LIGHTS = [
   // use material 'Grid', not 'Ceiling', so they are excluded by the material match alone.
   { test: (n, mats) => mats.includes('Ceiling') && n.startsWith('YellowRoom_Ceiling'),
     color: 0xffebc7, intensity: 45, distance: 12 },
-  // BlueRoom — cool blue panels, room ~11.8 x 10.7. Material guard + name guard.
+  // BlueRoom — cool blue panels, room 10.5 wide x 11.6 deep x 5.0 tall.
+  // The name guard is load-bearing: BlueRoom_EmissivePanel is also on the FLOOR panels, the
+  // front wall and both podium tops, so a material-only match would light this room from
+  // five places at once.
+  // GRIDDED because the ceiling really is a full-room emissive panel (measured x -10.32..0.12,
+  // z 27.6..39.24), not a lamp. As a single point it produced one hotspot per side wall,
+  // which on these dark blue walls read as two separate light sources. See `grid` below;
+  // distance drops 12 -> 8 to keep containment no worse while the lights spread outward.
   { test: (n, mats) => mats.includes('BlueRoom_EmissivePanel') && n.includes('Ceiling'),
-    color: 0xb8dbff, intensity: 45, distance: 12 },
+    color: 0xb8dbff, intensity: 45, distance: 8, grid: { x: 3, z: 3 } },
+
+  // PinkRoom — the only light in the scene that is NOT a ceiling fixture. It sits at the
+  // floating creature itself, so the room reads as lit by the figure.
+  //
+  // Matched on the MESH name, not the material — the exact opposite of every entry above,
+  // and deliberately so. The creature's material `Figur_Pink` is SHARED with `Figur_Body`
+  // and `Monster2_Body`, both of which live in the unreachable staging row, so a material
+  // match would silently create three of these lights, two of them far outside the
+  // building. `PinkRoom_Creature_Body` is a single-primitive node, so its runtime mesh name
+  // is exactly this string (no Group/`_0` split — see the note above about multi-primitive
+  // nodes) and it matches exactly once.
+  //
+  // `atCentre` keeps the light at the mesh's bounding-box centre. Every other entry gets
+  // dropped just below its fixture's underside, which is right for a ceiling slab but would
+  // put this one under the creature's feet instead of inside it.
+  //
+  // intensity 14 — deliberately low. This light sits mid-height ~2-3 units from the floor
+  // rather than ~5 units up like the ceiling fixtures, so it needs far less output to read.
+  //
+  // distance 13 IS THE CONTRAST KNOB, not just the containment knob. Three.js windows a
+  // PointLight as  (1/d²) · clamp(1 - (d/distance)⁴, 0, 1)²  — that window term collapses
+  // hard as d approaches `distance`. PinkRoom_OuterWall's radius reaches 10.68, so at the
+  // original distance 11 the window at the wall was 0.0124: the wall received barely 1% of
+  // its inverse-square value, i.e. essentially NO direct light. Everything visible on it was
+  // the flat AmbientLight + HemisphereLight + environment fill, which is why the wall read
+  // as one continuous pink. At 13 the window is 0.296 — about 24x more light on the wall —
+  // and the falloff is now in the useful part of the curve, so the wall finally shows the
+  // variation the geometry implies (its radius runs 9.10 to 10.68, a 38% brightness spread
+  // by inverse square, plus Lambert shading toward floor and ceiling).
+  //
+  // Do NOT raise `distance` much past 13 chasing more wall light. These lights cast no
+  // shadows, so walls do not block them and `distance` is the only containment. MainRoom's
+  // near wall is ~12.3 units from here, and the window rises steeply: 0.039 at distance 13
+  // (a ~7% contribution next to MainRoom's own ceiling light — imperceptible) but 0.89 at
+  // distance 22, which would light MainRoom's wall MORE brightly than its own fixture does.
+  { test: n => n === 'PinkRoom_Creature_Body',
+    color: 0xffb4d8, intensity: 14, distance: 13, atCentre: true },
+
+  // PinkRoom, second light — a SHAPING spot at the room's ENTRANCE, throwing light
+  // HORIZONTALLY into the room. No source geometry: nothing in the scene marks where it is.
+  //
+  // Why a second light at all: PinkRoom is a near-cylinder (PinkRoom_OuterWall radius
+  // 9.10-10.68, height 5) with the creature at its centre, so every wall point is roughly
+  // equidistant from that first light. A centred point light in a cylinder lights the wall
+  // almost perfectly evenly BY GEOMETRY — no intensity or distance value can make it
+  // uneven (Lambert adds only ~2.6% toward the ceiling). Light has to come from off-centre.
+  //
+  // Anchored to PinkRoom_Tunnel — the entrance passage — not to a room-centre mesh.
+  // Anchoring to geometry rather than hardcoding world coordinates is deliberate: the model
+  // is recentred on its own bounding box at load, so absolute coordinates shift whenever the
+  // Blender scene's extents change. A mesh anchor plus a relative offset survives that.
+  //
+  // Measured layout, in model space: tunnel centre (11.61, 1.5, 0), spanning x 9.77-13.45,
+  // y 0-3. Room centre (22.5, 2.5, 0). Floor y 0, ceiling y 5. Wall inner edge x 11.82, far
+  // wall x 33.18. So the entrance faces +X and the throw across the room is ~19.6 units.
+  //   offset [2, 0.3, 0] -> (13.61, 1.8, 0): just inside the wall line, at roughly standing
+  //                         eye height, centred in the doorway.
+  //   aimAt  [1, 0, 0]   -> dead horizontal, straight up the room's axis. y is exactly 0,
+  //                         which is what makes this a wall-wash rather than a downlight.
+  //
+  // THE CONE IS THE CONTAINMENT HERE, and it is why this can be brighter and reach further
+  // than the creature light. A SpotLight emits only inside its cone, so aimed +X it puts
+  // nothing at all back toward MainRoom (which sits at x 0, i.e. directly behind it). The
+  // creature light needed distance capped at 13 to avoid leaking next door; this one can
+  // use 24 and still reach the far wall, because direction does the work instead.
+  //
+  //   angle 0.5 rad  -> ~9.5-unit radius by the time it crosses the room, against the
+  //                     10.68 half-width: a broad wash that still falls off before the
+  //                     corners. Widen toward 0.7 to flood the whole far wall.
+  //   penumbra 0.6   -> soft edge, so the cone reads as light spilling through a doorway
+  //                     rather than a hard-edged stencil.
+  //   fill 0         -> deliberately NO co-located PointLight. A fill is omnidirectional
+  //                     and would sit 13.6 units from MainRoom with a 24-unit distance,
+  //                     throwing away the containment the cone just bought.
+  //
+  // Side benefit: this is a shadow-casting spot, and at SHADOW_CASTER_MAX_SIZE = 6 the
+  // 5.39-wide PinkRoom_CentralColumn and the 3.45-wide creature both qualify as casters
+  // while the 21.36-wide wall does not. So the column and the figure now throw real shadows
+  // across the room and up the far wall — the strongest contrast available here, and the
+  // thing a centred point light could never produce.
+  // intensity 110, and it needs to be that high — much higher than the creature light's 14.
+  // The throw is what costs it: the far wall is ~19.6 units away, so illuminance there is
+  // I · window / 19.6² = I · 0.308 / 384 = I · 0.0008. At 40 that gave 0.032, which is only
+  // what the creature light already puts on the wall by itself — invisible as a second
+  // source. 110 gives ~0.088, roughly 2.5x the creature light's wall level, which is what
+  // makes the direction readable. This is affordable precisely BECAUSE the cone contains it;
+  // an omnidirectional light at 110 would flood the neighbouring rooms.
+  { test: n => n === 'PinkRoom_Tunnel',
+    color: 0xd98cb4, intensity: 110, distance: 24, atCentre: true,
+    offset: [2, 0.3, 0], aimAt: [1, 0, 0],
+    spot: { angle: 0.5, penumbra: 0.6, fill: 0 } },
 ]
 
 // Emissive fixtures are authored in Blender at wildly inconsistent strengths
@@ -244,6 +342,15 @@ const MATERIAL_FIXUPS = {
   },
 }
 
+// Worth knowing if the centre tower ever flickers dark while moving again: its panels sit
+// only ~0.022 units inside their grid lattice (measured), which is the depth knife-edge the
+// camera's `near` comment at the top of this file describes. The measure that has held up
+// against it is the tower emitting its own light — but `Tower_Upper_Panel` is authored in
+// Blender at emissiveStrength 2.0, which is EXACTLY EMISSIVE_CLAMP, so it has zero headroom
+// and any Blender-side increase is silently clamped straight back to 2.0 on load. To give it
+// more light, add a `'Tower_Upper_Panel': { emissiveIntensity: N }` entry above — fixups that
+// set emissiveIntensity are exempt from the clamp. Raising it in Blender alone does nothing.
+
 // A mesh only casts a shadow if it is smaller than this in every dimension. Architecture
 // (walls, floors, ceilings, the 20-unit cassette array) is excluded on purpose: it would
 // cast the room's own shell into the shadow map for no visual gain, and a ceiling casting
@@ -263,11 +370,18 @@ function addFixtureLights(model) {
     // Rein in over-bright emissives so the fixture reads as coloured light, not white.
     const mats = Array.isArray(child.material) ? child.material : [child.material]
     for (const m of mats) {
-      if (m && m.emissiveIntensity > EMISSIVE_CLAMP) m.emissiveIntensity = EMISSIVE_CLAMP
+      // A fixup that sets its own emissiveIntensity is exempt from the clamp — and the
+      // exemption must live HERE, not rely on fixup-after-clamp ordering: the material is
+      // shared across several meshes (the tower alone is 3), and this loop runs per mesh,
+      // so the clamp would silently re-cap the fixup's value on the NEXT mesh visited.
+      const fix = m && MATERIAL_FIXUPS[m.name]
+      if (m && m.emissiveIntensity > EMISSIVE_CLAMP && !(fix && 'emissiveIntensity' in fix)) {
+        m.emissiveIntensity = EMISSIVE_CLAMP
+      }
 
       // Per-material fix-ups (see MATERIAL_FIXUPS above). Materials are shared between
-      // the two bottle instances, so guard against applying the same patch twice.
-      const fix = m && MATERIAL_FIXUPS[m.name]
+      // instances (both bottles; the tower's three meshes), so guard against applying
+      // the same patch twice.
       if (fix && !m.userData._fixedUp) {
         const before = `metalness ${m.metalness} emissive #${m.emissive?.getHexString?.() ?? '—'}` +
                        ` @${m.emissiveIntensity}`
@@ -326,7 +440,58 @@ function addFixtureLights(model) {
     // `+ model.position.y` for the same model-local -> world reason as above. Without it
     // this assignment silently threw away the Y half of the offset and left every fixture
     // 2.72 units too high — above its own ceiling, so the room below stayed dark.
-    pos.y = box.min.y + model.position.y - 0.05
+    //
+    // `atCentre` opts out: the drop-to-underside is right for a ceiling slab, but the
+    // PinkRoom creature is a free-floating body, and pushing the light to its underside
+    // would park it under the figure's feet instead of inside it. Leaving pos at the
+    // bounding-box centre is what makes the light read as emanating from the figure.
+    if (!spec.atCentre) pos.y = box.min.y + model.position.y - 0.05
+
+    // `offset` moves a light off its anchor mesh, room-relative. Used by the PinkRoom
+    // shaping light, which has no source geometry of its own to anchor to and must sit
+    // OFF-centre — a light at the centre of that near-cylindrical room lights the wall
+    // evenly by geometry, no matter what intensity or distance it is given.
+    if (spec.offset) pos.set(pos.x + spec.offset[0], pos.y + spec.offset[1], pos.z + spec.offset[2])
+
+    // `grid` spreads the fixture's light across the anchor mesh's own footprint instead of
+    // concentrating it in one point, for fixtures that are a large emissive PANEL rather
+    // than a lamp. A single point 5 units under a 10x12 ceiling makes a tight hotspot and,
+    // in a room with dark walls, two symmetric blobs on the side walls that read as two
+    // separate light sources — which is exactly what BlueRoom looked like.
+    //
+    // Total intensity is CONSERVED (spec.intensity split evenly), so overall room
+    // brightness is unchanged; only the distribution evens out. Lights sit at the centre of
+    // each cell — (i + 0.5) / n — which also insets them from the panel edge, so none ends
+    // up jammed against a wall making a fresh hotspot there.
+    //
+    // Pair a grid with a SMALLER `distance` than the single-point version: spreading the
+    // lights outward moves the outermost ones closer to the room's boundary, and `distance`
+    // is what stops a room's light bleeding through walls into its neighbour (walls block
+    // nothing without a shadow map). For BlueRoom, 3x3 at distance 8 reaches z 21.5 / x 6.4
+    // versus the old single light's 21.4 / 6.9 — i.e. slightly less far in every direction,
+    // so containment is strictly no worse than before.
+    if (spec.grid) {
+      const nx = spec.grid.x || 1
+      const nz = spec.grid.z || 1
+      const per = spec.intensity / (nx * nz)
+      const x0 = box.min.x + model.position.x, x1 = box.max.x + model.position.x
+      const z0 = box.min.z + model.position.z, z1 = box.max.z + model.position.z
+      for (let ix = 0; ix < nx; ix++) {
+        for (let iz = 0; iz < nz; iz++) {
+          const cell = new THREE.PointLight(spec.color, per, spec.distance, 2)
+          cell.position.set(
+            x0 + (x1 - x0) * (ix + 0.5) / nx,
+            pos.y,
+            z0 + (z1 - z0) * (iz + 0.5) / nz,
+          )
+          scene.add(cell)
+        }
+      }
+      seen.push(`${child.name} grid ${nx}x${nz} @ ${per.toFixed(1)} each, ` +
+                `y=${pos.y.toFixed(2)}, x ${x0.toFixed(1)}..${x1.toFixed(1)}, ` +
+                `z ${z0.toFixed(1)}..${z1.toFixed(1)}`)
+      return
+    }
 
     let light
     if (spec.spot) {
@@ -336,8 +501,20 @@ function addFixtureLights(model) {
       light.position.copy(pos)
       // A SpotLight aims at light.target, which defaults to the world origin and must be
       // added to the scene separately — miss either and this cone points sideways across
-      // the whole building instead of straight down, with no error.
-      light.target.position.set(pos.x, pos.y - 10, pos.z)
+      // the whole building instead of where it should, with no error.
+      //
+      // `aimAt` is a DIRECTION, not a target point, so it stays valid wherever the anchor
+      // mesh ends up after the model is recentred. Default [0,-1,0] = straight down, which
+      // is what a ceiling fixture wants; the PinkRoom entrance spot passes [1,0,0] for a
+      // dead-horizontal wall wash. Normalised so the 10-unit throw below is consistent
+      // regardless of how the vector was written.
+      const aim = spec.aimAt || [0, -1, 0]
+      const aLen = Math.hypot(aim[0], aim[1], aim[2]) || 1
+      light.target.position.set(
+        pos.x + (aim[0] / aLen) * 10,
+        pos.y + (aim[1] / aLen) * 10,
+        pos.z + (aim[2] / aLen) * 10,
+      )
       scene.add(light.target)
 
       if (renderer.shadowMap.enabled) {
@@ -382,7 +559,14 @@ let spawnYaw = 0
 let spawnPitch = 0
 const MOUSE_SENS  = 0.003
 const SCROLL_SENS = 0.003
-const PITCH_LIMIT = Math.PI / 2 - 0.01
+/* Vertical look range. Desktop keeps the full ±~89° (you can look straight up
+   or down). Touch devices get ±0.20 rad ≈ ±11.5°: on a phone the scene reads
+   best held roughly level, and a full-range pitch made it easy to end up
+   staring at the ceiling or the floor with no quick way back to level.
+   Gated on isMobile (navigator.maxTouchPoints > 0, defined at the top of this
+   file) rather than a width query, matching how this file already switches
+   antialiasing and shadows — so a mouse-driven desktop is untouched. */
+const PITCH_LIMIT = isMobile ? 0.20 : Math.PI / 2 - 0.01
 
 function clampPitch() {
   pitch = Math.max(-PITCH_LIMIT, Math.min(PITCH_LIMIT, pitch))
@@ -427,7 +611,16 @@ renderer.domElement.addEventListener('wheel', e => {
 }, { passive: false })
 
 // ── Touch swipe camera look + inertia ────────────────────────────
-const TOUCH_SENS    = 0.004
+const TOUCH_SENS    = 0.004   // horizontal (yaw) — unchanged
+/* Vertical (pitch) is deliberately ~30% of horizontal, so up/down look is a
+   subtle adjustment rather than an equal partner to turning.
+   This is paired with the tighter PITCH_LIMIT above and both are needed: with
+   the clamp alone at full sensitivity you'd hit the ±0.20 rad stop after ~50px
+   of swipe, which feels twitchy-then-jammed. At this rate it takes ~165px to
+   reach the limit, so the whole range is usable and reads as gentle.
+   No isMobile guard needed — these handlers only ever fire for touch input,
+   so mouse and trackpad look are untouched by definition. */
+const TOUCH_SENS_PITCH = 0.0012
 const INERTIA_DECAY = 5.0   // higher = snappier stop; fast swipes coast longer naturally
 let cameraTouchId = null
 let lastTouchX = 0, lastTouchY = 0
@@ -447,7 +640,7 @@ renderer.domElement.addEventListener('touchmove', e => {
   for (const t of e.changedTouches) {
     if (t.identifier !== cameraTouchId) continue
     const dyaw   = (t.clientX - lastTouchX) * TOUCH_SENS
-    const dpitch = (t.clientY - lastTouchY) * TOUCH_SENS
+    const dpitch = (t.clientY - lastTouchY) * TOUCH_SENS_PITCH
     lastTouchX = t.clientX
     lastTouchY = t.clientY
     yaw   += dyaw
