@@ -547,11 +547,24 @@
           var hero = doc.querySelector('.hero');
           if (hero && hero.offsetHeight > 0) {
             navIsland.classList.toggle('is-2d-mode', window.top.scrollY > hero.offsetHeight - 60);
-          } else if (doc.readyState === 'complete') {
-            // parent fully loaded and no full-bleed hero → pill always on
+          } else if (!hero && doc.readyState !== 'loading') {
+            // No full-bleed hero anywhere in the parent → pill always on.
+            //
+            // Gated on readyState !== 'loading' (i.e. 'interactive' OR 'complete'), NOT on
+            // 'complete'. 'interactive' means the document is fully PARSED, which is all
+            // that is needed to know whether a `.hero` exists — it is static markup on
+            // every page. 'complete' additionally waits for every image, video and iframe
+            // to finish downloading, and the four hero-less pages (2D.html, about2d,
+            // contact2d, unify2d) are exactly the ones carrying the heavy media: the
+            // homepage alone pulls ~16 MB across 3 videos + 2 large images. That made the
+            // nav sit un-shaded for several seconds on the real domain, then fade in (the
+            // fade being the 260ms box-shadow transition finally running), while localhost
+            // hid the bug completely by serving everything off disk instantly.
             navIsland.classList.add('is-2d-mode');
           }
-          // else: parent still loading / hero not laid out yet — a later call decides
+          // else: a `.hero` exists but has no layout yet — stay undecided and let a later
+          // call settle it. Deliberately NOT treated as "no hero": adding the shadow here
+          // would flash it on over a hero image and then toggle it back off.
         }
         window.top.addEventListener('scroll', updateNavShadow, { passive: true });
         window.top.addEventListener('resize', updateNavShadow, { passive: true });
