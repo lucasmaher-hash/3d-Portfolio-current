@@ -203,6 +203,16 @@
          to stay a length or the expand transition stops animating. */
       .item.open .item-body { max-height: 1000px; }
 
+      /* MUST come after the rule above, and must not be deleted.
+         Collapsing works by adding .closing while .open is still present — the
+         script only removes .open inside a `transitionend` listener for
+         max-height. Both selectors are 3 classes, so precedence is pure source
+         order: without this re-assertion the .open override above wins, so
+         max-height never changes, no transition runs, transitionend never
+         fires, the classes are never removed, and the row is stuck open with
+         no way to collapse it. */
+      .item.closing .item-body { max-height: 0; }
+
       /* 1.4vw bottoms out at the 12px clamp floor in a ~332px-wide overlay,
          making this the smallest body text in the 3D view. Matches the 16px
          mobile body tier used on about2d.html. */

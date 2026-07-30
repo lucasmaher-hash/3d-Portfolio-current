@@ -707,7 +707,8 @@ The two standalone videos carry `data-vid="homepage"` / `data-vid="settings"` at
 - **Scroll-hide nav** — every 2D page adds/removes `.hide` on `#top-bar` based on scroll direction (250px down threshold / 180px up threshold)
 - **Video filenames must be URL-safe** — no spaces; use hyphens (e.g., `map-courses.mov` not `map courses.mov`)
 - **Z-index stack** (top to bottom):
-  - `z-index: 9999` — #top-bar (nav iframe; all 2D pages)
+  - `z-index: 10000` — `.mobile-menu` on `2D.html` + `unify2d.html` **only** — it has to beat those two pages' `9999` nav. See the `.mobile-menu` note below.
+  - `z-index: 9999` — #top-bar, but **only on `2D.html` and `unify2d.html`**. The other six 2D pages use `10`, and the 3D page uses `10` (from `src/style.css`). This drift is real and was a live bug: `.mobile-menu` at `200` sat *below* the `9999` nav, so opening the mobile hamburger menu darkened the whole page **except** the nav pill, which stayed bright. Fixed by raising `.mobile-menu` to `10000` on those two pages rather than lowering the nav — the menu is `opacity: 0; pointer-events: none` unless `.open` and is never `.open` at desktop widths, so raising it cannot affect desktop, whereas lowering the nav would change desktop stacking. **If you bootstrap a new 2D page from `2D.html` or `unify2d.html`, you inherit both the `9999` nav and the need for the `10000` menu — keep them together.** Verified over CDP: at 390×844 with the menu open, `document.elementFromPoint()` at the nav centre returns `mobile-menu` (was `top-bar`); at 1440 the nav is still topmost and the menu is still `opacity: 0`.
   - `z-index: 3` — .hero-blob (sits above header/divider on Unify)
   - `z-index: 2` — .hero-header (breadcrumb, title, divider on Unify)
   - `z-index: 200` — .mobile-menu (mobile overlay)

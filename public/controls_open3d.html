@@ -9,7 +9,9 @@
   <title>Controls</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet" />
+  <!-- Roboto Flex is the site's body face; added for .card-description, which no
+       longer uses the VT323 pixel font (headings still do). -->
+  <link href="https://fonts.googleapis.com/css2?family=VT323&family=Roboto+Flex:wdth@100&display=swap" rel="stylesheet" />
   <style>
     @font-face {
       font-family: 'OCR-A-BT';
@@ -121,6 +123,20 @@
       display: flex;
       flex-direction: column;
       gap: 4px;
+    }
+
+    /* WASD cluster. Values match the inline styles these replaced, so desktop
+       renders exactly as before. */
+    .key-stack {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .key-row {
+      display: flex;
+      gap: 6px;
     }
 
     .key {
@@ -251,8 +267,12 @@
         height: auto;
         overflow-y: auto;
         border: none;
-        padding: 28px 20px;
-        gap: 24px;
+        /* Tighter than the other overlays' 28px/20px: at 18px the descriptions
+           need every pixel of measure, and this page is the only one that was
+           close to the 85vh ceiling. Buys ~8px of text width per side and ~8px
+           of height. */
+        padding: 24px 16px;
+        gap: 20px;
       }
 
       .header-title {
@@ -269,6 +289,21 @@
 
       .card {
         height: auto;
+        padding: 16px;
+        /* Guarantees clear separation between the text column and the icon.
+           `justify-content: space-between` alone doesn't: it only distributes
+           LEFTOVER space, so once the text grows enough to consume it the two
+           blocks touch. */
+        gap: 14px;
+      }
+
+      /* Let the text column own the remaining width and wrap onto two lines.
+         min-width: 0 is the load-bearing part — a flex item won't shrink below
+         its min-content width by default, so without it long text pushes into
+         the icon instead of wrapping. */
+      .card > div:first-child {
+        flex: 1;
+        min-width: 0;
       }
 
       /* The round "LM" badge in the RESET card was 56px — oversized next to the
@@ -282,6 +317,39 @@
         font-size: 18px;
         box-shadow: inset -5px -5px 12px rgba(255,255,255,1), inset 5px 5px 12px rgba(174,174,192,0.65);
       }
+
+      /* WASD keys at 50%: 38px -> 19px, with radius, gaps, font and shadow all
+         halved so the cluster scales uniformly rather than just the boxes.
+         The gap to the card's right edge is unchanged for free — .card is
+         `justify-content: space-between`, so .card-visual stays pinned to the
+         content-box edge and the 20px card padding is what sets that distance
+         regardless of how wide the cluster is. */
+      .key {
+        width: 19px;
+        height: 19px;
+        border-radius: 5px;
+        font-size: 8px;
+        box-shadow: 2.5px 2.5px 6px rgba(174,174,192,0.65), -2.5px -2.5px 6px rgba(255,255,255,1);
+      }
+
+      .key-stack,
+      .key-row { gap: 3px; }
+
+      /* The per-control explanation was 12px VT323 — the smallest text on the
+         page, in a pixel face with a small x-height, in the faint
+         --text-secondary grey. Now Roboto Flex, the site's body face: real body
+         copy shouldn't be set in the display font. Headings (.card-title) stay
+         VT323, so the pixel face still carries the page's character.
+         16px rather than the 18px used while this was VT323 — a proportional
+         face reads noticeably larger at the same size, so 16px here lands about
+         where 18px of VT323 did, and it's the site-wide mobile body floor.
+         .card-title goes to 24px to keep a clear step above it. */
+      .card-description {
+        font-family: 'Roboto Flex', sans-serif;
+        font-size: 16px;
+        line-height: 1.45;
+      }
+      .card-title { font-size: 24px; }
     }
   </style>
 </head>
@@ -299,9 +367,11 @@
           <div class="card-description" data-i18n="move-desc">W, A, S, D or arrow keys to walk the scene</div>
         </div>
         <div class="card-visual">
-          <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;">
+          <!-- Classes rather than inline styles so the gaps can be scaled per
+               breakpoint; inline styles can only be overridden with !important. -->
+          <div class="key-stack">
             <div class="key">W</div>
-            <div style="display: flex; gap: 6px;">
+            <div class="key-row">
               <div class="key">A</div>
               <div class="key">S</div>
               <div class="key">D</div>

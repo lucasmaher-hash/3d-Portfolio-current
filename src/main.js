@@ -185,6 +185,33 @@ const FIXTURE_LIGHTS = [
 // tinted glow. Small accent emissives (Lamp_* at 1.0, M_Purple at 0.18) are left alone.
 const EMISSIVE_CLAMP = 2.0
 
+// ── Per-material fix-ups ─────────────────────────────────────────
+// The vaccine bottle read as dark and unlit no matter how bright its room got, because
+// every part of it is lit by the ENVIRONMENT rather than by lights:
+//   transparent_V2 (glass body) — KHR_materials_transmission 1.0, so it is rendered by
+//                                 sampling what is behind it; direct lights barely register
+//   blue metal     (cap)        — metalness 1.0, and a fully metallic surface has NO
+//                                 diffuse term at all, only specular reflection of the env
+//   label                       — metalness 1.0 AND roughness 1.0
+// So adding a PointLight above the bottle does almost nothing — envMapIntensity is the
+// knob that actually moves these materials. This got worse when scene.environment became
+// a uniform shell: RoomEnvironment's bright emissive panels used to give the metals strong
+// highlights, and a flat colour does not.
+//
+// metalness 1.0 on a paper label is an authoring slip in the .blend — a label is a
+// dielectric. At metal 1 / rough 1 it is physically a dark rough metal, which is exactly
+// how it rendered. Setting it to 0 lets it take diffuse light from the ceiling fixture.
+// Worth fixing in Blender too, but that needs an export cycle; this override does not.
+//
+// Keyed on MATERIAL name, not mesh name (same reasoning as FIXTURE_LIGHTS). Each of these
+// three is used by exactly two nodes — the podium bottle and the second bottle instance —
+// so both instances stay consistent and nothing else in the scene is touched.
+const MATERIAL_FIXUPS = {
+  'label':          { metalness: 0.0, envMapIntensity: 2.5 },
+  'blue metal':     { envMapIntensity: 2.5 },
+  'transparent_V2': { envMapIntensity: 2.5 },
+}
+
 // A mesh only casts a shadow if it is smaller than this in every dimension. Architecture
 // (walls, floors, ceilings, the 20-unit cassette array) is excluded on purpose: it would
 // cast the room's own shell into the shadow map for no visual gain, and a ceiling casting
@@ -204,6 +231,15 @@ function addFixtureLights(model) {
     const mats = Array.isArray(child.material) ? child.material : [child.material]
     for (const m of mats) {
       if (m && m.emissiveIntensity > EMISSIVE_CLAMP) m.emissiveIntensity = EMISSIVE_CLAMP
+
+      // Per-material fix-ups (see MATERIAL_FIXUPS above). Materials are shared between
+      // the two bottle instances, so guard against applying the same patch twice.
+      const fix = m && MATERIAL_FIXUPS[m.name]
+      if (fix && !m.userData._fixedUp) {
+        Object.assign(m, fix)
+        m.userData._fixedUp = true
+        m.needsUpdate = true
+      }
     }
 
     // Shadow participation. Everything receives; only small props cast (see above).

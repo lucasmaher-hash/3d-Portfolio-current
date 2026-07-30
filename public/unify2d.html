@@ -608,7 +608,12 @@
 
     /* ── Mobile menu overlay ───────────────────────────────── */
     .mobile-menu {
-      position: fixed; inset: 0; z-index: 200;
+      /* z-index must beat #top-bar, which is 9999 on this page (most other 2D pages use
+         10). At 200 the nav iframe painted over this backdrop, leaving the nav pill bright
+         while the rest of the page darkened. Raising this instead of lowering #top-bar
+         leaves desktop untouched — this element is opacity:0/pointer-events:none unless
+         .open, and never .open at desktop widths. */
+      position: fixed; inset: 0; z-index: 10000;
       display: flex; align-items: center; justify-content: center;
       background: rgba(0,0,0,0.55);
       opacity: 0; pointer-events: none; transition: opacity 250ms ease;
