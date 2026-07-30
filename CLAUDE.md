@@ -104,6 +104,53 @@ The Craft dropdown items in the nav link to all 4 project pages via `window.top.
 
 Pages with content that starts near the top (`contact2d`, `about2d`, `2D.html`) have `padding-top: 90px` on `.page-wrapper` to clear the nav.
 
+### The 2D-mode raised shadow, and why it is NOT gated on `readyState === 'complete'`
+
+`.nav-island.is-2d-mode` is what turns on the nav's raised neumorphic shadow. `updateNavShadow()`
+in `top_row_permanent_V3.html` decides per page:
+- a full-bleed `.hero` **with layout** → toggle the shadow on only once scrolled past it
+  (`scrollY > hero.offsetHeight - 60`), so the nav sits transparent over the hero image;
+- **no `.hero` at all** and the parent DOM is parsed → shadow always on;
+- a `.hero` that exists but has **zero height** → stay undecided and let a later call settle it.
+  Deliberately *not* treated as "no hero": adding the shadow here would flash it on over a hero
+  image and then toggle it back off.
+
+**Only the four project pages have a `.hero`** (`vaccine2d`, `mac-lamp2d`, `kaffeemaschine2d`,
+`virtual_cooking2d`). `2D.html`, `about2d`, `contact2d` and `unify2d` have **none**, so for them the
+"no hero → always on" branch is the *only* path to a shadow.
+
+That branch used to be gated on `doc.readyState === 'complete'`, which waits for every image,
+video and iframe on the parent to finish downloading — and the hero-less pages are exactly the
+media-heavy ones. The homepage alone pulls **~16 MB** (3 videos + 2 large images: 5.3 MB
+`vaccine_render_V1.mov`, 4.9 MB `side_v1_final_V1.png`, 3.0 MB `homepage.mov`, 1.6 MB
+`coffeemachine_interface_video.mov`, 1.5 MB `IMG_3729_Snapseed.jpeg`). So the nav sat flat for
+several seconds on lucasmaher.com and then appeared to "fade in" — the fade being the existing
+`transition: box-shadow 260ms` finally running. **Localhost hid the bug completely** by serving it
+all off disk instantly.
+
+Now gated on **`readyState !== 'loading'`** (i.e. `interactive` *or* `complete`): knowing whether a
+static `.hero` exists only requires the DOM to be **parsed**, not its subresources loaded. Measured
+under 2 Mbps emulation, where the homepage's `load` event had still not fired after 20s: shadow on
+at **1.24s** (bounded only by the nav iframe's own load), and `vaccine2d.html` stayed correctly
+unshaded across all 188 samples at scroll 0.
+
+**Lesson:** a production-only timing bug that localhost cannot reproduce. `readyState` waits are a
+prime suspect whenever "it works locally but is slow/wrong on the live domain".
+
+### Mobile 3D nav no longer collapses
+
+The nav used to collapse behind the LM logo on touch devices in 3D (`.top-row.is-collapsible` /
+`.nav-island.is-collapsible` + `.is-open`, a `max-width: 60px → 100vw` slide), tapping the logo to
+open it. **All of that was removed** — the bar now stays fully open on mobile 3D like everywhere
+else. Gone: the `@media (pointer: coarse)` collapse CSS block, the logo-tap `.is-open` toggle, and
+the init that added the classes. Desktop was never affected (every removed piece was behind
+`@media (pointer: coarse)` or `navigator.maxTouchPoints > 0`).
+
+Side effect: tapping the logo on mobile 3D now falls through to the same branch desktop 3D uses —
+`window.resetScene()` — instead of toggling the bar. Historical references to
+`.nav-island.is-collapsible` further down this file (e.g. the `is-3d-view` item) describe a rule
+that **no longer exists**.
+
 ## Design system (neumorphic)
 
 Surface colour: `#DCDCE3`
@@ -148,6 +195,49 @@ The interactive coffee machine is a self-contained mini-app:
 - Embedded as an iframe inside `.machine-frame-wrap` on `kaffeemaschine2d.html`
 - The machine's own CSS caps its width: `width: min(504px, 96vw)` — changing the wrapper size alone won't resize the egg; both files need updating
 - An overlay (`#machine-overlay`) grays out the machine on load with a bouncing "[ click me ]" prompt; clicking dismisses it via JS
+
+### Sticky scroll-spin (`#spin-scrolly`, in the Design-process section)
+
+A scroll-driven 360° turntable of the finished machine, built from a **56-frame WebP sequence**
+(`/images/cybercoffee/spin/frame_001.webp` … `frame_056.webp`, ~1.4 MB total, all preloaded in a
+loop on init). Driven by `initSpin()` at the bottom of `kaffeemaschine2d.html`.
+
+Structure: `.spin-scrolly` is a tall spacer (**240vh**) whose only child `.spin-sticky` is
+`position: sticky; top: 0; height: 100vh`, so it pins while the spacer scrolls past. Progress
+`p` = `-scrolly.getBoundingClientRect().top / (offsetHeight - innerHeight)`, 0 → 1.
+
+**Desktop** splits the pinned scroll into three phases: `[0 – SPIN_END 0.55]` the machine spins a
+full turn, centred; `[SLIDE_START 0.55 – 1]` it slides centre → right; `[TEXT_START 0.82 – 1]` the
+caption fades in on the left. End state = machine right, text left.
+
+**Mobile (≤860px)** keeps the **pin** but goes stacked (machine above caption) and skips the
+slide/fade. The pin used to be switched *off* here (`height: auto` + `position: static`), which
+meant the frames still advanced but the section scrolled past mid-spin. Two things make it work:
+- `.spin-scrolly` deliberately does **not** get `height: auto` in the ≤860px block — it inherits
+  the 240vh spacer that gives the pin its scroll room.
+- `spinEnd` becomes **1** on narrow screens, so the spin uses the *whole* pinned range. Left at
+  0.55 it would finish at 55% and then hold you for another 45% on a motionless machine.
+- `.spin-sticky` uses `min-height: 100svh` (with a `100vh` fallback), not a hard `height`: the
+  stacked block is content-sized, so this centres it when it fits and grows if it doesn't instead
+  of overflowing on a short phone. `svh` so a collapsing mobile browser toolbar can't make it jump.
+
+**`prefers-reduced-motion`** collapses the whole thing to a static stacked block (`height: auto`,
+`position: static`, single frame, no spin/slide/fade). That media block sits **after** the ≤860px
+block in source order, so it still wins for a reduced-motion mobile user — keep that ordering.
+
+**Whitespace limit on mobile (open issue).** A full-viewport pin leaves visible dead space because
+the frames are **640 × 619** — essentially square — so on a 390px-wide phone the machine's *height*
+is capped by the screen's *width*. At `96%` stage width it is ~325px tall; plus the 136px caption
+that is ~473px of content in an 844px viewport, i.e. ~186px empty above **and** below. Total blank
+is fixed at `viewport − content`; you can only choose where it sits. **Shrinking `.spin-sticky`
+backfires** — it is the only child of the 240vh spacer, so any height it gives up shows as blank
+spacer *below* it during the pin, making the gap under the caption bigger. The only real levers are
+a bigger machine, or top-aligning the content so the gap moves below where the next section slides
+up into it (which also needs the progress formula adjusted, since it assumes a viewport-tall
+sticky box).
+
+Static renders for this page live alongside the frames: `01_hero_3q_duo.png`,
+`02_straight_on_widescreen.png`, `03_low_hero_egg_focus.png`, `07_custom_view.png`.
 
 ## 2D page layout patterns
 
@@ -225,6 +315,7 @@ Organized by project for clarity:
 
 **Images** (`/public/images/`):
 - `about/` — About page hero
+- `cybercoffee/` — Cybercoffee renders: `01_hero_3q_duo.png`, `02_straight_on_widescreen.png`, `03_low_hero_egg_focus.png`, `07_custom_view.png`, plus `spin/frame_001.webp`–`frame_056.webp` (~1.4 MB), the 56-frame turntable driving the sticky scroll-spin — see "Cybercoffee project". Frames are **640 × 619**, i.e. nearly square, which is what limits how large the machine can render on a phone.
 - `mac-lamp/` — Mac-Lamp project images & diashow frames. Diashow items are `5.jpg`–`9.jpg` (converted from `.HEIC` this session — HEIC only renders in Safari, so gallery images must be JPG/PNG; the original `5.HEIC`–`8.HEIC` are still on disk but unused). Process-section stills: `1.png` (CAD render) + videos `2.MOV`/`3.MOV`/`4.MOV` in `videos/mac-lamp/`
 - `portfolio/` — **orphaned.** Was "This Website" project screenshots; the page (`portfolio2d.html`) was removed this session (see "Recent Changes"). The image files are still on disk but nothing references them — safe to delete, left in place in case any of the removal was meant to be revisited.
 - `vaccine/` — Double Packaging renders & process steps
@@ -278,9 +369,70 @@ Organized by project for clarity:
 **Deployment:**
 - ✅ Live at `https://lucasmaher.com` (custom domain, HTTPS working) and `https://lucasmaher-hash.github.io/3d-Portfolio-current/` — see "Deployment" section below
 
-## Recent Changes (This Session)
+## Recent Changes (2026-07-30)
 
-Previous session's work (French removal, Unify design-story sections, hero blob, Virtual Cooking rebuild, nav dropdown, `2D.html` divider fix) is folded into the structural sections above rather than listed here — see "Languages / i18n," "Unify Page: Hero Blob Implementation," and the layout-pattern entries below.
+Detail for each of these lives in the structural sections above — "3D Mode: Lighting", "3D Mode:
+Colour gradients on geometry", "GLB export recipe", "Nav bar iframe", "Cybercoffee project". This
+list is the index; those sections are the reference.
+
+1. **3D lighting: every fixture light was 16.6 units out of place.** `Box3.setFromObject(child)`
+   reuses the parent's stale `matrixWorld`, so bboxes came back in model-local space and each room's
+   light landed outside the room. Fixed with `.add(model.position)` on both the centre *and* the
+   `pos.y` line — **not** `model.updateMatrixWorld(true)`, which also moves the spawn floor-probe
+   and ejects the camera from the scene.
+2. **`scene.environment` was the real cause of "splotchy" walls.** RoomEnvironment is not the
+   uniform flood an old comment claimed — it supplied ~55% of NewRoom's wall light and 100% of its
+   unevenness. Replaced with a genuinely uniform environment (`uniformEnvironment()`, built via
+   `fromScene`, not `fromEquirectangular`); intensity calibrated by measurement to **0.175**.
+   Horizontal spread on the reference wall: **24.4% → 2.7% of mean**, brightness held.
+3. **MainRoom's light `distance` 15 → 11.5**, after it was measured reaching 3.3 units past
+   NewRoom's near wall (walls block nothing without a shadow map).
+4. **NewRoom's fixture is now a plain PointLight, not the spot it specified.** The spot never lit
+   the room (it was one of the displaced lights), so its pool-on-the-podium look has never been on
+   the site, and an even wall was what was wanted.
+5. **Brown-room walls got a vertical floor→ceiling gradient** baked into a `WallGrad` colour
+   attribute as `COLOR_0`. Bottom stays the wall's original brown `(0.73, 0.45, 0.23)`; top travels
+   90% toward the ceiling colour → `(0.235, 0.135, 0.068)`, a 3.11× spread. **Live.**
+6. **`MATERIAL_FIXUPS` added** — per-material overrides keyed on material name, next to
+   `EMISSIVE_CLAMP`. Fixed the vaccine bottle's `label` (`metalness: 1.0 → 0`; a paper label is a
+   dielectric and a fully metallic surface has no diffuse term), then brightened label and lid via
+   `emissive`. Found along the way that **`envMapIntensity` does nothing here** (1.0 vs 6.0 →
+   byte-identical frames), so it is deliberately not used.
+7. **`grid: { x, z }` option for fixture lights.** BlueRoom's ceiling is a full-room emissive panel
+   but was lit by a single point, making one hotspot per side wall that read as two light sources.
+   Now 3×3 at `distance: 8`, total intensity conserved.
+8. **Mobile 3D nav no longer collapses** behind the logo — the `.is-collapsible` / `.is-open`
+   mechanism is gone entirely. Desktop untouched.
+9. **Homepage nav shadow was missing for seconds in production.** The "no `.hero` → shadow on"
+   branch was gated on `readyState === 'complete'`, which waits for the homepage's ~16 MB of media.
+   Now `readyState !== 'loading'`. A production-only bug localhost cannot reproduce.
+10. **Cybercoffee sticky scroll-spin now pins on mobile.** The ≤860px block was switching the pin
+    off, so the frames advanced but the section scrolled past mid-spin. Pin restored, and `spinEnd`
+    becomes 1 on narrow screens so the spin uses the whole pinned range. Verified: frames 1 → 56
+    across the pin, pin offset held at 0 throughout. Machine widened `78% → 96%`.
+    **Open:** ~186px of dead space above and below on a 390×844 phone — see "Cybercoffee project"
+    for why that is a geometric floor and what the remaining options are.
+11. **Blender file is now `severance_V21.blend`** (was `V18`). Lucas bumps the version as he works —
+    confirm with `bpy.data.filepath` rather than assuming.
+12. **Tried and reverted:** the same wall gradient on MainRoom's `Wall_Cylinder`. It exported
+    cleanly but triggered the centre-tower flicker; GLB restored from backup and the Blender bake
+    removed. Also recorded: the tower's emissive is pinned at exactly `EMISSIVE_CLAMP`, so raising
+    it in Blender alone does nothing.
+13. **Open / not done:** BlueRoom's two podium objects still read under-lit (cause diagnosed, fix
+    not applied — see end of "3D Mode: Lighting"); a horizontal-FOV fix for the 3D camera's fisheye
+    distortion was scoped but not implemented (vertical FOV 90 → **121° horizontal** at 16:9, where
+    >110° reads as fisheye).
+
+## Earlier Session Changes
+
+Kept for reference. Older work (French removal, Unify design-story sections, hero blob, Virtual
+Cooking rebuild, nav dropdown, `2D.html` divider fix) is folded into the structural sections above
+rather than listed here — see "Languages / i18n," "Unify Page: Hero Blob Implementation," and the
+layout-pattern entries.
+
+> **Note:** a few items below describe code that no longer exists — most notably
+> `.nav-island.is-collapsible` (removed, see "Nav bar iframe") and `scene.environmentIntensity = 0.22`
+> with `RoomEnvironment` (replaced, see "3D Mode: Lighting").
 
 1. **Virtual Cooking — Final result reordered.** `.result-image-pair` moved out from under "Instruction manual" to sit directly beneath the "Timer & ingredients" heading; that block now reads heading → images → caption → video.
 
@@ -458,18 +610,202 @@ All illumination is created in `src/main.js` — **the Blender scene contains ze
 
 **Knobs, in the order to reach for them:**
 1. `renderer.toneMappingExposure` (currently `0.55`) — overall brightness.
-2. `scene.environmentIntensity` (currently `0.22`) — flatness vs. contrast. `RoomEnvironment` is a bright studio-lit room acting as a full IBL on every material; at full strength it flattens everything and **no amount of trimming `AmbientLight`/`HemisphereLight` will touch it**. Raise if metals look dead.
-3. Per-room `intensity`/`color`/`angle` in the `FIXTURE_LIGHTS` table.
+2. `scene.environmentIntensity` (currently `0.175`) — the global IBL level. See "the environment must be UNIFORM" below; this is also the **only** dial that moves env-lit (metallic/transmissive) surfaces, because per-material `envMapIntensity` was measured to do nothing here.
+3. Per-room `intensity` / `color` / `distance` / `grid` / `spot` in the `FIXTURE_LIGHTS` table.
+4. Per-material `MATERIAL_FIXUPS` for a single object that reads wrong.
+
+**`scene.environment` must be UNIFORM — do not use `RoomEnvironment`.** It used to be
+`PMREMGenerator.fromScene(new RoomEnvironment())`, described in an old comment as "a perfectly
+uniform, direction-less flood". **That was wrong and cost a long debugging session.**
+RoomEnvironment is a studio-lit *box with bright emissive panels on particular faces*, so as an
+IBL its contribution tracks surface normal. On these curved walls the normal sweeps across those
+panels and paints broad bright/dim patches that track the camera and match no light in the scene.
+Measured on NewRoom's wall: it supplied **~55% of the total illumination and 100% of the
+left-to-right unevenness** (horizontal spread 24.4% of mean with it, 3.0% without).
+
+Replaced by `uniformEnvironment(0xffffff)` — a flat colour in every direction, so metals still
+have something to reflect. **Build it with `pmrem.fromScene()` on an inside-out box, NOT
+`pmrem.fromEquirectangular()` on a small `DataTexture`:** PMREM sizes its output from the source,
+so an 8×4 equirect produced a degenerate 336×8 cubeUV that emitted no light at all and silently
+made `environmentIntensity` a **no-op**. A working PMREM here is 768×1024. A flat white shell is
+also much dimmer per unit intensity than RoomEnvironment's emissive panels, so the intensity is
+**not** the old 0.22 — measured sweep 0.14/0.18/0.30/0.60/0.90 → wall mean 57.3/63.5/80.4/113.7/137.8,
+and **0.175** reproduces the original 62.8.
+
+**Diagnostic rule:** when a surface looks unevenly lit and no light explains it, set
+`scene.environmentIntensity = 0` first — it is the largest and least obvious contributor. Measure
+a horizontal luminance band profile rather than eyeballing screenshots.
 
 **`FIXTURE_LIGHTS` matches on the EMISSIVE MATERIAL name, never the mesh name.** Two hard-won reasons:
 - A Blender object with two materials (base + emissive) exports as one glTF node with two primitives, which `GLTFLoader` splits into a `Group` whose child meshes are named after Blender's **mesh-data** name plus an index — unrelated to the object name and effectively unpredictable. Measured: object `Ceiling_Cassettes` arrives as **`Ceiling004_1`**, and `NewRoom_Ceiling` arrives as **`MainRoom_Ceiling_Mesh_1`**. Exact object-name matching silently found neither.
-- Where a material is reused on non-ceiling geometry (`BlueRoom_EmissivePanel` is also on the front wall, floor and podium tops), add a mesh-name guard.
+- Where a material is reused on non-ceiling geometry (`BlueRoom_EmissivePanel` is also on the front wall, floor and podium tops), add a mesh-name guard. Without it that one room would light itself from five places at once.
 
-**Position from the geometry bounding box, not `getWorldPosition()`.** `getWorldPosition()` returns the transform *origin*, which in this scene is frequently left at the world origin while the geometry sits tens of units away — `NewRoom_Ceiling`'s origin is `(0,0,0)` but its geometry is at `(−19.5, −1.2, 5.25)`, so using the origin drops NewRoom's light into MainRoom. Also drop the light below `box.min.y`, not below the centre: the fixture slab has thickness, so centre-minus-a-nudge is still *inside* the mesh — invisible for a shadowless `PointLight`, but it makes a spot's own fixture geometry occlude its entire beam.
+**Position from the geometry bounding box, not `getWorldPosition()`.** `getWorldPosition()` returns the transform *origin*, which in this scene is frequently left at the world origin while the geometry sits tens of units away — `NewRoom_Ceiling`'s origin is `(0,0,0)` but its geometry is at `(−19.5, −1.2, 5.25)`, so using the origin drops NewRoom's light into MainRoom. Also drop the light below `box.min.y`, not below the centre (unless `atCentre`): the fixture slab has thickness, so centre-minus-a-nudge is still *inside* the mesh — invisible for a shadowless `PointLight`, but it makes a spot's own fixture geometry occlude its entire beam.
+
+**...and that bbox is in MODEL-LOCAL space, so `.add(model.position)` is load-bearing.**
+`addFixtureLights()` runs *after* `model.position.sub(center)`, but assigning `.position` does not
+recompute `model.matrixWorld`, and `Box3.setFromObject(child)` calls
+`updateWorldMatrix(false, true)` — note `updateParents = false`, so it happily reuses the
+parent's **stale** matrix. Without the offset every fixture light sat **16.6 units** from where it
+belonged (off by exactly `center` = `(4.36, 2.72, −15.81)`), outside its own room, leaving each
+room lit by whichever neighbour's displaced light happened to be in range. That read as uneven
+"splotchy" wall lighting coming from nowhere.
+
+**Do NOT "fix" that with `model.updateMatrixWorld(true)`.** The spawn floor-probe further down
+raycasts the same geometry and has *always* run against those same un-refreshed matrices — that
+is where `floorY = 0.018`, and hence the hand-tuned eye height, comes from. Refreshing the
+matrices corrects the lights and simultaneously moves the probe's answer, **ejecting the camera
+from the rooms.** This was tried; Lucas reported being outside the scene immediately.
+Gotcha within the gotcha: the `pos.y = box.min.y …` line needs `+ model.position.y` too. Missing
+it left every light 2.72 units *above* its own ceiling and the rooms dark — which reads as
+"everything got darker", not as a positioning bug.
+
+**`distance` is the containment knob.** Walls block nothing without a shadow map, so a too-large
+`distance` floods the neighbouring room. MainRoom went `15 → 11.5` (its own radius is ~10.6, so
+it still covers itself) after it was found reaching 3.3 units past NewRoom's near wall.
+
+**`grid: { x, z }` spreads one fixture's light across the anchor mesh's own footprint** — for
+fixtures that are a large emissive PANEL rather than a lamp. A single point 5 units under
+BlueRoom's 10.5 × 11.6 ceiling made one hotspot per side wall, which on those dark blue walls
+read as **two separate light sources**. Total intensity is conserved (split evenly), so room
+brightness is unchanged and only the distribution evens out; lights sit at each cell's centre
+(`(i + 0.5) / n`), which also insets them from the panel edge so none lands jammed against a wall.
+**Pair a grid with a smaller `distance`** than the single-point version, since spreading moves the
+outermost lights closer to the room boundary — BlueRoom's 3×3 at `distance: 8` reaches z 21.5 /
+x 6.4 versus the old single light's 21.4 / 6.9, i.e. slightly *less* far in every direction.
+
+**`atCentre` / `offset` / `aimAt`** (used by the PinkRoom lights): `atCentre` keeps the light at the
+bbox centre instead of dropping it to the underside — right for a free-floating body like the
+PinkRoom creature, where the underside would park the light under its feet. `offset` moves a light
+off its anchor mesh room-relative, for a light with no source geometry of its own. `aimAt` is a
+**direction, not a target point**, so it survives the model recentre; default `[0,-1,0]`
+(straight down), and PinkRoom's entrance spot uses `[1,0,0]` for a dead-horizontal wall wash.
 
 **`EMISSIVE_CLAMP = 2.0`.** Fixtures are authored in Blender at wildly inconsistent emission strengths (`NewRoom_CeilingLight_Warm` = 60, `Ceiling_Light` = 25, YellowRoom `Ceiling` = 5.5, `BlueRoom_EmissivePanel` = 1.5). Blender exports these via `KHR_materials_emissive_strength` and Three.js applies them as `material.emissiveIntensity`, so at 60 the fixture is ~18× over pure white after tone mapping and **hard-clips to a flat white disc, losing its colour entirely.** Clamping restores a bright-but-tinted glow. Small accent emissives (`Lamp_*` at 1.0, `M_Purple` at 0.18) are below the clamp and untouched.
 
+**The clamp exempts any `MATERIAL_FIXUPS` entry that sets its own `emissiveIntensity`** — and the
+exemption lives *inside* the clamp condition, not in call ordering: materials are shared across
+meshes (the centre tower alone has 3) and the clamp runs per mesh, so otherwise the next mesh
+visited would silently re-cap the fixup's value.
+
+**Centre-tower flicker — the one measure that has held.** `Tower_Upper` / `Tower_Lower` panels sit
+only **0.022** units inside their grid lattices (measured), which is the depth knife-edge the
+`camera.near` comment at the top of `main.js` describes; raising `near` 0.01 → 0.1 mitigated it
+without removing it. Per Lucas, depth-side fixes have been tried and **did not work** — what holds
+is the tower emitting its own light. But `Tower_Upper_Panel` is authored in Blender at
+`emissiveStrength 2.0`, which is **exactly** `EMISSIVE_CLAMP`, so it has **zero headroom** and any
+Blender-side increase is silently clamped straight back to 2.0. To give it more light, add a
+`'Tower_Upper_Panel': { emissiveIntensity: N }` entry to `MATERIAL_FIXUPS`. Raising it in Blender
+alone does nothing. Note also that the flicker can be *triggered* by unrelated material changes:
+giving a mesh vertex colours compiles a different shader program, which reshuffles Three.js's
+opaque draw order, and with the default `depthFunc: LessEqualDepth` whichever depth-tied surface
+draws later wins — so a stable tie can flip to a flickering one.
+
+**`MATERIAL_FIXUPS` — per-material overrides, keyed on MATERIAL name.** For one object that reads
+wrong without touching lights or the room. Current entries fix the vaccine bottle:
+- `label` — **`metalness: 1.0` is an authoring slip in the `.blend`**; a paper label is a
+  dielectric. A fully metallic surface has **no diffuse term at all**, only specular reflection of
+  the environment, so at metal 1 / rough 1 it is physically a dark rough metal — which is exactly
+  how it rendered. `metalness: 0` lifted the bottle region's mean luminance 63.8 → 73.2, p95
+  84 → 105, with zero clipped pixels. Same root cause as the cap (`blue metal`, metalness 1.0).
+- **`envMapIntensity` is deliberately NOT set.** It looks like the obvious lever for the
+  transmissive glass and the metal cap, but it was measured to do **nothing** in this scene:
+  `1.0` vs `6.0` rendered *byte-identical* frames, apparently because these materials have no
+  `envMap` of their own and inherit `scene.environment`, whose contribution is scaled by
+  `scene.environmentIntensity` instead.
+- The applier must **not** use `Object.assign`: `color` and `emissive` are `THREE.Color`
+  instances, and overwriting one with a hex number silently breaks the material. Colour-valued
+  keys go through `.set()`.
+- A `Material-Fixups:` console line logs every patch (matching the existing `Fixture-Lichter` /
+  `Clickables gefunden` style) so a silently-unmatched material name is visible rather than
+  mysterious. That log is what caught the `envMapIntensity` no-op.
+
+**Known-dark, not yet fixed:** BlueRoom's two podium objects. They are *not* short of light —
+measured illuminance 3.29 vs the brown-room bottle's 1.75, nearly 2×. The causes are
+`M_Silver_Egg` / `M_Silver_Panel` at **metalness 0.65** (little diffuse response), both objects
+being thin and vertical under a top-down light (grazing incidence), and the emissive floor
+(`BlueRoom_Floor_Panels`, strength 1.5) glowing brightly while contributing **zero** bounce
+because Three.js has no GI.
+
 **A `SpotLight` needs its `target` positioned AND added to the scene** — it defaults to the world origin, so miss either step and the cone aims sideways across the whole building with no error. Spots are the affordable way to get shadows here: one 2D shadow map versus a shadow-casting `PointLight`'s 6 cube faces. Shadows are desktop-only (`renderer.shadowMap.enabled = !isMobile`), so on phones a spot degrades to cone falloff with no contact shadow.
+
+## 3D Mode: Colour gradients on geometry (Blender → GLB)
+
+**The GLB has ZERO textures** (`images: 0, textures: 0`) — every surface is either a flat
+`baseColorFactor` or a vertex colour. So any gradient that must appear in the browser has to be
+**baked into a mesh colour attribute**. Procedural Blender node chains
+(`Texture Coordinate → Separate XYZ → Color Ramp`, `Noise`, `Voronoi`) render in Blender and export
+as **nothing**. `NewRoom_Wall_Gradient` had exactly such a chain sitting orphaned — built, never
+connected to Base Color, and unable to export even if it had been.
+
+Working recipe (used for the brown room's floor→ceiling wall gradient, live on the site):
+1. Create the colour attribute **first in `mesh.color_attributes` order** — Three.js's
+   `GLTFLoader` only reads `COLOR_0`, which is colour-attribute index 0. Existing attributes (these
+   meshes all carry a `Bleed` attribute) must be snapshotted with `foreach_get`, removed, and
+   recreated *after* the new one so they land in `COLOR_1`. Verify the restore is byte-exact.
+2. Use `type='FLOAT_COLOR'` — linear scene-referred, matching glTF's linear `COLOR_0`, so values
+   round-trip exactly. `BYTE_COLOR` is sRGB-encoded and gets converted on export.
+3. Link the Principled **Base Color** to a `ShaderNodeAttribute` reading it, and set Base Color's
+   `default_value` to **white**. The exporter then writes `baseColorFactor [1,1,1,1]` and `COLOR_0`
+   is authoritative. (White is belt-and-braces: if the node tree ever becomes something the
+   exporter can't follow, it falls back to `default_value`, and a stale coloured default would
+   silently double-darken the surface.)
+4. **Verify by test-exporting the single object** with `use_selection=True` to a **temp** path and
+   reading back `baseColorFactor` + `COLOR_0` — never by exporting over `public/current🟢.glb`.
+
+**Values above 1.0 survive export.** Confirmed: `COLOR_0` comes out as float32 and a baked 1.196
+was preserved un-clamped. That matters when the base colour is already bright and the gradient must
+go *brighter* (e.g. `Wall_White` at 0.92). Strictly the glTF spec says `COLOR_0` *should* sit in
+[0,1], so a pedantic validator may warn; Three.js renders it correctly.
+
+**Only a straight line is representable.** These wall meshes have just **3 vertex rings** — measured
+`NewRoom_Walls` at z 0 / 3.01 / 5.0 and `Wall_Cylinder` at z 0 / 3.0 / 5.0 — so a per-vertex ramp
+interpolates linearly no matter what curve is baked. Easing would need the wall subdivided
+vertically (a geometry edit).
+
+**Aside:** the exporter emits a synthetic **white** `COLOR_0` for meshes whose material uses no
+colour attribute, so untouched objects export identically before and after this kind of change. A
+white `COLOR_0` is a no-op, not a tint.
+
+**Tried and reverted: the same gradient on MainRoom's `Wall_Cylinder`.** It worked and exported
+cleanly, but it triggered the centre-tower flicker (see "3D Mode: Lighting") and was rolled back at
+Lucas's request — GLB restored from backup, the Blender bake removed, Base Color relinked to its
+authored `(0.92, 0.92, 0.90)`. If revisiting, deal with the tower's 0.022 depth knife-edge first.
+
+## GLB export recipe (two non-obvious flags)
+
+```python
+bpy.ops.export_scene.gltf(filepath=dest, export_format='GLB',
+                          use_selection=True,      # everything except Tower_*_NEWBUILD
+                          export_apply=True)       # <-- NOT the operator default
+```
+
+**`export_apply=True` is mandatory and is NOT the default.** 31 objects carry modifiers
+(`SUBSURF` ×4, `LATTICE` ×17, `BEVEL` ×7, `NODES` ×8). Exporting without it silently drops
+**36,992 triangles** — the vaccine bottle/lid lose their subdivision, the VR-panel
+`Left_StripSeg_*` lose bevel + geometry nodes, `YellowRoom_CoffeeTable` loses its geometry nodes,
+`logo-RLB` loses its lattice deform. Nothing errors; the file just comes out ~2 MB smaller. This
+shipped broken once before being caught by comparing per-mesh triangle counts against the backup.
+
+**Before exporting, pin each `SUBSURF` modifier's viewport `levels` to its `render_levels`, then
+restore.** The four bottle/lid subsurfs sit at viewport **6** / render **2**, and `export_apply`
+evaluates the *viewport* depsgraph — so exporting as-is would balloon them from ~13 k to ~1.7 M
+triangles each. Level 2 is what the known-good GLB contains.
+
+**Exclude `Tower_Lower_NEWBUILD` / `Tower_Upper_NEWBUILD`** (x ≈ 80). They were added after the last
+good export, and `src/main.js` does `model.position.sub(center)`, so including them shifts the whole
+world and invalidates the hardcoded spawn.
+
+**Always verify against a backup** (kept in `~/TEMP/glb-backups/`, **outside `public/`** — anything
+in `public/` is copied into `dist/` and deployed). With the flags above a re-export reproduces the
+previous GLB exactly: **280,139 triangles, 258,951 vertices, bbox-centre delta `[0,0,0]`** — that
+last one is the check that proves the spawn point survived. Also confirm the `CONTENT` keys still
+resolve. Known pre-existing dead key: `CONTENT['Pivot_MacLamp_Table']` matches no node, because the
+exporter collapses that empty and parents its six `*_Table` meshes straight to `SpinPivot`.
+
+The MCP call **times out** on a full-scene export while Blender is busy; the export still completes.
+Poll the output file's size/mtime from the shell instead of re-invoking, and do restore work in a
+`finally` block so it runs even when the caller has given up.
 
 ## 3D Mode: Camera Controls
 
