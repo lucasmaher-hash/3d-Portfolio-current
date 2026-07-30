@@ -166,11 +166,31 @@ const FIXTURE_LIGHTS = [
   // the theatrical downlight (and the only cast shadow in the scene) instead.
   { test: (n, mats) => mats.includes('NewRoom_CeilingLight_Warm'),
     color: 0xffc773, intensity: 42, distance: 13 },
-  // YellowRoom — warm, TWO separate ceiling panels (YellowRoom_Ceiling + .001), each
-  // ~16 x 7.7, so this intentionally matches twice and yields two lights. The grid bars
-  // use material 'Grid', not 'Ceiling', so they are excluded by the material match alone.
+  // YellowRoom — TWO separate ceiling panels (YellowRoom_Ceiling + .001), so this matches
+  // twice and yields two lights. The grid bars use material 'Grid', not 'Ceiling', so they
+  // are excluded by the material match alone.
+  //
+  // SPOTS aimed straight down (default aimAt [0,-1,0]), replacing the old omnidirectional
+  // PointLights at 45 — that pair lit floor, walls and ceiling all equally, which is why
+  // the room read as a flat gold wash. Now the glowing panels visibly throw their light
+  // DOWNWARD, like MainRoom's cassette ceiling reads: a bright pool on the (darkened)
+  // floor, walls falling off into shadow above it.
+  //   angle 0.62  — ~4.1-unit pool radius at the floor (~5.7-unit drop), roughly one
+  //                 panel's footprint each; the two pools overlap along the room's axis.
+  // Spot + centre fill, per panel. This exact configuration is the look Lucas picked
+  // after seeing the alternatives — the fill at each panel's centre gives the mid-wall
+  // its warm glow and leaves the room ends moodier, which is the drama he wants.
+  // A 2x3 grid per panel (even wash, no hotspot, ends lit) was tried and REVERTED:
+  // technically more uniform, but it flattened the room's character. Don't bring it
+  // back without asking. The lighter wall TOPS come from the baked vertex gradient
+  // (VERTEX_GRADIENTS above), not from these lights — the bake multiplies even the
+  // uniform ambient, so it lifts the tops at the room ends where these fills can't reach.
+  //   fill 14     — the mid-wall glow. The gradient's readability no longer depends on
+  //                 it, since the bake was strengthened instead.
+  //   intensity 42— the downward cones onto the (darkened) floor.
   { test: (n, mats) => mats.includes('Ceiling') && n.startsWith('YellowRoom_Ceiling'),
-    color: 0xffebc7, intensity: 45, distance: 12 },
+    color: 0xffebc7, intensity: 42, distance: 12,
+    spot: { angle: 0.62, penumbra: 0.5, fill: 14 } },
   // BlueRoom — cool blue panels, room 10.5 wide x 11.6 deep x 5.0 tall.
   // The name guard is load-bearing: BlueRoom_EmissivePanel is also on the FLOOR panels, the
   // front wall and both podium tops, so a material-only match would light this room from
@@ -330,6 +350,14 @@ const MATERIAL_FIXUPS = {
     metalness: 0.0,                 // the real fix — see above; a label is a dielectric
     emissive: 0xffffff,
     emissiveIntensity: 0.35,
+    // …but a FLAT white emissive washes the print out. The label carries the scene's only
+    // texture (`vaccine_label_fixed`, a 736x736 JPEG of blue type on white), and emissive is
+    // ADDED after shading, so a constant 0.35 lifted the dark type by exactly as much as the
+    // white paper — compressing the contrast between them. Pointing emissiveMap at the same
+    // texture modulates the glow by the image: white paper still gets the full lift (so the
+    // brightness gained earlier is kept) while the type emits ~nothing and stays dark.
+    // '@map' is a sentinel resolved in the applier below to this material's own .map.
+    emissiveMap: '@map',
   },
   'blue metal': {
     // Same root cause as the label: at metalness 1.0 the cap has NO diffuse term, so the
@@ -339,6 +367,41 @@ const MATERIAL_FIXUPS = {
     metalness: 0.30,
     emissive: 0x2a12e0,             // same blue family as its base colour (0.021, 0, 0.8)
     emissiveIntensity: 0.50,
+  },
+
+  // YellowRoom floor. First darkened to 0x453020 for the downlight look, then brought
+  // back up a step at Lucas's request once the grid lighting landed — 0x453020 read as
+  // near-black under the dimmer room. Still well below the authored mid-brown.
+  'YellowRoom_Floor_DarkBrown': {
+    color: 0x6a523e,
+  },
+
+  // The table lamp's orange body. Its base colour is BLACK at metalness 1 — every bit of
+  // orange you see is the emissive (1, 0.25, 0.02) glowing, so "darker orange" means a
+  // darker EMISSIVE, not a darker base colour, which would change nothing.
+  // emissiveIntensity is deliberately NOT set: it stays at the authored 1.0, which also
+  // keeps this entry outside the EMISSIVE_CLAMP exemption path — the colour alone does
+  // the darkening. Affects the staging-row copy too (shared material), which is fine:
+  // that copy is unreachable. The grey panels (Lamp_Grey) are untouched.
+  'Lamp_Orange': {
+    emissive: 0xc65808,
+  },
+
+  // The lamp's white parts (keyboard surround, deck, trackpad frames) -> light METALLIC
+  // grey. Same authored construction as Lamp_Orange: black base at metalness 1, all the
+  // visible "white" is emissive (0.58, 0.58, 0.58). Two changes work together:
+  //   emissive 0x9a9ea2 — the main visible shift, white -> light grey. Deliberately NOT
+  //                       set via emissiveIntensity, so the clamp path is untouched.
+  //   color 0x8e9296 + roughness 0.4 — a metal tints its reflections by its BASE colour,
+  //                       and the authored base is pure black, so this metal has never
+  //                       reflected anything. A grey base at lower roughness lets the env
+  //                       and the room's fills put a soft sheen on top of the flat
+  //                       emissive — that sheen is what reads as "metallic" rather than
+  //                       just "grey". Shared with the staging-row copy; harmless.
+  'Lamp_Grey': {
+    color: 0x8e9296,
+    roughness: 0.4,
+    emissive: 0x9a9ea2,
   },
 }
 
@@ -358,9 +421,59 @@ const MATERIAL_FIXUPS = {
 // the lamp — are what actually need contact shadows.
 const SHADOW_CASTER_MAX_SIZE = 6
 
+// ── Fake-lighting vertex gradients, baked at load ────────────────
+// Rewrites a mesh's COLOR_0 with a vertical brightness ramp: `bottom` at the lowest
+// vertex (1.0 = the authored colour, unchanged) rising to `top` at the highest. Cheaper
+// than real lighting and completely stable — same idea as the brown room's Blender-baked
+// wall gradient, but computed here at load so it needs no GLB re-export.
+//
+// Matched on MATERIAL name plus a minimum bbox height. The height guard is what keeps
+// this off small props sharing the material: 'Velvet' is also the YellowRoom coffee
+// table (0.8 units tall), and a per-mesh normalised ramp would visibly brighten its top
+// surface; the walls are 5.9 units. The ramp uses each vertex's WORLD-space height, not
+// local Y — YellowRoom_Sofa is rotated and its mirror copy has NEGATIVE scale (-2.37),
+// so local Y runs upside down on one of them and a local ramp would invert.
+//
+// Safe against the centre-tower flicker trap (see CLAUDE.md "Colour gradients"): these
+// meshes already arrive with a COLOR_0 from the exporter, so their materials are already
+// compiled with vertex colours — replacing the attribute's values changes no shader
+// program and therefore cannot reshuffle draw order. The replacement is float32 (the
+// authored attribute is normalised uint8, which cannot exceed 1.0, i.e. cannot brighten).
+const VERTEX_GRADIENTS = [
+  // YellowRoom gold walls: dark at the bench line, bright gold at the ceiling — reads as
+  // the ceiling panels washing the wall tops with light.
+  //
+  // The SPREAD is what makes a baked ramp readable, and it has to be large. A first pass
+  // used bottom 1.0 / top 1.55 and was invisible in practice: ACES tone mapping
+  // compresses a 1.55x difference to far less on screen, and the fill-light hotspots
+  // vary the wall's lit brightness by more than that on their own, drowning the ramp.
+  // The brown room's Blender-baked gradient — the one that visibly works — is a 3.11x
+  // spread; 0.7 -> 2.5 is 3.6x, pushed past it deliberately: with the spot+fill lighting
+  // Lucas chose, the room ENDS get little direct light, so the bake alone has to carry
+  // the bright-top effect there (it multiplies the uniform ambient/env light, which is
+  // why it works even where no fill reaches). `bottom` dips below 1.0, taking the wall
+  // bases darker than authored — half of what makes the top read as bright.
+  { material: 'Velvet', minHeight: 3, bottom: 0.7, top: 2.5 },
+
+  // YellowRoom floor: DRASTIC radial pool — mode 'radial' ramps by horizontal distance
+  // from the mesh's centre instead of by height. x2.4 at the room centre (under the
+  // coffee table) falling to x0.45 at the rim: a 5.3x spread, per Lucas's "very drastic".
+  // Multiplies the MATERIAL_FIXUPS base colour (0x6a523e), so re-tinting the floor there
+  // re-tints the whole pool.
+  //
+  // Unlike the walls, this mesh ships with NO COLOR_0, so applying it flips the floor
+  // material to vertexColors and recompiles its program. That is safe against the
+  // centre-tower draw-order flicker (see CLAUDE.md) even though a Blender-baked COLOR_0
+  // once triggered it: the renderer's opaque sort keys on material.id, and a load-time
+  // recompile keeps the same material instance and id — the Blender route reshuffled ids
+  // because the GLB's material creation ORDER changed, which is what moved the draw order.
+  { material: 'YellowRoom_Floor_DarkBrown', mode: 'radial', centre: 2.4, rim: 0.45 },
+]
+
 function addFixtureLights(model) {
   const seen = []
   const fixedUp = []
+  const gradApplied = []
   const _box = new THREE.Box3()
   const _size = new THREE.Vector3()
 
@@ -389,7 +502,9 @@ function addFixtureLights(model) {
         // overwriting one with a hex number silently breaks the material (the renderer
         // reads .r/.g/.b off it). Colour-valued keys have to go through .set().
         for (const [k, v] of Object.entries(fix)) {
-          if (m[k] && m[k].isColor) m[k].set(v)
+          // '@map' = "reuse this material's own base-colour texture" (see emissiveMap above).
+          if (v === '@map') m[k] = m.map || null
+          else if (m[k] && m[k].isColor) m[k].set(v)
           else m[k] = v
         }
         m.userData._fixedUp = true
@@ -406,7 +521,91 @@ function addFixtureLights(model) {
     child.receiveShadow = true
     child.castShadow = Math.max(_size.x, _size.y, _size.z) < SHADOW_CASTER_MAX_SIZE
 
+    // Fake-lighting gradient (see VERTEX_GRADIENTS above). Runs here because this
+    // traversal has already computed the mesh's bbox, and setFromObject has refreshed
+    // child.matrixWorld (model-local frame — fine: the ramp is normalised per mesh, so
+    // the recentre offset cancels out).
+    const grad = VERTEX_GRADIENTS.find(gr =>
+      mats.some(m => m && m.name === gr.material) && _size.y > (gr.minHeight ?? 0))
+    if (grad && !child.geometry.userData._gradApplied) {
+      const radial = grad.mode === 'radial'
+      // radial mode ramps by horizontal distance from the mesh's own centre (same
+      // model-local frame as the matrixWorld-transformed vertices below).
+      const cx = (box.min.x + box.max.x) / 2
+      const cz = (box.min.z + box.max.z) / 2
+      const posAttr = child.geometry.attributes.position
+      const v = new THREE.Vector3()
+      const ys = new Float32Array(posAttr.count)   // per-vertex key: height, or radius
+      let yMin = Infinity, yMax = -Infinity
+      for (let i = 0; i < posAttr.count; i++) {
+        v.fromBufferAttribute(posAttr, i).applyMatrix4(child.matrixWorld)
+        const k = radial ? Math.hypot(v.x - cx, v.z - cz) : v.y
+        ys[i] = k
+        if (k < yMin) yMin = k
+        if (k > yMax) yMax = k
+      }
+      const span = Math.max(yMax - yMin, 1e-6)
+      // vertical: bottom value at yMin -> top value at yMax.
+      // radial:   centre value at radius 0 -> rim value at max radius.
+      const fFrom = radial ? grad.centre : grad.bottom
+      const fTo   = radial ? grad.rim    : grad.top
+      // Keep the existing attribute's itemSize (4 = RGBA on these GLB meshes): the
+      // USE_COLOR_ALPHA shader define depends on it, and changing it would compile a
+      // new program — the exact thing this approach is built to avoid.
+      const old = child.geometry.attributes.color
+      const itemSize = old ? old.itemSize : 3
+      const out = new Float32Array(posAttr.count * itemSize)
+      for (let i = 0; i < posAttr.count; i++) {
+        const f = fFrom + (fTo - fFrom) * ((ys[i] - yMin) / span)
+        out[i * itemSize] = f
+        out[i * itemSize + 1] = f
+        out[i * itemSize + 2] = f
+        if (itemSize === 4) out[i * itemSize + 3] = 1
+      }
+      child.geometry.setAttribute('color', new THREE.BufferAttribute(out, itemSize))
+      for (const m of mats) {
+        if (m && !m.vertexColors) { m.vertexColors = true; m.needsUpdate = true }
+      }
+      child.geometry.userData._gradApplied = true
+      gradApplied.push(`${child.name} ${radial ? 'radial' : 'vertical'} ` +
+                       `${yMin.toFixed(1)}..${yMax.toFixed(1)} ${fFrom}->${fTo}`)
+    }
+
     const matNames = mats.filter(Boolean).map(m => m.name)
+
+    // ── Vaccine label: the UV map has u and v swapped ────────────────
+    // The label band is a ring ~6.31 around x ~2.0 tall, i.e. aspect ~3.15:1, and its texture
+    // is square (736x736). A correct wrap therefore needs u spanning the full 1.0 (around the
+    // bottle) and v spanning 1/3.15 = ~0.32 (up it). The authored UVs are the exact opposite —
+    // u 0..0.32, v 0..1 — so the right aspect was computed but assigned to the wrong axes, and
+    // the print renders rotated 90° (reading bottom-to-top). The texture image itself is
+    // stored upright; only the mapping is wrong.
+    //
+    // It must be a proper 90° ROTATION, `(u, v) -> (1 - v, u)`, NOT the bare swap
+    // `(u, v) -> (v, u)`. A swap is a transpose — a reflection about the u=v diagonal, with
+    // determinant -1 — so it lands the text horizontally but MIRRORED ("Menu" renders as
+    // "unǝM"). Tried it; that is exactly what happened. Negating the new u turns the
+    // reflection back into a rotation. The `1 - v` also keeps u' in 0..1 and v' in 0..0.32,
+    // so the band still shows the top of the poster.
+    //
+    // TEMPORARY: the real fix is to rotate the UV map in Blender and re-export — this is
+    // authoring data, not a rendering concern. Doing it here because Blender was not open.
+    // REMOVE this block once the .blend is fixed, or the label will end up sideways again.
+    if (matNames.includes('label') && child.geometry) {
+      const uv = child.geometry.attributes.uv
+      // Guard on the GEOMETRY, not the mesh: both bottle instances (`label` and
+      // `label_Podest`) can reference the same buffer, and rotating twice would undo it.
+      if (uv && !child.geometry.userData._labelUvRotated) {
+        for (let i = 0; i < uv.count; i++) {
+          const u = uv.getX(i), v = uv.getY(i)
+          uv.setXY(i, 1 - v, u)
+        }
+        uv.needsUpdate = true
+        child.geometry.userData._labelUvRotated = true
+        fixedUp.push(`label UV rotated 90° on ${child.name} (${uv.count} verts)`)
+      }
+    }
+
     const spec = FIXTURE_LIGHTS.find(f => f.test(child.name, matNames))
     if (!spec) return
 
@@ -544,6 +743,7 @@ function addFixtureLights(model) {
     seen.push(`${child.name} ${kind} @ ${pos.x.toFixed(1)},${pos.y.toFixed(1)},${pos.z.toFixed(1)}`)
   })
   console.log(`Material-Fixups: ${fixedUp.length} — ${fixedUp.join(' | ')}`)
+  console.log(`Vertex-Gradients: ${gradApplied.length} — ${gradApplied.join(' | ')}`)
   console.log(`Fixture-Lichter: ${seen.length} — ${seen.join(' | ')}`)
   if (seen.length === 0) {
     console.warn('Keine Fixture-Lichter gefunden — Mesh-Namen im GLB haben sich geändert? ' +
@@ -772,7 +972,17 @@ const CONTENT = {
   'bottle_body_Podest': { title: 'Double Packaging', url: '/vaccine2d.html' },        // bottle on NewRoom_Podium
   'bottle_body':        { title: 'Double Packaging', url: '/vaccine2d.html' },        // second bottle instance (Pivot_Bottle)
   'Pivot_MacLamp':       { title: 'Mac-Lamp',         url: '/mac-lamp2d.html' },
-  'Pivot_MacLamp_Table': { title: 'Mac-Lamp',         url: '/mac-lamp2d.html' },
+  // The lamp on the YellowRoom coffee table. There is NO 'Pivot_MacLamp_Table' key any
+  // more because that node does not exist in the GLB: the exporter collapses the empty
+  // and parents these six meshes directly to SpinPivot (verified in the glTF node tree).
+  // The old key matched nothing, which is exactly why the table lamp silently stopped
+  // being clickable. Keyed per MESH instead — the only naming that survives the export.
+  'Base_Orange_Table':          { title: 'Mac-Lamp', url: '/mac-lamp2d.html' },
+  'VerticalPlate_Orange_Table': { title: 'Mac-Lamp', url: '/mac-lamp2d.html' },
+  'KB_Grey_Panel_Table':        { title: 'Mac-Lamp', url: '/mac-lamp2d.html' },
+  'Back_Grey_Panel_Table':      { title: 'Mac-Lamp', url: '/mac-lamp2d.html' },
+  'Trackpad_Back_Grey_Table':   { title: 'Mac-Lamp', url: '/mac-lamp2d.html' },
+  'Trackpad_Front_Grey_Table':  { title: 'Mac-Lamp', url: '/mac-lamp2d.html' },
   'egg-rig':             { title: 'Cybercoffee',      url: '/kaffeemaschine2d.html' }, // Pivot_Kaffeemaschine's mesh parent
   'Pivot_UNify':         { title: 'Unify',            url: '/unify2d.html' },
   'Pivot_VRPanel':       { title: 'Virtual Cooking',  url: '/virtual_cooking2d.html' },

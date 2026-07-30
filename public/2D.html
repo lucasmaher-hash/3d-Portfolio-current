@@ -449,6 +449,17 @@
       .project-tile.tile-tall-media { aspect-ratio: 1064 / 1104; }  /* Cybercoffee */
       .project-tile.tile-xl-media   { aspect-ratio: 688 / 1406; }   /* Unify */
 
+      /* Unify only: 25% smaller on mobile. Its video is by far the tallest of the
+         five (688 x 1406 — nearly 1:2), so at full column width it ran ~800px tall
+         on a 390px phone and dwarfed every other card. Shrinking the TILE rather
+         than the <video> is what keeps this clean: aspect-ratio derives the height
+         from the width, so one number takes both dimensions to 75% and the tile
+         box stays wrapped tightly around the video — sizing the video down inside
+         a full-width tile would have left the tile's own dead space behind it.
+         The wrapping <a> stays full width, so `margin: 0 auto` is what re-centres
+         the narrower tile under the title. */
+      .project-tile.tile-xl-media   { width: 75%; margin: 0 auto; }
+
       /* Cybercoffee's video has #D7D7DE (215,215,222) baked in behind the machine
          while the page is #DCDCE3 (220,220,227) — a uniform +5 per channel. Once the
          video fills the tile edge to edge (ratio match above) that 5-level step meets

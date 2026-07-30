@@ -153,6 +153,10 @@
       will-change: cx, cy;
     }
 
+    /* Body extension is mobile-only — hidden here so desktop keeps the original
+       silhouette, viewBox, height and position untouched. */
+    .blob-ext { display: none; }
+
     .hero-header {
       position: relative;
       z-index: 2;
@@ -534,10 +538,18 @@
       #top-bar.hide { transform: translateY(-90px); }
       .section { padding: 24px 20px; }
       .guide-section { padding: 32px 20px; }
-      /* min-height deliberately unchanged — .hero-header is bottom-aligned in
-         .hero-top, so this is what fixes the header's position. Don't touch it
-         when resizing the blob. */
-      .hero-top { padding: 0 20px; min-height: clamp(420px, 92vw, 560px); }
+      /* .hero-header is bottom-aligned in .hero-top, so this min-height is what
+         sets the header's position — and therefore everything below it.
+         It grows by the blob's extension MINUS 14px, so the content moves down
+         with the longer body but slightly less than it, which tightens the gap
+         under the legs from ~28px to ~18px at 390px. The extension term is the
+         same expression used for .hero-blob's `top` below; keep the two in sync. */
+      .hero-top {
+        padding: 0 20px;
+        min-height: calc(clamp(420px, 92vw, 560px)
+                         + 0.3935 * (clamp(420px, 92vw, 560px) - 100px)
+                         - 8px);
+      }
       /* Blob was clamp(400px, 108vw, 620px) = 421px at 390px wide, and with
          top: -30px its bottom edge landed at 392px — 74px past the header's top
          (319px), so it covered the breadcrumb and most of the "Unify" title.
@@ -551,7 +563,23 @@
          taller than at phone widths — a constant offset can't track that, so it
          has to cover the tallest header. Clearance measures +29px at 390px down
          to +4px at 640px; at 84px it was +12px on phones but -13px at 640. */
-      .hero-blob { height: calc(clamp(420px, 92vw, 560px) - 100px); left: 66.667%; transform: translateX(-50%); top: -30px; }
+      /* Body elongated 40% — see the .blob-ext path in the SVG. The element's
+         height and therefore the shape's SCALE are unchanged; the extra length is
+         drawn above the viewBox, so it would grow the blob UPWARD and the legs
+         would not move. Pushing the element down by exactly the extension length
+         is what converts that into downward growth: the pink top edge lands back
+         where it was (it bleeds off-page either way) while the eyes and legs move
+         down by the full 326.6 units.
+         0.3935 = 326.6 / 830 — the extension in viewBox units over the viewBox
+         height — so multiplying by the element height converts it to pixels and
+         tracks the blob at every width instead of being a fixed px nudge. */
+      .blob-ext { display: inline; }
+      .hero-blob {
+        height: calc(clamp(420px, 92vw, 560px) - 100px);
+        left: 66.667%;
+        transform: translateX(-50%);
+        top: calc(-30px + 0.3935 * (clamp(420px, 92vw, 560px) - 100px));
+      }
       .project-title { font-size: clamp(32px, 9vw, 56px); }
       .meta-grid { grid-template-columns: 1fr 1fr; gap: 11px; }
       .meta-tile { padding: 8px; gap: 8px; height: 155px; min-height: 0; }
@@ -929,7 +957,67 @@
 
     @media (max-width: 640px) {
       .process-section { padding: 24px 20px; }
-      .typography-card { padding: 16px 12px; }
+
+      /* ── Typography panels: one line per pill ──────────────────────────────
+         Spec (size · weight) on the LEFT, the big Nunito word on the RIGHT.
+         The @media 860 block above stacks this card into a centred column, which
+         is what put the text on two lines; this restores a row.
+
+         The big word is .typography-label — it already reads "Header" / "Body
+         text" / "Info text" and is already translated, so promoting it to the
+         sample means NO markup and NO TRANSLATIONS change, and desktop keeps its
+         own layout and its sample phrases untouched. .typography-preview (the
+         phrase) is hidden instead.
+
+         Each card's weight is an inline style on that now-hidden .typography-
+         preview (800 / 700 / 300), so it is re-applied to the label by position
+         below — otherwise every row would render at the same weight and stop
+         being a specimen of the weight it names. */
+      .typography-card {
+        padding: 16px 12px;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        text-align: left;
+        gap: 12px;
+        /* was clamp(120px, 14vw, 160px), sized for the two-line stack */
+        min-height: 72px;
+      }
+
+      .typography-preview { display: none; }
+
+      .typography-info {
+        flex: 1;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .typography-spec {
+        order: 1;
+        white-space: nowrap;
+      }
+
+      /* The "·" divider separated label from spec while both sat together on the
+         left. With the label moved to the far right it is orphaned in front of
+         "72px", reading as "· 72px · bold". */
+      .typography-spec::before { content: none; }
+
+      .typography-label {
+        order: 2;
+        font-family: 'Nunito', sans-serif;
+        font-size: clamp(20px, 6.5vw, 30px);
+        line-height: 1;
+        white-space: nowrap;
+      }
+
+      /* Weights carried over from each card's hidden .typography-preview. Sized
+         to fit the longest German label ("Überschrift") next to its spec without
+         wrapping — see the measurement in the reply. */
+      .typography-card:nth-child(1) .typography-label { font-weight: 800; }
+      .typography-card:nth-child(2) .typography-label { font-weight: 700; }
+      .typography-card:nth-child(3) .typography-label { font-weight: 300; }
       .character-row,
       .character-row.right,
       .character-row.indent { flex-direction: column; align-items: flex-start; gap: 16px; }
@@ -967,9 +1055,24 @@
       .meta-inset { font-size: 15px; }
       /* VT323 UI labels */
       .breadcrumb,
-      .project-nav-label,
-      .project-nav-number,
       .color-swatch-code { font-size: 16px; }
+
+      /* Project nav — mobile only. The project TITLE under the label is hidden, so
+         the footer reads just "NEXT >>" and the number. It is dropped rather than
+         shrunk because the destination is already named by the big title at the top
+         of the page you land on, and at 390px the OCR-A-BT title wrapped to two
+         lines inside a box that was mostly empty anyway.
+         With the title gone the label/number pair is the only content left, so it
+         takes the primary (near-black) text colour instead of the secondary grey and
+         a step up in size. It is NOT in the 16px VT323 group above any more: that
+         size was calibrated for a secondary label sitting BELOW a title, which is no
+         longer the relationship. min-height drops from clamp(160px, 18vw, 220px) —
+         160px at phone widths — to 84px, which is the ~70px the remaining content
+         actually occupies (24px padding x2 + one ~22px line) plus a little air. */
+      .project-nav-title { display: none; }
+      .project-nav-label,
+      .project-nav-number { font-size: 18px; color: var(--text-primary); }
+      .project-nav { min-height: 84px; }
     }
 
     /* Comma carriers inserted before each <br> in the meta values by the script at
@@ -1057,6 +1160,115 @@
       .meta-inset br { display: none; }
       .meta-sep { display: inline; }
     }
+    /* ── Mobile layout repairs ─────────────────────────────────────────────────
+       Three sections were genuinely broken at phone widths. Appended last so each
+       fix wins on source order; every rule here is inside the media query, so
+       desktop is untouched. */
+    @media (max-width: 640px) {
+
+      /* 1. COLOUR PALETTE — swatches were rendering 75x58px, right-aligned.
+         Cause: .color-grid is a row with `align-items: flex-end` (to bottom-align
+         swatches of unequal height). The @media 860 block flips it to
+         `flex-direction: column`, and in a column `align-items` controls the
+         CROSS axis — so flex-end stopped meaning "bottom" and started meaning
+         "right", while each box shrank to its content width instead of filling.
+         Three swatches side by side is also the better read for a palette, so
+         this restores the row rather than fixing the column. */
+      .color-grid {
+        flex-direction: row;
+        align-items: stretch;
+        gap: 12px;
+        margin-bottom: 32px;
+      }
+
+      .color-box { flex: 1 1 0; min-width: 0; }
+
+      .color-swatch {
+        /* 1.83/1 is a wide desktop chip; at ~103px per column that collapses to a
+           thin bar, so square reads as a proper swatch. */
+        aspect-ratio: 1 / 1;
+        border-radius: 20px;
+        padding: 10px;
+        align-items: flex-end;
+        justify-content: center;
+      }
+
+      /* 2. CHARACTERS — .character-copy measured 367px inside a 350px column,
+         pushing text past the page edge. Cause: the paragraphs carry inline
+         `margin-left: -15px` / `margin-right: -15px`, which tuck the text against
+         the figure in the desktop ROW layout. At <=640px the row becomes a
+         column, so those negative margins pull the text sideways out of the
+         container instead. !important is required — they are inline styles. */
+      .character-copy {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+      }
+
+      /* 3. TIMETABLE/SOCIALS SCROLLY — was the worst of the three: the sticky row
+         stayed `row-reverse` on mobile, which squeezed .scrolly-copy and both its
+         panels to ZERO width and pushed the videos 46px off the left edge, over a
+         2917px-tall section.
+         Cause is specificity, not a missing rule: the mobile fallback sets
+         `.scrolly-sticky { flex-direction: column }` (0,1,0) but the mirrored
+         layout is declared as `#timetable-socials-scrolly .scrolly-sticky`
+         (1,0,1), so the ID rule kept winning inside the media query. The sibling
+         #nav-friends-scrolly has no ID-level direction rule, which is exactly why
+         it stacked correctly and this one did not.
+         Re-stating both at ID strength is what actually overrides them. */
+      #timetable-socials-scrolly .scrolly-sticky {
+        flex-direction: column;
+      }
+
+      #timetable-socials-scrolly .scrolly-media {
+        margin-left: 0;
+        margin-right: 0;
+      }
+
+      /* 3b. …and give both scrolly sections a layout that actually suits a phone.
+         The <=860px fallback stands the two phones SIDE BY SIDE and then stacks
+         both captions underneath. At 390px that leaves each phone ~175px wide —
+         narrower than the app UI inside it is legible at — and it divorces each
+         caption from the screenshot it describes. Two phones at 175px also
+         overflow the 350px column once the gap is counted, which is what pushed
+         the second video's frame past its own clip.
+         Instead, pair each video with its own caption, exactly like the
+         single-video Home and Settings sections above and below.
+         `display: contents` dissolves the two wrapper divs so their children
+         become direct flex items of the column, and `order` interleaves them —
+         no markup change, so desktop's row layout is untouched. */
+      .scrolly-media,
+      .scrolly-copy { display: contents; }
+
+      .scrolly-vid:nth-child(1)   { order: 1; }
+      .scrolly-panel:nth-child(1) { order: 2; }
+      .scrolly-vid:nth-child(2)   { order: 3; }
+      .scrolly-panel:nth-child(2) { order: 4; }
+
+      /* The column is align-items: stretch, so without this the box spans the
+         full width and the video sits hard against the left edge. */
+      .scrolly-vid { align-self: center; }
+
+      /* Same ramp as .feature-media video, so all six phone mockups on the page
+         render at one size. Both rules needed: the active/inactive size split is
+         a desktop affordance and there is no active step down here. */
+      .scrolly-vid video,
+      .scrolly-vid.is-active video { height: clamp(416px, 78vh, 598px); }
+
+      /* The 860px fallback's 24px panel gap now lands between a video and its own
+         caption, which should be the tight pair; the breathing room belongs
+         before the NEXT video instead. */
+      .scrolly-panel + .scrolly-panel { margin-top: 0; }
+      .scrolly-vid:nth-child(2) { margin-top: 28px; }
+
+      /* 4. CHARACTERS — the figures are locked to a 130px minimum, which above a
+         350px-wide paragraph read as an afterthought rather than the subject of
+         the section. Bigger, and the desktop stagger is kept alive by alternating
+         which edge each figure hangs off instead of by horizontal offsets (which
+         a single-column layout has no room for). */
+      .character-figure { width: 150px; }
+      .character-row.right  .character-figure { align-self: flex-end; }
+      .character-row.indent .character-figure { align-self: center; }
+    }
   </style>
 </head>
 <body>
@@ -1081,7 +1293,20 @@
     <div class="hero-top">
       <svg id="unify-blob" class="hero-blob" viewBox="-10 -65 760 830" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
         <path d="M323.21 756.493C234.412 756.11 213.731 661.375 202.306 549.236C199.532 554.819 196.622 560.291 193.579 565.6C178.334 592.198 142.361 636.09 118.884 632.259C3.27708 608.835 31.0147 384.119 25.2783 265.741C25.2772 -86 -6.99887 -60 202.306 -60L429.004 -60C709.5 -55 694.991 -102 694.991 171.552C703.989 276.413 668.813 333.55 601.172 349.148C612.796 465.829 649.858 629.358 560.806 710.631C539.425 730.443 513.556 736.463 489.14 727.269C450.275 712.108 432.59 675.002 413.366 627.06C391.475 696.237 375.125 738.926 323.21 756.493Z" fill="#FF88C8"/>
-        <circle cx="266.586" cy="324.744" r="168.5" fill="#fff"/>
+        <!-- Mobile-only body extension (hidden by default; see .blob-ext).
+           Draws ONLY the band inserted between the original top cap and a copy of
+           that cap translated up by 326.6 units (= 40% of the 816.5-unit body).
+           Its bottom boundary is the original top cap traced in reverse, so the
+           union with the body path above is seamless — nothing is scaled, so the
+           eyes and legs keep their exact size.
+           The two straight sides are exact, not approximations: the body path
+           leaves (25.2783, 265.741) with its control point at x=25.2772 and
+           arrives at (694.991, 171.552) from x=694.991, i.e. both junctions are
+           already vertical, so length can be inserted there with no kink.
+           Coordinates run above the viewBox top (-65) and render only because
+           .hero-blob sets overflow: visible. -->
+      <path class="blob-ext" d="M25.2783 265.741L25.2783 -60.859C25.2772 -412.6 -6.99887 -386.6 202.306 -386.6L429.004 -386.6C709.5 -381.6 694.991 -428.6 694.991 -155.048L694.991 171.552C694.991 -102 709.5 -55 429.004 -60L202.306 -60C-6.99887 -60 25.2772 -86 25.2783 265.741Z" fill="#FF88C8"/>
+      <circle cx="266.586" cy="324.744" r="168.5" fill="#fff"/>
         <circle cx="574.086" cy="324.744" r="168" fill="#fff"/>
         <circle id="unify-pupil-l" cx="223.086" cy="425.744" r="52.5" fill="#292925"/>
         <circle id="unify-pupil-r" cx="530.586" cy="425.744" r="52.5" fill="#292925"/>
@@ -1592,6 +1817,26 @@
       if (steps.length < 2) return;
       let current = steps[0];
 
+      // Below 860px the CSS fallback drops the sticky pin and shows BOTH videos
+      // and BOTH captions at once, so there is no "active" step left to swap to.
+      // Leaving the scroll logic running there did two visible things wrong: it
+      // paused whichever video wasn't active, so one phone sat on a frozen frame
+      // beside a playing one; and with .scrolly at height:auto the progress
+      // fraction (scrollY - top) / max(offsetHeight - innerHeight, 1) divides by
+      // that 1px floor, so it snapped 0 -> 1 in a single scroll step instead of
+      // easing. Desktop is unaffected — this branch cannot match there.
+      const stacked = window.matchMedia('(max-width: 860px)');
+
+      function showAll() {
+        vids.forEach(v => {
+          v.classList.add('is-active');
+          const video = v.querySelector('video');
+          if (video) video.play().catch(() => {});
+        });
+        panels.forEach(p => p.classList.add('is-active'));
+        current = null;   // so a resize back up to desktop re-applies step 1
+      }
+
       function setActive(step) {
         if (step === current) return;
         current = step;
@@ -1607,13 +1852,15 @@
         panels.forEach(p => p.classList.toggle('is-active', p.dataset.step === step));
       }
 
-      // pause whichever video isn't active on load
-      vids.forEach(v => {
-        if (!v.classList.contains('is-active')) {
-          const video = v.querySelector('video');
-          if (video) video.pause();
-        }
-      });
+      // pause whichever video isn't active on load (desktop only — see `stacked`)
+      if (!stacked.matches) {
+        vids.forEach(v => {
+          if (!v.classList.contains('is-active')) {
+            const video = v.querySelector('video');
+            if (video) video.pause();
+          }
+        });
+      }
       function metrics() {
         const rect = scrolly.getBoundingClientRect();
         const top = rect.top + window.scrollY;
@@ -1625,19 +1872,22 @@
         if (ticking) return;
         ticking = true;
         requestAnimationFrame(() => {
+          ticking = false;
+          if (stacked.matches) { showAll(); return; }
           const { top, total } = metrics();
           const p = Math.min(Math.max((window.scrollY - top) / total, 0), 1);
           setActive(p < 0.5 ? steps[0] : steps[1]);
-          ticking = false;
         });
       }
       window.addEventListener('scroll', onScroll, { passive: true });
       window.addEventListener('resize', onScroll);
+      stacked.addEventListener('change', onScroll);
       onScroll();
 
       // click a video → scroll to that step's position (which also flips state)
       vids.forEach(v => {
         v.addEventListener('click', () => {
+          if (stacked.matches) return;   // both are already shown; nothing to swap to
           const { top, total } = metrics();
           const p = v.dataset.step === steps[0] ? 0.15 : 0.85;
           window.scrollTo({ top: Math.round(top + p * total), behavior: 'smooth' });

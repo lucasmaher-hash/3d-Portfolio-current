@@ -833,9 +833,24 @@
       /* short but real content, kept below body size */
       .meta-inset { font-size: 15px; }
       /* VT323 UI labels */
-      .breadcrumb,
+      .breadcrumb { font-size: 16px; }
+
+      /* Project nav — mobile only. The project TITLE under the label is hidden, so
+         the footer reads just "NEXT >>" / "<< PREVIOUS" and the number. It is dropped
+         rather than shrunk because the destination is already named by the big title
+         at the top of the page you land on, and at 390px the OCR-A-BT title wrapped to
+         two lines inside a box that was mostly empty anyway.
+         With the title gone the label/number pair is the only content left, so it
+         takes the primary (near-black) text colour instead of the secondary grey and
+         a step up in size. It is NOT in the 16px VT323 group above any more: that
+         size was calibrated for a secondary label sitting BELOW a title, which is no
+         longer the relationship. min-height drops from clamp(160px, 18vw, 220px) —
+         160px at phone widths — to 84px, which is the ~70px the remaining content
+         actually occupies (24px padding x2 + one ~22px line) plus a little air. */
+      .project-nav-title { display: none; }
       .project-nav-label,
-      .project-nav-number { font-size: 16px; }
+      .project-nav-number { font-size: 18px; color: var(--text-primary); }
+      .project-nav { min-height: 84px; }
     }
     /* Comma carriers inserted before each <br> in the meta values by the script at
        the bottom of this file. Hidden by default so DESKTOP is untouched — it keeps

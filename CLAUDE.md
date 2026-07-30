@@ -720,6 +720,24 @@ wrong without touching lights or the room. Current entries fix the vaccine bottl
   `Clickables gefunden` style) so a silently-unmatched material name is visible rather than
   mysterious. That log is what caught the `envMapIntensity` no-op.
 
+**The vaccine label's UVs are rotated — currently patched in CODE, not in the `.blend`.**
+The label is the scene's **only texture** (`vaccine_label_fixed`, a 736×736 JPEG; everything else
+is flat colours or vertex colours). The band is ~6.31 around × ~2.0 tall, aspect ~3.15:1, so a
+correct wrap on a square texture needs `u` spanning 1.0 (around the bottle) and `v` spanning
+1/3.15 ≈ 0.32 (up it). The authored UVs are exactly the opposite — `u 0..0.32, v 0..1` — i.e. the
+right aspect assigned to the wrong axes, so the print rendered rotated 90°. **The texture image
+itself is stored upright; only the mapping is wrong.**
+
+`addFixtureLights()` rotates the UVs at load as a stopgap, keyed on the material name `label`.
+It must be a proper rotation `(u, v) → (1 - v, u)`, **not** the bare swap `(u, v) → (v, u)`: a
+swap is a transpose, i.e. a reflection with determinant −1, which lands the text horizontal but
+**mirrored** ("Menu" renders as "unǝM"). That was tried and is exactly what happened.
+The guard flag lives on the **geometry**, not the mesh, since both bottle instances can share a
+buffer and rotating twice would undo it.
+
+**If the UV map is ever fixed in Blender, DELETE that block** — otherwise the load-time rotation
+applies on top of a now-correct map and the label goes sideways again.
+
 **Known-dark, not yet fixed:** BlueRoom's two podium objects. They are *not* short of light —
 measured illuminance 3.29 vs the brown-room bottle's 1.75, nearly 2×. The causes are
 `M_Silver_Egg` / `M_Silver_Panel` at **metalness 0.65** (little diffuse response), both objects
