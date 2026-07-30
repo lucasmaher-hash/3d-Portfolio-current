@@ -443,17 +443,14 @@ const VERTEX_GRADIENTS = [
   // YellowRoom gold walls: dark at the bench line, bright gold at the ceiling — reads as
   // the ceiling panels washing the wall tops with light.
   //
-  // The SPREAD is what makes a baked ramp readable, and it has to be large. A first pass
-  // used bottom 1.0 / top 1.55 and was invisible in practice: ACES tone mapping
-  // compresses a 1.55x difference to far less on screen, and the fill-light hotspots
-  // vary the wall's lit brightness by more than that on their own, drowning the ramp.
-  // The brown room's Blender-baked gradient — the one that visibly works — is a 3.11x
-  // spread; 0.7 -> 2.5 is 3.6x, pushed past it deliberately: with the spot+fill lighting
-  // Lucas chose, the room ENDS get little direct light, so the bake alone has to carry
-  // the bright-top effect there (it multiplies the uniform ambient/env light, which is
-  // why it works even where no fill reaches). `bottom` dips below 1.0, taking the wall
-  // bases darker than authored — half of what makes the top read as bright.
-  { material: 'Velvet', minHeight: 3, bottom: 0.7, top: 2.5 },
+  // NOTE: the YellowRoom WALL gradient is no longer here — it is BAKED IN BLENDER now
+  // (2026-07-30, at Lucas's request, as an end-to-end pipeline test). The walls' material
+  // was split to 'Velvet_WallGrad' (the coffee table keeps plain 'Velvet' — the recipe
+  // sets Base Color to white, which would have turned the shared table white), and a
+  // 'WallGrad' FLOAT_COLOR attribute at index 0 carries velvet x0.10 (floor) -> x3.5
+  // (ceiling), a deliberately extreme 35x spread. See CLAUDE.md "Colour gradients on
+  // geometry" for the recipe. A runtime 'Velvet' entry here would match nothing now and
+  // must not be re-added — it would overwrite the baked COLOR_0 at load.
 
   // YellowRoom floor: DRASTIC radial pool — mode 'radial' ramps by horizontal distance
   // from the mesh's centre instead of by height. x2.4 at the room centre (under the

@@ -841,6 +841,21 @@
       .meta-inset br { display: none; }
       .meta-sep { display: inline; }
     }
+
+    /* ══ Mobile content pass ═══════════════════════════════════════════
+       PHONES ONLY — see the identical block on the other project pages.
+       Desktop is untouched: everything is inside max-width: 640px.
+
+       ONE COLUMN, ONE WIDTH: every media block shares the content
+       column's left/right edges. This page has no .stagger-row in its
+       markup (the class exists in the stylesheet but is unused), so only
+       the still/figure blocks need it. The sticky scroll-spin above keeps
+       its own mobile sizing — it is a pinned full-width stage, not a
+       block in this column. */
+    @media (max-width: 640px) {
+      .process-shot,
+      .guide-media { width: 100%; margin-left: 0; margin-right: 0; }
+    }
   </style>
 </head>
 <body>

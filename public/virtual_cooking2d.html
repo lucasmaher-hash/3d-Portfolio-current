@@ -778,6 +778,24 @@
       .meta-inset br { display: none; }
       .meta-sep { display: inline; }
     }
+
+    /* ══ Mobile content pass ═══════════════════════════════════════════
+       PHONES ONLY — see the identical block on the other project pages.
+       Desktop is untouched: everything is inside max-width: 640px.
+
+       ONE COLUMN, ONE WIDTH. .stagger-figure was 234px on a 390px screen
+       while the .process-shot stills around it filled the full 350px
+       content column; that mix of edges is what made the page read as a
+       squeezed desktop layout. All media now shares the column's edges.
+       .result-image-pair is already single-column at this width. */
+    @media (max-width: 640px) {
+      .stagger-figure { width: 100%; }
+      .stagger-row,
+      .stagger-row.right,
+      .stagger-row.indent { gap: 20px; }
+      .process-shot,
+      .guide-media { width: 100%; margin-left: 0; margin-right: 0; }
+    }
   </style>
 </head>
 <body>

@@ -508,6 +508,16 @@
         gap: 28px; padding: 32px 20px;
       }
       .scrolly-media { justify-content: center; margin-left: 0; }
+      /* The mirrored desktop layout is declared at ID strength
+         (#timetable-socials-scrolly .scrolly-sticky, specificity 1,0,1), so the
+         plain `.scrolly-sticky { flex-direction: column }` above (0,1,0) lost to
+         it and this one section stayed row-reverse for the whole stacked band —
+         which squeezed .scrolly-copy and both its panels to ZERO width and pushed
+         the videos off the left edge. Sibling #nav-friends-scrolly has no
+         ID-level direction rule, which is why only this one broke.
+         Restating at ID strength is what actually overrides it. */
+      #timetable-socials-scrolly .scrolly-sticky { flex-direction: column; }
+      #timetable-socials-scrolly .scrolly-media { margin-left: 0; margin-right: 0; }
       .scrolly-vid video,
       .scrolly-vid.is-active video { height: clamp(360px, 64vw, 460px); }
       .scrolly-copy { min-height: 0; }
@@ -1205,26 +1215,14 @@
       }
 
       /* 3. TIMETABLE/SOCIALS SCROLLY — was the worst of the three: the sticky row
-         stayed `row-reverse` on mobile, which squeezed .scrolly-copy and both its
-         panels to ZERO width and pushed the videos 46px off the left edge, over a
-         2917px-tall section.
-         Cause is specificity, not a missing rule: the mobile fallback sets
-         `.scrolly-sticky { flex-direction: column }` (0,1,0) but the mirrored
-         layout is declared as `#timetable-socials-scrolly .scrolly-sticky`
-         (1,0,1), so the ID rule kept winning inside the media query. The sibling
-         #nav-friends-scrolly has no ID-level direction rule, which is exactly why
-         it stacked correctly and this one did not.
-         Re-stating both at ID strength is what actually overrides them. */
-      #timetable-socials-scrolly .scrolly-sticky {
-        flex-direction: column;
-      }
+         stayed `row-reverse`, which squeezed .scrolly-copy and both its panels to
+         ZERO width and pushed the videos 46px off the left edge, over a
+         2917px-tall section. It is a specificity bug, and it affected the whole
+         stacked band rather than just phones, so the fix lives in the
+         @media (max-width: 860px) fallback block further up — see the comment
+         there. What follows is layout, not repair.
 
-      #timetable-socials-scrolly .scrolly-media {
-        margin-left: 0;
-        margin-right: 0;
-      }
-
-      /* 3b. …and give both scrolly sections a layout that actually suits a phone.
+         3b. Give both scrolly sections a layout that actually suits a phone.
          The <=860px fallback stands the two phones SIDE BY SIDE and then stacks
          both captions underneath. At 390px that leaves each phone ~175px wide —
          narrower than the app UI inside it is legible at — and it divorces each

@@ -705,6 +705,29 @@
       .meta-inset br { display: none; }
       .meta-sep { display: inline; }
     }
+
+    /* ══ Mobile content pass ═══════════════════════════════════════════
+       PHONES ONLY. Every rule below sits inside max-width: 640px, so the
+       desktop layout is untouched — and the desktop shrink-cap
+       (@media hover:hover and pointer:fine { min-width: 860px }) holds real
+       mouse/trackpad windows at 860px content width regardless.
+
+       ONE COLUMN, ONE WIDTH. Measured on a 390px screen before this pass:
+       a .stagger-figure rendered 234px wide while the .process-shot still
+       directly below it filled the whole 350px content column. Two
+       competing left/right edges in the same scroll is the single thing
+       that made these pages read as a desktop layout squeezed down rather
+       than a mobile layout. Every media block now shares the content
+       column's edges, so the only horizontal rhythm left is the page
+       gutter itself — which is what the hero and the dot-dividers already
+       align to. Last in the stylesheet so it wins on source order. */
+    @media (max-width: 640px) {
+      .stagger-figure { width: 100%; }
+      .stagger-row,
+      .stagger-row.right { gap: 20px; }
+      .process-shot,
+      .guide-media { width: 100%; margin-left: 0; margin-right: 0; }
+    }
   </style>
 </head>
 <body>

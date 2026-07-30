@@ -937,6 +937,41 @@
       .meta-inset br { display: none; }
       .meta-sep { display: inline; }
     }
+
+    /* ══ Mobile content pass ═══════════════════════════════════════════
+       PHONES ONLY — see the identical block on the other project pages.
+       Desktop is untouched: everything is inside max-width: 640px.
+
+       ONE COLUMN, ONE WIDTH: every media block shares the content
+       column's left/right edges. */
+    @media (max-width: 640px) {
+      .process-shot,
+      .guide-media { width: 100%; margin-left: 0; margin-right: 0; }
+
+      /* The dual-video scrolly was the one hard overflow on any project
+         page. At <=860px the pin is already off and the block goes static,
+         but .lamp-scrolly-media stayed a flex ROW while each video kept
+         height: clamp(345px, 73.6vw, 460px) — 73.6vw is only 287px at this
+         width so the 345px floor won, giving two 194x345 portrait clips
+         plus a 16px gap = 404px inside a 390px viewport. Measured: the
+         second video ran from x 203 to x 397, i.e. 7px off-screen.
+         Stacking them full-width fixes the overflow and makes each clip
+         actually legible instead of thumbnail-sized. */
+      .lamp-scrolly-media {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 16px;
+      }
+      .lamp-scrolly-vid { width: 100%; }
+      .lamp-scrolly-vid video,
+      .lamp-scrolly-vid.is-active video {
+        width: 100%;
+        height: auto;   /* portrait clips size from the column, not a vh floor */
+      }
+
+      /* 35px measured — under the 44px minimum tap target. */
+      .gallery-thumb { width: 44px; }
+    }
   </style>
 </head>
 <body>
