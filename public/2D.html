@@ -412,7 +412,7 @@
         flex-direction: column;
         gap: 16px;
         /* 60px top/bottom (24px originally, then 44px): with the section stacked
-           as title > image > pills, this padding is what separates the title
+           as image > title > pills, this padding is what separates the image
            from the divider above it and the pills from the divider below, so it
            sets the breathing room between projects. Horizontal stays 20px. */
         padding: 60px 20px;
@@ -424,16 +424,18 @@
         display: contents;
       }
 
-      /* Uniform stacking for every project: title, then media, then the four tags.
-         The title is order -1, NOT the media at order 1 — and that is load-bearing.
-         Two DOM shapes exist here: three projects wrap the tile in an <a> (so the <a>
-         is the flex item, at default order 0, and an order on .project-tile never
-         applies) while Mac-Lamp and Double Packaging have .project-tile as the direct
-         child. Since the wrapping <a> can't be reached through .project-tile, the media
-         is pinned at 0 for both shapes and the title has to go BELOW it. Ordering the
-         media to 1 instead would move only the two direct-child tiles and leave the
-         other three above the title. */
-      .project-title-block { order: -1; }
+      /* Uniform stacking for every project: media, then title, then the four tags.
+         The MEDIA is what stays pinned at 0 and the other two move around it — that is
+         load-bearing. Two DOM shapes exist here: three projects wrap the tile in an <a>
+         (so the <a> is the flex item, at default order 0, and an order on .project-tile
+         never applies) while Mac-Lamp and Double Packaging have .project-tile as the
+         direct child. Since the wrapping <a> can't be reached through .project-tile,
+         order 0 is the only value the media reliably holds in BOTH shapes — for the
+         wrapped ones it is the <a>'s default, for the direct ones it is set explicitly
+         below. So image-first is expressed by pushing the title to 1, never by giving
+         the media a negative order, which would move only the two direct-child tiles
+         and leave the other three unchanged. */
+      .project-title-block { order: 1; }
       .project-tags        { order: 2; gap: 5px; }
       .project-tile        { order: 0; width: 100%; aspect-ratio: 16/10; }
 

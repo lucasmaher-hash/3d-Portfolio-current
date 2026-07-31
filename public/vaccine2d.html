@@ -923,6 +923,16 @@
       .guide-section .dot-divider,
       .section .dot-divider { margin-bottom: 12px; }
       b.kw { color: #4a4a52; }
+
+      /* The scroll-progress marker is a fixed 5px column of orange dots at the right
+         edge. Over the pale page it reads as a quiet indicator; over THIS page's tall
+         black hero it reads as a bright vertical line down the side of the render.
+         It also travels with scroll, which is why it was reported as "hard to capture
+         on a screenshot" — a static seam would have photographed fine.
+         Hidden while the hero is still underneath it, faded back in once you scroll
+         past. Scoped to mobile: desktop keeps the marker as designed. */
+      #scroll-track { transition: opacity 220ms ease; }
+      #scroll-track.over-hero { opacity: 0; }
       /* The At-a-Glance lead reads as the project's one-paragraph pitch — full
          primary ink, no partial highlights (they were unwrapped from this key). */
       .glance-lead { color: var(--text-primary); }
@@ -1019,7 +1029,7 @@
           </div>
           <div class="stagger-copy">
             <span class="step-heading" data-i18n="step1-heading">Modeling</span>
-            <p class="guide-text" data-i18n-html="step1-text">The vial body modeled from a single profile, lathed and edge-loop-tightened around the cap. Cap separated as its own object so it could be UV-unwrapped cleanly for the label band. Subdivision surface kept on for the final render to round the silhouette without losing the printed-grade ribs at the base.</p>
+            <p class="guide-text" data-i18n-html="step1-text">The vial body modeled from a single profile and lathed, with the cap split off as its own object so it could be UV-unwrapped cleanly for the label band.</p>
           </div>
         </div>
 
@@ -1039,7 +1049,7 @@
           </div>
           <div class="stagger-copy">
             <span class="step-heading" data-i18n="step3-heading">Vacuum Sim</span>
-            <p class="guide-text" data-i18n-html="step3-text">The payoff of the simulation: the bag pulled taut and wrinkled exactly like real shrink-wrap, sucked down tight around the bottle. 192 baked frames, with frame 90 picked as the hero.</p>
+            <p class="guide-text" data-i18n-html="step3-text">The payoff of the simulation: the bag pulled taut and wrinkled exactly like real shrink-wrap, sucked down tight around the bottle.</p>
           </div>
         </div>
 
@@ -1066,7 +1076,7 @@
         </div>
         <div class="stagger-copy">
           <span class="step-heading" data-i18n="step5-heading">Rendering</span>
-          <p class="guide-text" data-i18n-html="step5-text">A look at the render setup itself — Cycles output configured at 1920×1400 with a single key light at 6500K, denoised in the compositor before any of the final angles were picked.</p>
+          <p class="guide-text" data-i18n-html="step5-text">Cycles output configured at 1920×1400 with a single key light at 6500K, denoised in the compositor before any of the final angles were picked.</p>
         </div>
       </div>
     </div>
@@ -1241,11 +1251,11 @@
         'glance-lead': 'A Blender exercise in presenting a 3D object in a way you could never actually photograph: a bottle vacuum-sealed inside a zip bag, shrink-wrapped tight and rendered from an angle no real vacuum bag could hold still for. This project became the basis for the render approach I later used on Cybercoffee.',
         'section-process': 'Process',
         'process-intro': 'This started as a Blender exercise — practice at presenting a 3D object in a way that actually shows it off, and it became the basis for how I later approached the Cybercoffee render. Credit for the idea goes to <b class="kw">Intranetgirl</b>, whose tutorial I followed to get started. The point of doing it in 3D specifically: you can\'t actually photograph a vacuum bag suspended mid-rotation like this — in real life it just sits flat on a surface. Rendering it let the bag hang and turn <b class="kw">the way gravity never would</b>, around an equally unusual pairing: a bottle, vacuum-sealed inside a zip bag.',
-        'step1-heading': 'Modeling', 'step1-text': 'The vial body modeled from a <b class="kw">single profile</b>, lathed and edge-loop-tightened around the cap. Cap separated as its own object so it could be UV-unwrapped cleanly for the label band. <b class="kw">Subdivision surface</b> kept on for the final render to round the silhouette without losing the printed-grade ribs at the base.',
+        'step1-heading': 'Modeling', 'step1-text': 'The vial body modeled from a <b class="kw">single profile</b> and lathed, with the cap split off as its own object so it could be UV-unwrapped cleanly for the label band.',
         'step2-heading': 'Topology', 'step2-text': 'Bag subdivided to ~250k tris — enough resolution for the <b class="kw">cloth sim</b> to resolve fine wrinkles where the plastic suctions onto the bottle without exploding into noise.',
-        'step3-heading': 'Vacuum Sim', 'step3-text': 'The payoff of the simulation: the bag pulled taut and wrinkled <b class="kw">exactly like real shrink-wrap</b>, sucked down tight around the bottle. 192 baked frames, with <b class="kw">frame 90 picked as the hero</b>.',
+        'step3-heading': 'Vacuum Sim', 'step3-text': 'The payoff of the simulation: the bag pulled taut and wrinkled <b class="kw">exactly like real shrink-wrap</b>, sucked down tight around the bottle.',
         'step4-heading': 'Shading', 'step4-text': 'Bag mixes <b class="kw">Transparent BSDF</b> for clarity, Translucent BSDF for the milky scatter on the bunched areas, and Glossy with IOR-driven Fresnel for the <b class="kw">wet plastic highlights</b>.',
-        'step5-heading': 'Rendering', 'step5-text': 'A look at the render setup itself — Cycles output configured at 1920×1400 with a <b class="kw">single key light at 6500K</b>, denoised in the compositor before any of the final angles were picked.',
+        'step5-heading': 'Rendering', 'step5-text': 'Cycles output configured at 1920×1400 with a <b class="kw">single key light at 6500K</b>, denoised in the compositor before any of the final angles were picked.',
         'section-final-render': 'Final Render',
         'nav-prev': '<< PREVIOUS', 'nav-next': 'NEXT >>',
       },
@@ -1257,14 +1267,14 @@
         'label-role': 'Rolle', 'val-role': '3D-Designer',
         'label-skills': 'Werkzeuge', 'val-skills': 'Blender · Cycles<br/>Tuchsimulation<br/>Material-Shading',
         'section-glance': 'Auf einen Blick',
-        'glance-lead': 'Eine Blender-Übung, bei der ein 3D-Objekt so präsentiert wird, wie man es nie tatsächlich fotografieren könnte: eine Flasche, vakuumversiegelt in einem Druckverschlussbeutel, straff geschrumpft und aus einem Winkel gerendert, den kein echter Vakuumbeutel je halten würde. Dieses Projekt wurde später zur Grundlage für den Rendering-Ansatz bei Cybercoffee.',
+        'glance-lead': 'Eine Blender-Übung: ein 3D-Objekt so zeigen, wie man es nie fotografieren könnte — eine Flasche, vakuumversiegelt im Druckverschlussbeutel, straff geschrumpft, aus einem Winkel, den kein echter Beutel je hielte. Später wurde daraus der Rendering-Ansatz für Cybercoffee.',
         'section-process': 'Prozess',
-        'process-intro': 'Das begann als Blender-Übung — Praxis darin, ein 3D-Objekt wirkungsvoll zu präsentieren, und wurde später zur Grundlage für mein Cybercoffee-Rendering. Die Idee stammt von <b class="kw">Intranetgirl</b>, deren Tutorial ich als Ausgangspunkt nutzte. Der Grund für 3D: Einen Vakuumbeutel, der so mitten in der Drehung schwebt, kann man in echt nicht fotografieren — er liegt sonst einfach flach. Das Rendering ließ ihn hängen und drehen, <b class="kw">wie es Schwerkraft nie erlauben würde</b>, um eine Flasche, vakuumversiegelt in einem Druckverschlussbeutel.',
-        'step1-heading': 'Modellierung', 'step1-text': 'Der Fläschchenkörper wurde <b class="kw">aus einem Profil</b> modelliert, gedreht und mit Edge Loops um den Deckel verdichtet. Der Deckel wurde als eigenes Objekt getrennt, um sauber für die Etikettenbahn UV-entfaltet zu werden. <b class="kw">Subdivision Surface</b> blieb aktiv, um die Silhouette abzurunden, ohne die Rippen an der Basis zu verlieren.',
+        'process-intro': 'Angefangen hat das als Blender-Übung: Wie zeigt man ein 3D-Objekt so, dass es wirklich zur Geltung kommt? Daraus wurde später die Grundlage für mein Cybercoffee-Rendering. Die Idee stammt von <b class="kw">Intranetgirl</b>, deren Tutorial mir als Ausgangspunkt diente. Warum 3D: Einen Vakuumbeutel, der mitten in der Drehung schwebt, kann man gar nicht fotografieren — er liegt sonst flach auf dem Tisch. Im Rendering hängt und dreht er sich so, <b class="kw">wie die Schwerkraft es nie zulassen würde</b> — um eine Flasche, vakuumversiegelt im Druckverschlussbeutel.',
+        'step1-heading': 'Modellierung', 'step1-text': 'Der Fläschchenkörper entstand <b class="kw">aus einem einzigen Profil</b>, am Drehpunkt rotiert — der Deckel als eigenes Objekt abgetrennt, damit er sich sauber für das Etikett entfalten ließ.',
         'step2-heading': 'Topologie', 'step2-text': 'Der Beutel wurde auf ~250k Tris unterteilt — ausreichend Auflösung, damit die <b class="kw">Tuchsimulation</b> feine Falten dort auflösen kann, wo sich der Kunststoff an die Flasche saugt, ohne in Rauschen zu eskalieren.',
-        'step3-heading': 'Vakuumsimulation', 'step3-text': 'Das Ergebnis der Simulation: Der Beutel zieht sich stramm und faltet sich <b class="kw">genau wie echte Schrumpffolie</b>, fest um die Flasche gesaugt. 192 gebackene Frames, <b class="kw">Frame 90 als Hero</b> ausgewählt.',
+        'step3-heading': 'Vakuumsimulation', 'step3-text': 'Das Ergebnis der Simulation: Der Beutel zieht sich stramm und faltet sich <b class="kw">genau wie echte Schrumpffolie</b>, fest um die Flasche gesaugt.',
         'step4-heading': 'Shading', 'step4-text': 'Der Beutel kombiniert <b class="kw">Transparent BSDF</b> für Klarheit, Translucent BSDF für die milchige Streuung an den gewellten Bereichen und Glossy mit IOR-gesteuertem Fresnel für die <b class="kw">glänzenden Kunststoffhöhepunkte</b>.',
-        'step5-heading': 'Rendering', 'step5-text': 'Ein Blick auf das Render-Setup selbst — Cycles-Ausgabe konfiguriert auf 1920×1400 mit einem <b class="kw">einzelnen Key-Licht bei 6500K</b>, im Compositor entrauscht, bevor die finalen Winkel ausgewählt wurden.',
+        'step5-heading': 'Rendering', 'step5-text': 'Cycles-Ausgabe konfiguriert auf 1920×1400 mit einem <b class="kw">einzelnen Key-Licht bei 6500K</b>, im Compositor entrauscht, bevor die finalen Winkel ausgewählt wurden.',
         'section-final-render': 'Finales Rendering',
         'nav-prev': '<< ZURÜCK', 'nav-next': 'WEITER >>',
       }
@@ -1545,5 +1555,28 @@
     })();
   </script>
 
+  <script>
+    // Hide the scroll-progress dots while the black hero is behind them (see the
+    // #scroll-track.over-hero rule). Compared in VIEWPORT coordinates: the marker is
+    // position:fixed and the hero scrolls past it, so a page-coordinate comparison
+    // would be wrong. The class is toggled at all widths and does nothing on desktop,
+    // where the CSS rule that acts on it is not in scope.
+    (function () {
+      var track = document.getElementById('scroll-track');
+      var thumb = document.getElementById('scroll-thumb');
+      var hero  = document.querySelector('.hero');
+      if (!track || !thumb || !hero) return;
+      var ticking = false;
+      function sync() {
+        ticking = false;
+        track.classList.toggle('over-hero',
+          hero.getBoundingClientRect().bottom > thumb.getBoundingClientRect().top);
+      }
+      function onScroll() { if (!ticking) { ticking = true; requestAnimationFrame(sync); } }
+      window.addEventListener('scroll', onScroll, { passive: true });
+      window.addEventListener('resize', onScroll);
+      sync();
+    })();
+  </script>
 </body>
 </html>

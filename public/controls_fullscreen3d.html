@@ -9,7 +9,7 @@
   <title>Controls</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&family=VT323&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet" />
   <style>
     @font-face {
       font-family: 'OCR-A-BT';
@@ -64,47 +64,6 @@
       font-size: clamp(36px, 4vw, 56px);
       color: var(--text-primary);
       letter-spacing: 6px;
-    }
-
-    /* Title and concept line share ONE baseline-aligned row.
-       flex-wrap is the safety valve: at narrow desktop widths the panel gives only
-       ~380px of content box, where the two simply cannot fit side by side, so the
-       lead drops to its own line instead of overflowing a panel that is
-       overflow: hidden. Above that it stays on the title's line as intended. */
-    .header-row {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: baseline;
-      gap: clamp(12px, 1.6vw, 24px);
-    }
-
-    /* The concept line. "You can walk around in here" is the one thing the scene
-       cannot say about itself, and a visitor who misses it just stands still — so
-       it is worth stating once, in the first thing they see.
-       Deliberately folded into THIS panel instead of getting a screen of its own:
-       the loader already gates the scene once, and a second full-screen step before
-       any work is visible is where people leave. One screen, both jobs.
-       nowrap so the sentence never breaks mid-phrase — it is either beside the
-       title or beneath it, whole. That is also why the copy is a short phrase and
-       not the full instruction: the "click an object" half is already the INSPECT
-       card's job, and a sentence long enough to repeat it could never hold a line. */
-    .header-lead {
-      font-size: clamp(14px, 1.25vw, 18px);
-      line-height: 1.45;
-      color: var(--text-secondary);
-      white-space: nowrap;
-    }
-
-    /* Explanatory copy is NOT the pixel face. VT323 stays on the panel chrome (the
-       start hint, the key caps) and OCR-A-BT keeps the title, but anything the
-       visitor actually reads for meaning gets a proportional face: VT323 has a small
-       x-height and 1px strokes, which is precisely wrong at the 12px the card
-       descriptions run at. Note VT323 reads ~2-3px smaller than a proportional font
-       at the same declared size, so these sizes were re-checked after the swap. */
-    .header-lead,
-    .card-title,
-    .card-description {
-      font-family: 'Roboto', system-ui, -apple-system, sans-serif;
     }
 
     .header-divider {
@@ -392,13 +351,7 @@
 <body>
   <div class="panel">
     <div class="header">
-      <div class="header-row">
-        <h1 class="header-title" data-i18n="intro-title">WELCOME</h1>
-        <!-- No pointer/touch split here any more: the phrase no longer says
-             "click"/"tap", so one string serves both. The INSPECT card below
-             already carries that instruction in the right wording. -->
-        <p class="header-lead" data-i18n="intro-lead">A walkable portfolio exhibition</p>
-      </div>
+      <h1 class="header-title" data-i18n="controls-title">CONTROLS</h1>
       <hr class="header-divider" />
     </div>
 
@@ -500,8 +453,7 @@
     (function () {
       var T = {
         de: {
-          'intro-title': 'WILLKOMMEN',
-          'intro-lead': 'Eine begehbare Portfolio-Ausstellung',
+          'controls-title': 'STEUERUNG',
           'move-title': 'BEWEGEN', 'move-desc': 'W, A, S, D oder Pfeiltasten, um durch die Szene zu laufen',
           'move-desc-touch': 'Joystick (unten links) ziehen, um durch die Szene zu laufen',
           'camera-title': 'KAMERA', 'camera-desc': 'Rechtsklick oder Trackpad, um die Kamera zu bewegen',
@@ -513,8 +465,7 @@
           'start-hint-touch': '[ tippe irgendwo, um zu starten ]'
         },
         en: {
-          'intro-title': 'WELCOME',
-          'intro-lead': 'A walkable portfolio exhibition',
+          'controls-title': 'CONTROLS',
           'move-title': 'MOVE', 'move-desc': 'W, A, S, D or arrow keys to walk the scene',
           'move-desc-touch': 'Drag the joystick (bottom left) to walk the scene',
           'camera-title': 'CAMERA', 'camera-desc': 'Rightclick or trackpad to move camera',
