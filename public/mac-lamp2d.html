@@ -125,7 +125,7 @@
       color: var(--text-secondary);
     }
 
-    .title-row { display: flex; align-items: flex-end; gap: 12px; }
+    .title-row { display: flex; align-items: baseline; gap: 12px; }
 
     .project-title {
       font-family: 'OCR-A-BT', monospace;
@@ -140,11 +140,19 @@
       50%, 100% { opacity: 0; }
     }
 
+    /* Sits ON the text baseline like a full stop. An empty flex item has no baseline
+       of its own, so one is synthesised from its bottom edge — with margin-bottom 0
+       that edge IS the dot's bottom, so it lands on the baseline at ANY heading size.
+       The old align-items: flex-end + margin-bottom: 12px aligned to the LINE BOX
+       bottom instead, and the gap from there down to the baseline is the font's
+       descent, which scales with font-size — so one fixed value could only ever be
+       right at one size. Measured: 7.8px BELOW the baseline on the 96px desktop
+       heading, 4.2px ABOVE it on the 35px mobile one. */
     .accent-dot {
       width: 16px; height: 16px;
       border-radius: 50%;
       background: var(--accent-orange);
-      margin-bottom: 12px;
+      margin-bottom: 0;
       flex-shrink: 0;
       animation: blink 1.5s step-end infinite;
     }

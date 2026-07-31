@@ -195,7 +195,7 @@
       color: var(--text-secondary);
     }
 
-    .title-row { display: flex; align-items: flex-end; gap: 12px; }
+    .title-row { display: flex; align-items: baseline; gap: 12px; }
 
     .project-title {
       font-family: 'OCR-A-BT', monospace;
@@ -210,11 +210,19 @@
       50%, 100% { opacity: 0; }
     }
 
+    /* Sits ON the text baseline like a full stop. An empty flex item has no baseline
+       of its own, so one is synthesised from its bottom edge — with margin-bottom 0
+       that edge IS the dot's bottom, so it lands on the baseline at ANY heading size.
+       The old align-items: flex-end + margin-bottom: 12px aligned to the LINE BOX
+       bottom instead, and the gap from there down to the baseline is the font's
+       descent, which scales with font-size — so one fixed value could only ever be
+       right at one size. Measured: 7.8px BELOW the baseline on the 96px desktop
+       heading, 4.2px ABOVE it on the 35px mobile one. */
     .accent-dot {
       width: 16px; height: 16px;
       border-radius: 50%;
       background: var(--accent-orange);
-      margin-bottom: 12px;
+      margin-bottom: 0;
       flex-shrink: 0;
       animation: blink 1.5s step-end infinite;
     }
@@ -536,14 +544,22 @@
         display: flex; flex-direction: column; align-items: center; gap: 18px;
       }
       .spin-copy { position: static; transform: none; opacity: 1; width: 100%; order: 2; }
-      /* 96% not 78%: the frames are 640x619, i.e. nearly square, so width is what
-         drives height here. At 78% the machine was only 264px tall and the stacked
-         block came to 418px inside an 844px pinned box — 213px of dead space above
-         AND below it. Widening to 96% is the only real lever: shrinking the pinned
-         box instead BACKFIRES, because the sticky element is the only child of the
-         240vh spacer, so whatever height it gives up shows as blank spacer below it
-         during the pin — making the gap under the caption bigger, not smaller. */
-      .spin { position: static; transform: none; width: min(520px, 96%); order: 1; }
+      /* The frames are 640x619 — nearly square — so WIDTH is what drives the
+         machine's height, and that height is what decides how much dead space is
+         left above and below it inside the pinned box.
+         `calc(100% + 40px)` lets the machine ALONE break out of the section's
+         20px gutter and run edge to edge: the stage is only 350px wide at a
+         390px viewport, so this buys back the full 390 and takes the machine
+         from 325px to 377px tall — 26px less blank above and below. The caption
+         is deliberately NOT broken out; it keeps the gutter, so body text never
+         touches the screen edge.
+         That is the whole lever. Blank inside a pin is `viewport - content`, and
+         the content cannot grow any other way: the frames are already tightly
+         cropped (measured across the turn: only 6% empty margin horizontally,
+         4.5% vertically), and shrinking the pinned box BACKFIRES, because the
+         sticky element is the only child of the 240vh spacer, so whatever height
+         it gives up reappears as blank spacer below it during the pin. */
+      .spin { position: static; transform: none; width: min(520px, calc(100% + 40px)); order: 1; }
       .spin-stage { gap: 12px; }
     }
 

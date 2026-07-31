@@ -135,7 +135,7 @@
 
     .title-row {
       display: flex;
-      align-items: flex-end;
+      align-items: baseline;
       gap: 12px;
     }
 
@@ -152,12 +152,20 @@
       50%, 100% { opacity: 0; }
     }
 
+    /* Sits ON the text baseline like a full stop. An empty flex item has no baseline
+       of its own, so one is synthesised from its bottom edge — with margin-bottom 0
+       that edge IS the dot's bottom, so it lands on the baseline at ANY heading size.
+       The old align-items: flex-end + margin-bottom: 12px aligned to the LINE BOX
+       bottom instead, and the gap from there down to the baseline is the font's
+       descent, which scales with font-size — so one fixed value could only ever be
+       right at one size. Measured: 7.8px BELOW the baseline on the 96px desktop
+       heading, 4.2px ABOVE it on the 35px mobile one. */
     .accent-dot {
       width: 16px;
       height: 16px;
       border-radius: 50%;
       background: var(--accent-orange);
-      margin-bottom: 12px;
+      margin-bottom: 0;
       flex-shrink: 0;
       animation: blink 1.5s step-end infinite;
     }
@@ -785,18 +793,20 @@
        gutter itself — which is what the hero and the dot-dividers already
        align to. Last in the stylesheet so it wins on source order. */
     @media (max-width: 640px) {
-      /* 70% = the requested -30%. These two figures are product renders of a small
-         vial on a flat background, so at the full column width the subject reads as
-         oversized — it fills the phone the way the hero does.
-         No margin/alignment needed to push it left: .stagger-row is a column with
-         align-items: flex-start at this width, so a narrower box stays pinned to the
-         content column's LEFT edge on its own. Shrinking it IS what moves it left.
-         A considered exception to the "ONE COLUMN, ONE WIDTH" note above — the left
-         edge still lines up with every other block and only the right edge comes up
-         short, and it was the mismatched LEFT edges that made these pages read as a
-         squeezed desktop layout. Component-level on purpose, so the Modeling and
-         Vacuum-Sim figures stay the same size as each other. */
-      .stagger-figure { width: 70%; }
+      /* Default stays the full content column — that is what the ONE COLUMN, ONE
+         WIDTH note above is about, and it applies to the Vacuum-Sim figure. */
+      .stagger-figure { width: 100%; }
+      /* Opt-in -30%, currently only on the Modeling render. That one is a tall
+         PORTRAIT shot of a small vial, so at full width it towered over the phone
+         the way the hero does; the near-square Vacuum-Sim render beside it reads
+         fine full-width, which is why this is a modifier rather than a change to
+         the component.
+         No margin or alignment needed to push it left: .stagger-row is a column
+         with align-items: flex-start at this width, so a narrower box pins itself
+         to the content column's LEFT edge. Shrinking it IS what moves it left.
+         A class, not :nth-of-type — these process steps have been reordered before,
+         and a positional selector would silently retarget the wrong image. */
+      .stagger-figure.is-compact { width: 70%; }
       .stagger-row,
       .stagger-row.right { gap: 20px; }
       .process-shot,
@@ -831,20 +841,21 @@
       .hero {
         aspect-ratio: 4 / 5;
 
-        /* 45px of black added ABOVE the video, extending the frame rather than
+        /* 92px of black added ABOVE the video, extending the frame rather than
            eating into it — the video keeps its full 4/5 box and is pushed down,
            clearing the nav bar.
 
-           45 is derived, not eyeballed. Sampling 14 frames across the 8s clip,
+           92 is derived, not eyeballed. Sampling 14 frames across the 8s clip,
            the topmost non-black content (the string the bag hangs from) sits at
            10.7% of the frame height at its highest — it never reaches the frame
            edge, so cropping was never the problem. With the video box at
            390x488 on a 390px screen, that content lands at
            heroTop(1) + band + 0.107*488, and the nav island's bottom is at y=80.
-           At the first attempt's 20px band that put it at y=73 — 7px UNDER the
-           bar, which is the clipping that was reported. 45px puts it at y=98,
-           clear by 18px, and it still clears at 360px (y=94) and 430px (y=101),
-           since the island's own top is a flat 20px across that range.
+           The 20px first attempt put it at y=73 — 7px UNDER the bar. 45px did
+           clear, but by only 18px (y=98), which still read as crowding the nav
+           on the device. 92px puts it at y=144, i.e. 64px of air, and holds
+           across the range (360px -> y=140, 430px -> y=150) because the
+           island's bottom is a flat y=80 at every width.
 
            A border, not padding, and content-box, not the inherited border-box.
            Both are load-bearing:
@@ -859,12 +870,38 @@
            The colour has to be restated because a border cannot inherit the
            element's background — keep it equal to .hero's background above. */
         box-sizing: content-box;
-        border-top: 45px solid #000;
+        border-top: 92px solid #000;
+
+        /* ...and a matching band BELOW, because the bag is flush with the bottom of
+           its own frame. Measured over 14 frames of the 8s clip, the render's content
+           spans 10.9%..99.4% of the source height — so there are ~53px of black above
+           it inside the video box and only ~3px below. That was always true; widening
+           the top band just made the asymmetry impossible to miss, and the bag started
+           reading as cropped. object-fit: cover cannot help — the source is 1920x1400
+           (1.371) in a 4/5 box, so cover matches HEIGHTS and crops the sides; the full
+           frame height is already on screen and there is no hidden bottom to reveal.
+           61px of padding puts 64px of black under the bag, echoing the 64px of air
+           the top band was derived for.
+           padding, NOT border, on this side: .hero's border-bottom is the 1px divider
+           against the page below, and a black border here would replace it. Padding
+           sits inside the element so the hero's own black background fills it, and
+           with content-box the 4/5 ratio still describes the video area — so the video
+           keeps its full 488px height rather than being squeezed. */
+        padding-bottom: 61px;
       }
 
       .hero video {
-        width: 100%;
-        height: 100%;
+        /* 80%, not 100% — the render sat too large in the frame. Both axes take the
+           same factor and the hero's content box is 4/5, so the video box stays 4/5
+           (312x390 at a 390px screen) and object-fit crops exactly as before: the bag
+           is scaled down, not re-cropped. Nothing is lost by shrinking — measured, the
+           bag spans 27.5%..74.6% of the source width while cover shows the middle
+           58.4%, so it was never touching the side crop in the first place.
+           The hero's own height is deliberately unchanged (border-top + 4/5 content +
+           padding-bottom), so the frame is the same size and the 20% simply becomes
+           more black, split evenly above and below by the flex centering. */
+        width: 80%;
+        height: 80%;
         max-width: none;
         object-fit: cover;
       }
@@ -977,7 +1014,7 @@
 
       <div class="process-steps">
         <div class="stagger-row">
-          <div class="stagger-figure">
+          <div class="stagger-figure is-compact">
             <img src="/images/vaccine/step1_bottle.png" alt="Modeling — base bottle mesh" />
           </div>
           <div class="stagger-copy">

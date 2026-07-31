@@ -66,6 +66,28 @@
       letter-spacing: 6px;
     }
 
+    /* The concept line. "You can walk around in here" is the one thing the scene
+       cannot say about itself, and a visitor who misses it just stands still — so
+       it is worth stating once, in the first thing they see.
+       Deliberately folded into THIS panel instead of getting a screen of its own:
+       the loader already gates the scene once, and a second full-screen step before
+       any work is visible is where people leave. One screen, both jobs. */
+    .header-lead {
+      font-size: clamp(15px, 1.4vw, 19px);
+      line-height: 1.45;
+      color: var(--text-secondary);
+      max-width: 62ch;
+    }
+
+    /* "CONTROLS" demoted from the panel's H1 to a small label over the grid, now
+       that the H1 carries the welcome. Same size as .card-title so it reads as the
+       grid's heading rather than as a second page title competing with the first. */
+    .section-label {
+      font-size: 20px;
+      letter-spacing: 2px;
+      color: var(--text-primary);
+    }
+
     .header-divider {
       width: 100%;
       height: 4px;
@@ -351,9 +373,17 @@
 <body>
   <div class="panel">
     <div class="header">
-      <h1 class="header-title" data-i18n="controls-title">CONTROLS</h1>
+      <h1 class="header-title" data-i18n="intro-title">WELCOME</h1>
+      <!-- Same .desc-pointer / .desc-touch split the cards use: the sentence has to
+           say "click" or "tap" depending on which control scheme is actually bound. -->
+      <p class="header-lead">
+        <span class="desc-pointer" data-i18n="intro-lead">A walkable portfolio exhibition — move through the rooms and click an object to open its project.</span>
+        <span class="desc-touch" data-i18n="intro-lead-touch">A walkable portfolio exhibition — move through the rooms and tap an object to open its project.</span>
+      </p>
       <hr class="header-divider" />
     </div>
+
+    <div class="section-label" data-i18n="controls-title">CONTROLS</div>
 
     <div class="grid">
       <!-- Each card carries BOTH a pointer and a touch variant, of the copy and
@@ -453,6 +483,9 @@
     (function () {
       var T = {
         de: {
+          'intro-title': 'WILLKOMMEN',
+          'intro-lead': 'Eine begehbare Portfolio-Ausstellung — lauf durch die Räume und klicke ein Objekt an, um das Projekt zu öffnen.',
+          'intro-lead-touch': 'Eine begehbare Portfolio-Ausstellung — lauf durch die Räume und tippe ein Objekt an, um das Projekt zu öffnen.',
           'controls-title': 'STEUERUNG',
           'move-title': 'BEWEGEN', 'move-desc': 'W, A, S, D oder Pfeiltasten, um durch die Szene zu laufen',
           'move-desc-touch': 'Joystick (unten links) ziehen, um durch die Szene zu laufen',
@@ -465,6 +498,9 @@
           'start-hint-touch': '[ tippe irgendwo, um zu starten ]'
         },
         en: {
+          'intro-title': 'WELCOME',
+          'intro-lead': 'A walkable portfolio exhibition — move through the rooms and click an object to open its project.',
+          'intro-lead-touch': 'A walkable portfolio exhibition — move through the rooms and tap an object to open its project.',
           'controls-title': 'CONTROLS',
           'move-title': 'MOVE', 'move-desc': 'W, A, S, D or arrow keys to walk the scene',
           'move-desc-touch': 'Drag the joystick (bottom left) to walk the scene',
