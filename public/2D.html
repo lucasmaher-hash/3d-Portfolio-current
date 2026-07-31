@@ -225,6 +225,18 @@
         top: 50%;
         transform: translate(-50%, -50%);
       }
+
+      /* Sit the blinking dot ON the title's line instead of below it.
+         The base rule is `translateY(calc(-50% + 24px))` — a FIXED 24px nudge against a
+         title whose size is fluid, `clamp(32px, 8vw, 83px)`. Measured: the dot is 24px
+         below the text mid-line at every width, but the desktop line box is 83px tall so
+         it still lands inside the text; at 390px the title is only 32px tall, so the same
+         24px puts the dot entirely below the line (its top edge cleared the text bottom by
+         2px). Dropping the offset here centres it on the line, since .hero-title-block is
+         exactly as tall as the title (line-height: 1). Desktop keeps the 24px. */
+      .hero-accent {
+        transform: translateY(-50%);
+      }
     }
 
 
