@@ -1021,6 +1021,79 @@
       /* 35px measured — under the 44px minimum tap target. */
       .gallery-thumb { width: 44px; }
     }
+
+    /* ── Mobile gallery pager ─────────────────────────────────────────
+       Desktop keeps the thumbnail strip. On a phone those stills land at 44px —
+       too small to read as previews, and five of them under the image compete
+       with it for attention. Below 640px they're replaced by a pager: a pressed
+       neumorphic well holding one dot per slide, the active one stretched into
+       an orange pill.
+
+       Both controls stay in the DOM and are swapped by media query rather than
+       one being built conditionally in JS, so rotating the phone or resizing
+       across 640px switches cleanly with no rebuild and no lost state — goTo()
+       updates whichever is currently visible. */
+    .gallery-dots { display: none; }
+
+    @media (max-width: 640px) {
+      .gallery-thumbs { display: none; }
+
+      .gallery-dots {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 13px;
+        width: max-content;
+        max-width: 100%;
+        margin: 20px auto 0;
+        padding: 14px 20px;
+        border-radius: 999px;
+        background: var(--bg-surface);
+        box-shadow: var(--shadow-pressed);
+      }
+
+      .gallery-dot {
+        width: 13px;
+        height: 13px;
+        flex: 0 0 auto;
+        padding: 0;
+        border: none;
+        border-radius: 999px;
+        background: var(--bg-surface);
+        /* A shallower raised shadow than --shadow-raised-sm: at this size the 5px
+           offsets of the shared token overshoot the dot itself and read as a
+           smudge rather than a bead. The blur is deliberately tight (half the
+           offset) so the highlight and shadow stay crisp against the bead's edge
+           instead of diffusing into the well around it. */
+        box-shadow: 2px 2px 2px rgba(174,174,192,0.75), -2px -2px 2px rgba(255,255,255,1);
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+        transition: width 340ms cubic-bezier(.2,.7,.2,1),
+                    background-color 340ms ease,
+                    box-shadow 340ms ease;
+      }
+
+      .gallery-dot.active {
+        width: 47px;
+        background: var(--accent-orange);
+        box-shadow: 2px 2px 2.5px rgba(174,174,192,0.9), -2px -2px 2.5px rgba(255,255,255,1);
+      }
+
+      /* The bead is 13px inside a ~41px row; the pseudo-element pads the hit area
+         out to the 44px minimum without moving the visible dot or widening the
+         well. Recompute the vertical inset if the dot size changes: it is
+         (44 - width) / 2. */
+      .gallery-dot::after {
+        content: '';
+        position: absolute;
+        inset: -15px -5px;
+      }
+      .gallery-dot { position: relative; }
+
+      @media (prefers-reduced-motion: reduce) {
+        .gallery-dot { transition: none; }
+      }
+    }
   </style>
 </head>
 <body>
@@ -1164,6 +1237,7 @@
             </div>
           </div>
           <div class="gallery-thumbs" id="gallery-thumbs"></div>
+          <div class="gallery-dots" id="gallery-dots" role="tablist" aria-label="Galerie"></div>
         </div>
       </div>
     </div>
@@ -1458,6 +1532,7 @@
       ];
 
       const thumbsEl    = document.getElementById('gallery-thumbs');
+      const dotsEl      = document.getElementById('gallery-dots');
       const mainEl      = document.getElementById('gallery-main');
       const activeImg   = document.getElementById('gallery-active-img');
       const activeVideo = document.getElementById('gallery-active-video');
@@ -1493,6 +1568,12 @@
         thumbsEl.querySelectorAll('.gallery-thumb').forEach((t, i) => {
           t.classList.toggle('active', i === current);
         });
+        dotsEl.querySelectorAll('.gallery-dot').forEach((d, i) => {
+          const on = i === current;
+          d.classList.toggle('active', on);
+          d.setAttribute('aria-selected', on ? 'true' : 'false');
+          d.tabIndex = on ? 0 : -1;
+        });
         // Only keep the thumbnail strip in view for real user navigation. On the
         // initial goTo(0) this would scroll the whole PAGE down to the gallery,
         // which is why the page used to open mid-way instead of at the top.
@@ -1522,7 +1603,64 @@
         }
         wrap.addEventListener('click', () => goTo(i));
         thumbsEl.appendChild(wrap);
+
+        // Mobile pager — a real <button> so it is focusable and keyboard-operable,
+        // rather than a styled <div>. Hidden above 640px by CSS alone.
+        const dot = document.createElement('button');
+        dot.type = 'button';
+        dot.className = 'gallery-dot' + (i === 0 ? ' active' : '');
+        dot.setAttribute('role', 'tab');
+        dot.setAttribute('aria-label', 'Bild ' + (i + 1));
+        dot.setAttribute('aria-selected', i === 0 ? 'true' : 'false');
+        dot.tabIndex = i === 0 ? 0 : -1;
+        dot.addEventListener('click', () => goTo(i));
+        dotsEl.appendChild(dot);
       });
+
+      // ── Swipe (touch only) ──────────────────────────────────────────────
+      // Axis-locked on the first meaningful movement of a gesture: until we know
+      // whether the finger is going sideways or down, nothing is claimed. Once it
+      // reads as horizontal we preventDefault so the page doesn't scroll under the
+      // swipe; once it reads as vertical we bow out for the rest of the gesture and
+      // never touch it again, so scrolling past the gallery still feels native.
+      //
+      // That decision REQUIRES touchmove to be non-passive ({ passive: false }) —
+      // a passive listener silently ignores preventDefault, which would leave the
+      // page scrolling diagonally while the image tracked the same finger.
+      (function initGallerySwipe() {
+        const SWIPE_MIN  = 45;   // px of travel before it counts as a swipe
+        const AXIS_LOCK  = 10;   // px before committing to an axis
+        let startX = 0, startY = 0, axis = null, active = false;
+
+        mainEl.addEventListener('touchstart', e => {
+          if (e.touches.length !== 1) { active = false; return; }
+          active = true; axis = null;
+          startX = e.touches[0].clientX;
+          startY = e.touches[0].clientY;
+        }, { passive: true });
+
+        mainEl.addEventListener('touchmove', e => {
+          if (!active || e.touches.length !== 1) return;
+          const dx = e.touches[0].clientX - startX;
+          const dy = e.touches[0].clientY - startY;
+          if (!axis && Math.hypot(dx, dy) > AXIS_LOCK) {
+            axis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
+          }
+          if (axis === 'x') e.preventDefault();
+        }, { passive: false });
+
+        mainEl.addEventListener('touchend', e => {
+          if (!active) return;
+          active = false;
+          if (axis !== 'x') return;
+          const dx = e.changedTouches[0].clientX - startX;
+          if (Math.abs(dx) < SWIPE_MIN) return;
+          // Clamped, not wrapped: with a pager showing exactly where you are,
+          // jumping from the last image back to the first reads as a glitch.
+          const next = Math.min(ITEMS.length - 1, Math.max(0, current + (dx < 0 ? 1 : -1)));
+          if (next !== current) goTo(next);
+        }, { passive: true });
+      })();
 
       document.addEventListener('keydown', e => {
         if (e.key === 'ArrowLeft')  goTo(current - 1);
@@ -1668,8 +1806,9 @@
         if (!wrapper) return;
         var wrapperLeft = wrapper.getBoundingClientRect().left;
         var btnWidth    = btn.offsetWidth;
-        var MARGIN_GAP  = 24;
-        var INSET_GAP   = 16;
+        // Both branches nudged +10px right from their original 24 / 16.
+        var MARGIN_GAP  = 34;
+        var INSET_GAP   = 26;
         btn.style.left = (wrapperLeft - MARGIN_GAP >= btnWidth)
           ? MARGIN_GAP + 'px'
           : (wrapperLeft + INSET_GAP) + 'px';
@@ -1679,46 +1818,62 @@
       if (document.fonts && document.fonts.ready) document.fonts.ready.then(positionExitBtn);
 
       // A neumorphic shadow only reads correctly over the page's own surface
-      // colour; over a picture it becomes a glowing halo, worst on the dark
-      // renders. So the pill drops both shadows whenever a picture is behind it.
+      // colour — anywhere else the white highlight and grey shadow become a
+      // glowing halo. So the pill drops both shadows whenever something other
+      // than that surface is behind it.
       //
-      // This is a real geometric test against everything on the page, not just
-      // the hero: the process/gallery shots further down cover the button too,
-      // and an earlier hero-only version left the halo on over those. The button
-      // is position: fixed, so its rect and the media rects are both
-      // viewport-relative and directly comparable.
-      //
-      // `.hero` is in the selector alongside img/video because vaccine2d's hero
-      // letterboxes its video inside a black container — the <video> rect alone
-      // covers under half the button and would miss the black margin it actually
-      // sits on. Iframes are deliberately NOT included: the only one that passes
-      // under the button is Cybercoffee's machine, which is drawn on
-      // transparency, so the real backdrop there is the page surface.
-      var EXIT_MEDIA_SEL = '.hero, img, video';
+      // This asks what is ACTUALLY PAINTED behind the button rather than
+      // intersecting rectangles with a list of selectors. Two earlier versions
+      // failed because the list was never complete: a hero-only test left the
+      // halo on over the process shots further down, and a '.hero, img, video'
+      // test still missed Unify's colour-palette swatches, which are plain divs
+      // with a background-colour — the button sat glowing on a hot pink square.
+      // Hit-testing has no such list to keep up to date: an image, a video, a
+      // dark hero container and a coloured div all register the same way.
+      var EXIT_SAMPLES = 3;   // 3x3 grid. Coverage lands in ninths, which
+                              // straddles the 50% threshold cleanly: 4/9 = 44%,
+                              // 5/9 = 56%, so there is no exact-tie flicker.
+
+      // What paints at this point, ignoring the button itself. Walks DOWN the
+      // stack past anything transparent, because the surface-coloured section
+      // wrappers are usually several levels below whatever sits on top.
+      function exitPaintAt(x, y) {
+        var stack = document.elementsFromPoint(x, y);
+        for (var i = 0; i < stack.length; i++) {
+          var el = stack[i];
+          if (el === btn || btn.contains(el)) continue;
+          var tag = el.tagName;
+          if (tag === 'IMG' || tag === 'VIDEO' || tag === 'CANVAS') return 'media';
+          var cs = getComputedStyle(el);
+          // A real bitmap counts; a CSS gradient does not — the only gradients
+          // here are the .dot-divider rules, which are decoration ON the surface.
+          if (cs.backgroundImage.indexOf('url(') === 0) return 'media';
+          var bg = cs.backgroundColor;
+          if (!bg || bg === 'transparent' || bg === 'rgba(0, 0, 0, 0)') continue;
+          return bg;
+        }
+        return null;   // nothing opaque found — the page background shows through
+      }
 
       function updateExitShadow() {
         var b = btn.getBoundingClientRect();
-        var area = b.width * b.height;
-        if (!area) return;
-        // Overlaps are SUMMED. That double-counts nested media (a .hero and the
-        // <video> inside it), but only ever in cases where the outer element
-        // already covers the button on its own, so it cannot change the outcome —
-        // whereas summing is what correctly handles two SEPARATE images that each
-        // cover a third of the button.
-        var covered = 0;
-        var media = document.querySelectorAll(EXIT_MEDIA_SEL);
-        for (var i = 0; i < media.length; i++) {
-          var r = media[i].getBoundingClientRect();
-          if (!r.width || !r.height) continue;   // hidden, or not laid out yet
-          var w = Math.min(b.right, r.right) - Math.max(b.left, r.left);
-          var h = Math.min(b.bottom, r.bottom) - Math.max(b.top, r.top);
-          if (w > 0 && h > 0) covered += w * h;
+        if (!b.width || !b.height) return;
+        var surface = getComputedStyle(document.body).backgroundColor;
+        var covered = 0, total = EXIT_SAMPLES * EXIT_SAMPLES;
+        for (var iy = 0; iy < EXIT_SAMPLES; iy++) {
+          for (var ix = 0; ix < EXIT_SAMPLES; ix++) {
+            var paint = exitPaintAt(
+              b.left + b.width  * (ix + 0.5) / EXIT_SAMPLES,
+              b.top  + b.height * (iy + 0.5) / EXIT_SAMPLES
+            );
+            if (paint !== null && paint !== surface) covered++;
+          }
         }
-        btn.classList.toggle('is-raised', covered <= area * 0.5);
+        btn.classList.toggle('is-raised', covered <= total * 0.5);
       }
 
-      // rAF-throttled: this reads layout for every image on the page, so it must
-      // not run more than once per frame during a scroll.
+      // rAF-throttled: nine hit tests plus a getComputedStyle walk per sample is
+      // real work, so it must not run more than once per frame during a scroll.
       var exitTick = false;
       function requestExitShadow() {
         if (exitTick) return;
