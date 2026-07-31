@@ -31,6 +31,14 @@ When resuming work in a new session:
 5. Check nav dropdown doesn't clip content on any page (iframe z-index and `.page-wrapper overflow` issues)
 6. Inspect hero blob on Unify page — pupils should track cursor; blob should sit above header dotted line
 7. Test mobile responsiveness at 860px breakpoint (scrollytelling switches from sticky pin to static layout)
+8. **When testing mobile over CDP, always enable touch emulation.** Without it headless Chrome
+   matches `pointer: fine` and triggers the desktop shrink cap (`html, body { min-width: 860px }`),
+   so every measurement below 860px is silently taken against an 860px layout. Check a desktop
+   width in the same run as a control — several bugs this session were only distinguishable from
+   pre-existing ones that way.
+9. **Mobile widths worth checking:** 390 and 430 (phones), **744/768/844** (the 641–860px band —
+   iPad portrait *and* landscape phones, where two separate bugs hid this session), 859/861
+   (either side of the breakpoint), 1440 (desktop control).
 
 ## Architecture
 
@@ -68,8 +76,16 @@ When resuming work in a new session:
 Every 2D page embeds the nav as a fixed iframe:
 
 ```html
-<iframe id="top-bar" src="/top_row_permanent_V3.html" allowtransparency="true"></iframe>
+<iframe id="top-bar" src="/top_row_permanent_V3.html" allowtransparency="true" scrolling="no"></iframe>
 ```
+
+**`scrolling="no"` is required on every host page, including `index.html`.** The nav document's
+`body` carries `padding-top: 130px`, but `.top-row` inside is `position: fixed` — so that padding
+contributes *height without content*. On the 2D pages the frame is 140px and absorbs it; on
+`index.html` the frame is only **100px**, leaving 30px of overflow, and that page was the only one
+missing the attribute — so it drew a **15px scrollbar down the right edge, over the 3D scene**
+(measured: inner `clientWidth` 1425 vs a 1440 frame; 1440 vs 1440 after). Nothing is down there to
+scroll to. If a new host page is added, copy the attribute with the iframe.
 
 CSS on the host page:
 ```css
@@ -188,6 +204,29 @@ Raised shadow = element pops out. Pressed/inset shadow = element pushed in (used
 - `applyLang` falls back to English for any unknown language, so nothing breaks. **Do NOT add French going forward.**
 - New placeholder sections on Unify (color palette, typography, characters) and the whole rebuilt Virtual Cooking middle are **English-only, not yet wired into `TRANSLATIONS`** — wire them up when copy is finalized.
 
+### Mobile: the language toggle lives in the hamburger menu
+
+Below 640px the nav bar's `de / en` pair is **hidden, not removed** (`.lang-toggle { display:
+none }`) — those `.lang-btn` elements are still what the nav's language IIFE reads and marks
+active, and desktop (>640px) shows and uses them unchanged. The mobile control is a segmented
+toggle at the bottom of the menu, under Contact, on all 9 menus (8 2D pages + `index.html`).
+
+**It reuses `.mobile-view-toggle` / `.mobile-mode-btn` verbatim** — the same two classes as the
+2D/3D toggle above it, with no styling of its own — so the pair can never drift apart. Only the
+`[data-mode]` variant is orange; `[data-lang]` keeps the grey neumorphic well.
+
+**The menu button does NOT translate its page.** It writes `localStorage.lang`, marks its own
+highlight, and posts `lang-change` into the nav iframe, which stays the single owner of language:
+the nav applies its own labels and **re-broadcasts to the parent**, where every page's existing
+`lang-change` handler does the actual translation. One path in, so nothing desyncs, and
+`index.html` needs no access to its i18n IIFE's private `apply()`. No loop — the parent handlers
+only apply, they never post back. Writing localStorage also fires a `storage` event inside the
+3D overlay iframes, which is how they already re-translate.
+
+Two notes for anyone extending this: the nav's language IIFE gained a `message` listener (it
+previously only *sent* `lang-change`), and the highlight is seeded synchronously from
+localStorage because the nav's own broadcast lands ~100ms after the iframe loads.
+
 ## Cybercoffee project (`kaffeemaschine2d.html`)
 
 The interactive coffee machine is a self-contained mini-app:
@@ -195,6 +234,52 @@ The interactive coffee machine is a self-contained mini-app:
 - Embedded as an iframe inside `.machine-frame-wrap` on `kaffeemaschine2d.html`
 - The machine's own CSS caps its width: `width: min(504px, 96vw)` — changing the wrapper size alone won't resize the egg; both files need updating
 - An overlay (`#machine-overlay`) grays out the machine on load with a bouncing "[ click me ]" prompt; clicking dismisses it via JS
+
+### Mobile: the egg fills the phone, and the 641–860px band was broken
+
+**A media query inside `kaffeemaschine.html` resolves against the IFRAME's box, not the device.**
+That box (`.machine-frame-wrap`) is **exactly 480px at every viewport from 481px up, desktop
+included**, and only ever narrower on a phone — so `@media (max-width: 479px)` in the machine app
+is a clean split that provably cannot fire on desktop. It drops `body { padding-top: 20px }` and
+sets `.machine { width: 100vw }`. Dropping the padding is what makes the full width *fit*:
+`.machine-frame-wrap` is an exact `969/1344` box, so a full-width egg is already exactly as tall
+as the frame and 20px of padding would push its base out of view.
+
+On the page side, `.result-egg` breaks out of `.section`'s 20px gutter with negative margins
+(rather than removing the gutter, so every other block keeps its alignment) and
+`.machine-frame-wrap` becomes `min(480px, 100%)`. The 480px cap is the desktop wrap width —
+without it a 640px viewport would make the egg *larger* on "mobile" than on desktop, and it also
+keeps the iframe's own width query on the correct side.
+
+**Pre-existing bug fixed: the egg rendered 0×0 across the whole 641–860px band** — iPad portrait
+and every landscape phone. `justify-items: center` in the ≤860px block makes `.result-egg`
+shrink-to-fit, and its child's `width: min(480px, 100%)` percentage then resolves against a parent
+whose width depends on the child. That's circular, so browsers resolve it to **0** and the frame
+collapses. Verified at HEAD before the fix: 0×0 at 641/744/768/844/860, fine at 390 (the old
+override there used `vw`, not `%`) and fine at 1440 (two-column grid → definite track). Fixed with
+`.result-egg { justify-self: stretch }`. **Rule: a percentage width inside a shrink-to-fit parent
+is circular and silently resolves to zero — give the parent a definite width.**
+
+### Mobile hero: portrait crop, NOT the old letterbox band
+
+`02_straight_on_widescreen.png` is 3556×2000 (16:9) — a desktop banner shape. Letterboxed into a
+phone-width strip the machine came out ~117px wide, a thumbnail of the page's own subject. The
+mobile hero is now `aspect-ratio: 4 / 5` and lets the base rule's `object-fit: cover` crop **55%
+off the sides** while showing the full height, which is where all the subject is.
+
+Measured off the source, the machine body sits at x `0.352 → 0.650` (width 0.298, centre 0.501 —
+already dead centre, so **no `object-position` shift is needed**) and y `0.284 → 0.810`. Under
+full-height cover its rendered width is `0.298 × (16/9) / hero-aspect` of the hero width, so
+**4/5 puts it at 0.663**; 5/6 or 27/32 would leave it at 0.63–0.64. Result at 390px: hero 390×488,
+machine 259×257px — 2.2× its previous size.
+
+**This replaced the earlier "+30% taller with a dark band above" treatment** (`aspect-ratio:
+160/117`, image pinned to the bottom at `76.9231%` height, `#141B30` band). That band existed
+specifically to add height *without* re-cropping; here re-cropping is the point, so the image
+fills the frame and the band never shows. The background colour stays — it's sampled from the
+render's own top row `(20,27,48)`, so it covers the frame with the right tone while the 4.9 MB PNG
+loads instead of flashing white. The mobile `.hero img` override is gone entirely: the base rule's
+`-1px` / `calc(100% + 2px)` overscan and centre-centre cover are already exactly right.
 
 ### Sticky scroll-spin (`#spin-scrolly`, in the Design-process section)
 
@@ -362,12 +447,209 @@ Organized by project for clarity:
 - ✅ Rebuilt this session to match the shared pattern (see layout above); all real copy preserved
 - ⏳ At a Glance lead is `[ Placeholder ]`; same `section-glance`/`glance-lead` keys pattern
 
+**Mobile (2D):**
+- ✅ Reviewed and rebuilt end-to-end on 2026-07-31 — menu, type scale, hero, project cards, meta
+  tiles, Unify layout, Cybercoffee hero + egg, 3D overlays, language toggle. See "Recent Changes
+  (2026-07-31) — Session A".
+- ⏳ **Not yet reviewed on a real device by Claude** — everything was verified over CDP at
+  390/430/744/768/859px plus a desktop control. **The device is the source of truth**: an earlier
+  video-colour "fix" was reverted based on a headless measurement and turned out to have been
+  working on Lucas's phone. Colour-management questions in particular cannot be settled headless.
+
 **3D mode:**
-- ✅ Camera look-around now triggers on right-click **or middle-click** (previously right-click only) — see "3D Mode: Camera Controls" section below
-- Otherwise stable; no other recent changes
+- ✅ Camera look-around triggers on right-click **or middle-click**; arrow keys now alias WASD —
+  see "3D Mode: Camera Controls"
+- ✅ YellowRoom relit with downward spots; floor pool + Blender-baked wall gradient
+- ⏳ **BlueRoom is mid-rebuild** (curved cove in Blender): its fixture light is commented out and
+  its panels are non-emissive, so **the room reads dark by design right now** — see "3D Mode:
+  Lighting" before treating that as a bug
+- ⏳ `nav-out.json` at the repo root is an orphaned debug dump — safe to delete
 
 **Deployment:**
 - ✅ Live at `https://lucasmaher.com` (custom domain, HTTPS working) and `https://lucasmaher-hash.github.io/3d-Portfolio-current/` — see "Deployment" section below
+
+## Recent Changes (2026-07-31)
+
+Two Claude sessions ran in parallel on this day and both are folded in below. **Scope note:** the
+3D/Blender items were reconstructed from the committed code and its comments, not from that
+session's own transcript — the code comments in `src/main.js` are the authority if anything here
+disagrees.
+
+### Session A — mobile 2D (this session's focus)
+
+Standing constraint for the whole session: **mobile only, desktop is finished and must not
+change.** Every item below is inside `@media (max-width: 640px)` (or `pointer: coarse`) unless
+stated, and each was verified at 390/430px with a desktop control run in the same pass.
+
+1. **Unify's mobile layout was substantially broken; four separate causes.** See the new
+   "Unify page — mobile" subsection under "Unify Page: Scroll-Driven Dual-Video Sections".
+   - Colour swatches rendered **75×58px, right-aligned**: `.color-grid` is a row with
+     `align-items: flex-end`, and the ≤860px block flips it to a column where `align-items`
+     controls the *cross* axis — `flex-end` silently became "right" and each box collapsed to
+     content width. Restored as a row of three square swatches.
+   - `.character-copy` measured **367px inside a 350px column**: the paragraphs carry inline
+     `margin-left/right: -15px` to tuck against the figure in the desktop ROW; in a column they
+     just pull text off the page. Zeroed (needs `!important` — inline styles).
+   - **`#timetable-socials-scrolly` did not stack at all** — copy and both panels at **zero
+     width**, videos 46px off the left edge, section 2917px tall. Specificity, not a missing
+     rule: the fallback sets `.scrolly-sticky { flex-direction: column }` (0,1,0) but the
+     mirrored layout is `#timetable-socials-scrolly .scrolly-sticky` (1,0,1). Sibling
+     `#nav-friends-scrolly` has no ID-level direction rule, which is why only one broke. Fixed
+     in the **860px** block, not 640 — a landscape phone lands in that band too.
+   - The colour-palette heading carries an inline `margin-top: 190px` (deliberate air at 1440px,
+     **26% of the whole section** at 390px) → 40px on mobile.
+2. **Both Unify scrolly sections got a real phone layout, and a frozen-video bug was fixed.**
+   The ≤860px fallback stands the two phones side by side and dumps both captions underneath —
+   ~175px per phone at 390px, and each caption divorced from its screenshot. Now each video is
+   paired with its own caption via `display: contents` on `.scrolly-media`/`.scrolly-copy` plus
+   `order` — no markup change, desktop's mirrored row untouched. Separately, `initScrolly`
+   paused whichever step wasn't active, but below 860px **both are on screen**, so one phone sat
+   on a dead frame; and with `.scrolly` at `height: auto` the progress fraction divides by the
+   `max(…, 1)` floor and snapped 0→1 in one scroll step. Guarded with
+   `matchMedia('(max-width: 860px)')`.
+3. **Phone mockups +7%, captions matched to the mockup width** (Unify). One `--phone-h` custom
+   property replaces the same clamp declared in two places; `--phone-w` derives the caption
+   width. The width is the **visible phone, not the element box** — see the derivation in
+   "Unify Page: Video Details".
+4. **Language toggle moved into the mobile menu** on all 9 menus; the nav bar's `de / en` is
+   hidden below 640px. See "Languages / i18n".
+5. **Cybercoffee hero re-cropped to portrait on mobile**, machine 2.2× bigger. This **replaces**
+   the "+30% taller with a dark band above" treatment. See "Cybercoffee project".
+6. **Cybercoffee egg fills the phone edge to edge**, and a pre-existing bug where it rendered
+   **0×0 across the entire 641–860px band** (iPad portrait, every landscape phone) was fixed.
+   See "Cybercoffee project".
+7. **Meta tiles → a pressed spec-list** on all 5 project pages, values comma-joined on one line
+   by a small DOM script (three CSS-only attempts failed — see the gotcha).
+8. **3D overlay pages** (`about3d`/`contact3d`/`craft3d`/`controls_open3d`) restructured for
+   phones: topbars removed, frames shrunk to their content, first-paint heights set in
+   `src/style.css` to kill an open-flicker. **A `display: none` iframe performs no layout, so it
+   cannot self-measure until visible — CSS first-paint heights are the only fix.**
+9. **Assorted mobile fixes:** liquid-glass removed from the menu; nav `?` button given its own
+   VT323 declaration; scroll dots moved to `right: 6px`; `2D.html` hero fills the screen
+   (`100svh − 91px`); project cards reordered (title above image, pills below, "Project 0X"
+   kicker dropped); Unify/Cybercoffee landing tiles filled with their video; a readable type
+   scale (16px body / 15px meta / 16px VT323 UI); 3D vertical look range cut to
+   `PITCH_LIMIT = 0.20` with `TOUCH_SENS_PITCH = 0.0012`; toggle inset spread reduced 35%;
+   About/Contact accordions fixed (an `.item.closing` rule that lost to a later `.item.open`).
+10. **The landing page no longer opens with Projekte pre-pressed** — `2D.html`'s mobile menu had
+    `is-active` hardcoded on Craft. `about2d`/`contact2d` keep theirs (correct "you are here");
+    the landing page is not the Craft page. The nav bar's own marker is an underline, not a
+    press, and was never involved.
+11. **The 3D nav iframe was the only one missing `scrolling="no"`** — see "Nav bar iframe".
+
+### Session B — 3D scene, lighting and Blender (reconstructed from code + commits)
+
+1. **New `VERTEX_GRADIENTS` system in `src/main.js`** — load-time COLOR_0 baking with three
+   modes (vertical / `radial` / `tiles`). This is the runtime counterpart to the Blender bake
+   recipe and needs no GLB re-export. See the new "Load-time vertex gradients" subsection under
+   "3D Mode: Colour gradients on geometry".
+2. **YellowRoom relit.** The two ceiling panels (`YellowRoom_Ceiling` + `.001`) became
+   **SpotLights aimed straight down** (`angle 0.62`, `intensity 42`, `fill 14`, `distance 12`,
+   `0xffebc7`), replacing omnidirectional PointLights at 45 that lit floor, walls and ceiling
+   equally and read as a flat gold wash. **A 2×3 grid per panel was tried and REVERTED** —
+   more uniform but it flattened the room's character; per the code comment, *don't bring it
+   back without asking*. Floor darkened via `MATERIAL_FIXUPS` (`YellowRoom_Floor_DarkBrown` →
+   `0x6a523e`; an earlier `0x453020` read as near-black) and given a **radial pool** gradient
+   (centre ×2.4 → rim ×0.45).
+3. **YellowRoom's wall gradient moved from runtime to a Blender bake** as an end-to-end pipeline
+   test: material split to `Velvet_WallGrad` (the coffee table keeps plain `Velvet` — the recipe
+   sets Base Color to white, which would have turned the shared table white) with a `WallGrad`
+   FLOAT_COLOR attribute at index 0 carrying ×0.10 → ×3.5, a deliberate 35× spread.
+   **A runtime `Velvet` entry must not be re-added — it would overwrite the baked COLOR_0.**
+4. **BlueRoom is being rebuilt as a curved cove.** Its `FIXTURE_LIGHTS` entry is **commented out,
+   not deleted**, and its panels are no longer emissive, so *the room has no light of its own* —
+   only the global fill (Ambient 0.08 + Hemi 0.18 + Dir 0.12 + environment 0.175). It is expected
+   to read dark. Its tiles use `mode: 'tiles'` on all five `BlueRoom_EmissivePanel` meshes.
+5. **`BLUEROOM_Z_LIMIT = 36.4` — a hard movement clamp, because collision cannot help here.**
+   The cove is built from loose, unwelded tile quads that don't close around the curve, and
+   raycast collision tests that same geometry — *the holes are the gaps*. The clamp sits at the
+   cove's tangent line (back plane z ≈ 39.05, radius 2.505 → 36.55), is scoped to BlueRoom's
+   measured footprint, and is applied **after** the move + slide so it clamps the final position
+   rather than fighting the collision solver.
+6. **Vaccine label: `emissiveMap: '@map'`.** A flat emissive lift washed the print out — emissive
+   is added after shading, so a constant 0.35 lifted the dark type by exactly as much as the
+   white paper. Pointing `emissiveMap` at the material's own texture modulates the glow by the
+   image. `'@map'` is a sentinel resolved in the applier.
+7. **Mac-Lamp materials:** `Lamp_Orange` → `emissive: 0xc65808`; `Lamp_Grey` →
+   `color: 0x8e9296` + `roughness: 0.4` + `emissive: 0x9a9ea2`. Both are **black base at
+   metalness 1**, so everything visible is the emissive — "darker orange" means a darker
+   *emissive*, not a darker base colour, which would change nothing. The grey entry also gives
+   the metal a non-black base so it finally has something to tint its reflections with.
+8. **`CONTENT['Pivot_MacLamp_Table']` removed and replaced with six per-mesh keys**
+   (`Base_Orange_Table`, `VerticalPlate_Orange_Table`, `KB_Grey_Panel_Table`,
+   `Back_Grey_Panel_Table`, `Trackpad_Back_Grey_Table`, `Trackpad_Front_Grey_Table`). The
+   exporter collapses that empty and parents the meshes straight to `SpinPivot`, so the old key
+   matched nothing — which is why the table lamp had silently stopped being clickable. This was
+   listed as a "known pre-existing dead key" in the GLB export section; it is now fixed.
+9. **Arrow keys are full WASD aliases**, with `preventDefault` under `{ passive: false }` (a
+   passive listener silently ignores it) or holding one both walks the camera and scrolls the
+   document. Safe for the overlays: a keydown inside an iframe doesn't bubble to the parent.
+   **The bug worth remembering:** `keys` has *three* states — `undefined` (never pressed),
+   `true`, `false` — so `keys['KeyA'] !== keys['KeyD']` was true after merely releasing a key
+   (`false !== undefined`) and walked the camera forever. Use truthiness (`||`), not `!==`.
+   Pure WASD hid it, because pressing those keys once makes both sides real booleans.
+10. **Temporary BlueRoom-doorway spawn** (used while iterating on the tile gradient) has been
+    **reverted to the real spawn** `(2.2970, -0.7653, 9.6615)`, yaw 2.34, pitch 0.054.
+11. **`nav-out.json` (repo root, 769 bytes)** was committed in `9a64481` — a debug dump, nothing
+    references it. Safe to delete.
+
+### Session C — PinkRoom: wall regression reverted, centre column joined to floor + ceiling
+
+1. **The PinkRoom wall's rib shading broke, and the cause was a stale `.blend`, not a bad edit.**
+   Reported as "the darkened grills/indentations are way way darker all of a sudden." Root cause:
+   when the texture-based rib approach was rejected earlier ("delete this version and bring back
+   the one with the baked geometry"), **only `public/current🟢.glb` was restored from backup — the
+   `.blend` was left in the experiment's state.** It sat there harmlessly until a *different*
+   Claude session re-exported for unrelated BlueRoom work and shipped the regression. Two distinct
+   faults, both in the `.blend`:
+   - `PinkRoom_Gradient_Wall`'s Principled **Base Color was wired to `RibRampTex`** (the rejected
+     image-texture node) instead of the `Attribute` node reading `RibGrad`. The exporter can't
+     follow that node chain, so it fell back to `baseColorFactor [1,1,1,1]` **plus a synthetic
+     all-white `COLOR_0`** — i.e. the wall shipped with *no* colour data at all, and its pink came
+     purely from the pink lights hitting a white surface. That is why it read as high-contrast and
+     near-black in the grooves rather than simply flat. **The `RibGrad` bake was never lost** — it
+     was still on the mesh (R 0.6751–0.8700), just unplugged.
+   - The wall had **also silently lost a subdivision level**: 57,716 → 14,494 triangles, exactly
+     4×. This is the half that produced the "low poly / hard edged" look. Restored with a
+     `SIMPLE` (not Catmull-Clark) subsurf named `RibSubdiv` at level 1 — simple keeps the rib
+     silhouette and only adds resolution for the per-vertex gradient. Verified: bbox identical,
+     `COLOR_0` back to float32 R 0.6751–0.8700, wall back to 58,164 tris.
+   **Diagnostic that found it:** compare per-mesh triangle counts and `COLOR_0` min/max between a
+   fresh export and a known-good backup. A 4× triangle drop = a lost subdivision; `COLOR_0` pinned
+   at 1.0 = a material link that no longer exports. Both are invisible in Blender's viewport.
+
+2. **`PinkRoom_CentralColumn` now includes the floor and the ceiling; `PinkRoom_Floor` and
+   `PinkRoom_Ceiling` no longer exist.** Fixes a visible "colour cut" ring where the centre dome
+   met the ceiling and the stump met the floor. It was never a colour problem — all three objects
+   already shared material `PinkRoom_Gradient` with identical `baseColorFactor` 0.87/0.48/0.56 and
+   no `COLOR_0`. It was **shading**: the column's outermost ring sat at normal `(0, 0.958, 0)`
+   (~17° off the plane) while the planes were exactly `(0, ±1, 0)`, and being separate meshes they
+   could not average normals across the boundary — so the normal jumped 17° instantaneously. The
+   planes also sat 5 mm inside the column's rim (floor z 0.005 / ceiling z 4.995 vs the column's
+   0 → 5), so the two surfaces **intersected** rather than joined; the seam traced that
+   intersection circle.
+   **Method — reuse the rim, don't bridge.** The floor and ceiling were already annuli (inner
+   r 2.66, outer r 9.15, 128 segments). Rather than bridge two loops with mismatched vertex counts
+   (96 vs 128, which would have produced a degenerate ~35 mm band), the column's own 96-vertex rim
+   loops were moved onto the plane heights and **extruded straight out to r 9.15**, generating the
+   floor and ceiling as part of the column mesh. Because the rim vertices are *reused* as the
+   inner ring, it is watertight by construction — no bridging, no merge-by-distance, no threshold
+   to tune. Then `recalc_face_normals` (the three meshes had inconsistent winding — floor faced
+   down, ceiling and column faced up — and welding them without this would have averaged normals
+   to near-zero) and smooth shading on every face. Result: the vertex normal at the old junction
+   is now `(-0.136, 0, 0.991)`, a continuous average, instead of a 17° step.
+   **Accepted side effect:** the merged object is 18.3 units wide, past `SHADOW_CASTER_MAX_SIZE = 6`,
+   so the column **no longer casts its contact shadow** from the entrance spot. Lucas judged the
+   room better with the seam gone; the stale claim was corrected in `src/main.js`'s comment.
+   No code depended on the two deleted object names.
+
+3. **Two Claude sessions on one Blender instance is a real hazard, and item 1 is what it looks
+   like.** The MCP drives a single shared process — geometry edits land in the scene the other
+   session is looking at, `bpy.ops` reads global selection/mode state, and the undo stack is
+   shared. `public/current🟢.glb` is likewise one file with two writers. Before touching Blender,
+   check `bpy.data.filepath`, `bpy.data.is_dirty` and `bpy.context.mode`, and back up the `.blend`
+   **and** the GLB. Prefer the `bmesh`/data API over `bpy.ops` — it doesn't depend on ambient
+   selection, so a concurrent session can't break it mid-script.
 
 ## Recent Changes (2026-07-30)
 
@@ -574,6 +856,28 @@ layout-pattern entries.
     - **Intro gate** — loading screen + controls intro now run once per tab via `sessionStorage.introSeen`. See the "Intro gate" bullet under item 43.
     - **3D-page horizontal slide-in REMOVED** (`index.html`). Arriving at the 3D page used to hold the entire `<html>` element off-screen at `translateX(±100%)` with `overflow: hidden`, then animate it in over 380ms via injected `_sR`/`_sL` keyframes, with `#top-bar` counter-animated in the opposite direction so the nav appeared stationary. All of it deleted along with its now-unused `KF`/`DUR`/`EASE`/`OPP` locals — the scene just appears, and the orange-bubble loader covers any wait. **`sessionStorage.removeItem('_sv')` is still called on load and must stay:** a 2D page sets `_sv` on its way out, and without the 3D page consuming it the flag would linger and fire a stray slide on whatever page was visited next. **The 2D pages still slide in** — that is a separate implementation living in each 2D page's own script (each animates a wrapper element, guards on `prefers-reduced-motion`, and defines its own `_sR`/`_sL` keyframes), so nothing was shared with the 3D page and nothing there was touched. Verified over CDP: 14 samples across the load window show zero transform/animation on `<html>` or `#top-bar`.
 
+## Mobile: meta tiles render as a pressed spec-list (all 5 project pages)
+
+The 2×2 tile grid struggles on a phone: every tile is locked to `height: 155px` so a one-word
+value leaves most of its inset empty; a raised tile wrapping a pressed inset puts two opposing
+shadow systems inside a ~170px box, which reads as noise; and two columns leave each value ~150px
+wide so dates wrap mid-phrase. Below 640px it becomes **one pressed card holding four label/value
+rows**, hairline-separated — same tokens (VT323 orange labels, `--text-secondary` values), no
+nesting, height driven by content. The block is appended LAST so it beats the earlier mobile rules
+(`grid-template-columns`, `height: 155px`) on source order; deleting it restores the old design
+exactly, with no markup or `data-i18n` changes involved.
+
+**Multi-line values are joined onto one line with a real DOM node, not CSS.** The values use
+`<br>` for desktop's stacked layout, and **three CSS-only approaches were measured and all fail in
+Blink**: `br { display: none }` and `display: contents` merge the runs with no separator
+("FigmaPrototypingClaude Code"); `br::after { content: ", " }` adds **0px** (generated content on
+`<br>` does not render); and flex blockification does not neutralise the line break either. So a
+small script before `</body>` inserts a `<span class="meta-sep">` before each `<br>`, hidden by
+default and shown only under the media query — which is what makes resizing across 640px work in
+both directions. It is context-aware: a value already ending in `— – , ; : /` gets a plain space
+instead of a comma, otherwise you get "Mai 2026 —, Jun. 2026". A `MutationObserver` re-runs it
+because `applyLang` replaces the values on language change.
+
 ## Project-page section sub-headings (`.feature-title`)
 
 Sub-headings inside a project section, above a per-item image/video. **OCR-A-BT only — there is no orange kicker.** Unify originally had a `.feature-kicker` (small orange VT323 label like `03 — SOZIALES`) above each title; that pattern was extended to Virtual Cooking and Mac-Lamp and then **removed everywhere on 2026-07-30 per Lucas — the orange label didn't work for him. Do not reintroduce it.** Zero `feature-kicker` references remain site-wide.
@@ -738,6 +1042,28 @@ buffer and rotating twice would undo it.
 **If the UV map is ever fixed in Blender, DELETE that block** — otherwise the load-time rotation
 applies on top of a now-correct map and the label goes sideways again.
 
+**YellowRoom is lit by two downward SPOTS, and the 2×3 grid experiment was REVERTED.** Its two
+ceiling panels (`YellowRoom_Ceiling` + `.001` — the grid bars use material `Grid`, so they are
+excluded by the material match alone) are spots at `angle 0.62` / `intensity 42` / `distance 12`
+/ `0xffebc7`, each with a co-located `fill: 14` PointLight at the panel centre. That replaced
+omnidirectional points at 45, which lit floor, walls and ceiling equally and read as a flat gold
+wash. A 2×3 grid per panel was then tried for evenness and **rolled back at Lucas's request** —
+technically more uniform, but it flattened the room's character. **Don't reintroduce it without
+asking.** The lighter wall *tops* come from the baked vertex gradient, not from these lights.
+
+**BlueRoom currently has NO light of its own.** Its `FIXTURE_LIGHTS` entry is **commented out,
+not deleted** (the back wall is being rebuilt as a curved cove in Blender), and its panels are no
+longer emissive because the tile gradient needs them off. The only thing lighting it is the global
+fill — Ambient 0.08 + Hemi 0.18 + Dir 0.12 + environment 0.175 — so **it is expected to read
+dark**; that is not a regression to chase. Uncomment the entry when the room lands.
+
+**`BLUEROOM_Z_LIMIT = 36.4` is a movement clamp, and collision genuinely cannot replace it.** The
+cove is built from loose, unwelded tile quads that don't close up around the curve, and raycast
+collision tests that same geometry — *the holes are the gaps*, so you walk straight through. The
+constant sits at the cove's tangent line (back plane z ≈ 39.05, radius 2.505 → 36.55), is scoped
+to BlueRoom's measured footprint (x −10.34..0.14, z 27.58..39.26), and is applied **after** the
+move + slide so it clamps the final position instead of fighting the collision solver.
+
 **Known-dark, not yet fixed:** BlueRoom's two podium objects. They are *not* short of light —
 measured illuminance 3.29 vs the brown-room bottle's 1.75, nearly 2×. The causes are
 `M_Silver_Egg` / `M_Silver_Panel` at **metalness 0.65** (little diffuse response), both objects
@@ -771,6 +1097,18 @@ Working recipe (used for the brown room's floor→ceiling wall gradient, live on
 4. **Verify by test-exporting the single object** with `use_selection=True` to a **temp** path and
    reading back `baseColorFactor` + `COLOR_0` — never by exporting over `public/current🟢.glb`.
 
+**Abandoning one of these experiments means reverting the `.blend`, NOT just the GLB.** Restoring
+`public/current🟢.glb` from a backup makes the site look correct immediately, which is exactly the
+trap: the `.blend` still holds the rejected material wiring, and the site stays correct only until
+*someone* re-exports. This has already shipped a regression once — a rejected texture approach left
+`PinkRoom_Gradient_Wall`'s Base Color on an image-texture node and the wall un-subdivided; a
+different Claude session re-exported hours later for unrelated work and the wall lost all its
+colour data (see "Session C" under Recent Changes 2026-07-31). **Two symptoms to look for when
+diffing a fresh export against a known-good backup:** `COLOR_0` pinned at a uniform 1.0 means the
+Base Color link no longer exports and the exporter emitted a synthetic white attribute; a per-mesh
+triangle count that dropped by exactly 4× means a lost subdivision level. Neither is visible in
+Blender's viewport.
+
 **Values above 1.0 survive export.** Confirmed: `COLOR_0` comes out as float32 and a baked 1.196
 was preserved un-clamped. That matters when the base colour is already bright and the gradient must
 go *brighter* (e.g. `Wall_White` at 0.92). Strictly the glTF spec says `COLOR_0` *should* sit in
@@ -789,6 +1127,47 @@ white `COLOR_0` is a no-op, not a tint.
 cleanly, but it triggered the centre-tower flicker (see "3D Mode: Lighting") and was rolled back at
 Lucas's request — GLB restored from backup, the Blender bake removed, Base Color relinked to its
 authored `(0.92, 0.92, 0.90)`. If revisiting, deal with the tower's 0.022 depth knife-edge first.
+
+### Load-time vertex gradients (`VERTEX_GRADIENTS` in `src/main.js`)
+
+The runtime counterpart to the Blender bake above: it rewrites a mesh's `COLOR_0` at load, so it
+needs **no GLB re-export** and can be iterated on in the browser. Three modes:
+
+- **vertical** (default) — `bottom` → `top` ramp over the mesh's height. `1.0` = the authored
+  colour unchanged; values above 1.0 brighten.
+- **`radial`** — ramps by horizontal distance from the mesh centre (`centre` → `rim`). Used for
+  YellowRoom's floor pool.
+- **`tiles`** — **every tile gets its own** gradient, dark in its middle and bright toward its
+  edges. Not to be confused with `radial`, which stretches ONE gradient across the whole mesh;
+  that was tried on BlueRoom's floor first and read as a single dark patch in the middle of the
+  room.
+
+Matching is on **material name**, plus optional `mesh` name and a **minimum bbox height**. The
+height guard is what keeps a gradient off small props sharing a material — `Velvet` is also the
+YellowRoom coffee table (0.8 units) versus 5.9-unit walls. Ramps use each vertex's **world-space**
+height, not local Y: `YellowRoom_Sofa` is rotated and its mirror copy has **negative scale**
+(−2.37), so local Y runs upside down on one of them and a local ramp would invert.
+
+**Why this is safe against the centre-tower flicker** (unlike the Blender route, which triggered
+it — see "Colour gradients on geometry"): meshes that already arrive with a `COLOR_0` are already
+compiled with vertex colours, so replacing the attribute's *values* changes no shader program and
+cannot reshuffle draw order. For a mesh with no `COLOR_0` (YellowRoom's floor), applying one does
+recompile — but the renderer's opaque sort keys on `material.id`, and a load-time recompile keeps
+the **same material instance and id**. The Blender route reshuffled ids because the GLB's material
+creation *order* changed, which is what moved the draw order.
+
+Two implementation details that are easy to get wrong:
+- **Keep the existing attribute's `itemSize`** (4 = RGBA on these meshes). The `USE_COLOR_ALPHA`
+  shader define depends on it, and changing it compiles a new program — the exact thing this
+  approach exists to avoid.
+- Write **float32**. The authored attribute is normalised uint8, which cannot exceed 1.0, i.e.
+  cannot brighten.
+
+Use `clone` when the material is shared and the changes must not leak (BlueRoom's
+`BlueRoom_EmissivePanel` is on five meshes), and `emissive: 0x000000` when the surface is authored
+emissive: emission is added after shading and **cannot vary per-fragment from a colour map**, so
+leaving it on flattens the ramp — the same failure mode as the flat emissive that washed out the
+bottle label. A `Vertex-Gradients:` console line logs every mesh it touched.
 
 ## GLB export recipe (two non-obvious flags)
 
@@ -838,6 +1217,12 @@ Look-around (yaw/pitch) is hand-rolled in `src/main.js` — no OrbitControls/Thr
 **Desktop — scroll wheel:** `wheel` event also nudges `yaw`/`pitch` (`SCROLL_SENS = 0.003`), independent of the click-drag path — lets you look around without holding a mouse button.
 
 **Mobile — touch swipe with inertia:** single-finger drag on the canvas (`touchstart`/`touchmove`) drives the same yaw/pitch at `TOUCH_SENS = 0.004`, with velocity tracked per-frame and inertia decay (`INERTIA_DECAY = 5.0`) so a fast swipe keeps coasting briefly after release, matching the general "momentum projection" feel used elsewhere in the site's interactions.
+
+**Mobile — vertical range is deliberately tiny.** `PITCH_LIMIT` is `isMobile ? 0.20 : Math.PI/2 − 0.01`, and vertical drag has its own sensitivity, `TOUCH_SENS_PITCH = 0.0012` (30% of the horizontal `TOUCH_SENS`). Sideways looking is unchanged; up/down is a subtle nudge.
+
+**Movement — arrow keys are full WASD aliases**, feeding the same two axes, so diagonals and mixed WASD/arrow presses behave identically. Two things to preserve:
+- `preventDefault()` on the four arrows under `{ passive: false }` — a passive listener silently ignores it, and without it holding an arrow both walks the camera *and* scrolls the document. Safe for the overlays: a keydown inside an iframe doesn't bubble to the parent, so this never blocks arrow-scrolling their content.
+- **Combine the two keys with `||` (truthiness), never `!==`.** The `keys` map has *three* states — `undefined` (never pressed), `true` (down), `false` (released) — so `keys['KeyA'] !== keys['KeyD']` is TRUE after merely releasing one (`false !== undefined`), which left the branch permanently satisfied and walked the camera forever. Pure WASD hid the bug, because pressing those keys once makes both sides real booleans.
 
 **If adding a new input method (e.g. two-finger drag, a dedicated look-joystick):** hook into the same `yaw`/`pitch` variables + `clampPitch(); applyRotation();` pair — don't build a parallel rotation path, since `applyRotation()` is the single place that writes `camera.rotation`.
 
@@ -977,6 +1362,44 @@ html { overflow-x: clip; }  /* Not 'hidden' — clip allows sticky positioning *
 - `.scrolly-sticky` → `position: static` (no sticky pin); `flex-direction: column` (stack vertically)
 - Both videos same height; both panels visible; no toggle behavior
 - Useful on small screens where scroll range is too small to trigger transitions
+- **`#timetable-socials-scrolly` needs its column direction restated at ID strength here.**
+  The mirrored desktop layout is `#timetable-socials-scrolly .scrolly-sticky` (specificity 1,0,1)
+  and beats the fallback's plain `.scrolly-sticky` (0,1,0), so this one section stayed
+  `row-reverse` for the whole band — squeezing `.scrolly-copy` and both panels to **zero width**
+  and pushing the videos off the left edge. `#nav-friends-scrolly` has no ID-level direction rule,
+  which is exactly why only one of the two ever broke.
+- **`initScrolly` must not run its scroll logic here.** Both videos are on screen, so there is no
+  "active" step to swap to: the pause-the-inactive-one branch left one phone on a frozen frame,
+  and with `.scrolly` at `height: auto` the progress fraction divides by the `max(…, 1)` floor and
+  snaps 0→1 in a single scroll step. Guarded with `matchMedia('(max-width: 860px)')`, which shows
+  and plays both; desktop cannot reach that branch.
+
+### Unify page — mobile (≤640px)
+
+**Each video is paired with its own caption**, instead of two phones side by side followed by both
+captions. Done with `display: contents` on `.scrolly-media`/`.scrolly-copy` — which dissolves them
+so their children become direct flex items of the column — plus `order` to interleave. No markup
+change, so desktop's mirrored row is untouched. Consequences worth knowing:
+- `.scrolly-copy` reports **zero width** by design (it has no box). Measure the panels, not it.
+- `.scrolly-panel` is a **flex** item here while `.feature-copy` is a **grid** item, so anything
+  sizing both must use auto margins rather than `justify-self`/`align-self`.
+
+**Colour palette** (`.color-grid`) must stay a **row** at this width. It is a row with
+`align-items: flex-end` to bottom-align swatches; the ≤860px block flips it to a column, where
+`align-items` controls the *cross* axis — `flex-end` stops meaning "bottom" and starts meaning
+"right", and each box shrinks to content width. That is what produced 75×58px right-aligned
+swatches. Three square swatches side by side is also simply the better read for a palette.
+
+**Character figures** are 150px and keep the desktop stagger alive by alternating which edge each
+one hangs off (left / right / centre via `align-self`), since a single column has no room for
+horizontal offsets. Their paragraphs' inline `margin-left/right: -15px` must be zeroed with
+`!important` — those tuck the text against the figure in the desktop ROW and pull it off the page
+in a column.
+
+**The colour-palette heading's inline `margin-top: 190px`** is deliberate air at 1440px but ~26%
+of the whole section's height at 390px, landing as an empty hole under the dotted divider. Cut to
+40px via `.process-section .dot-divider + .process-title` (structural, not the i18n key — it is
+the only `.process-title` directly following a divider) with `!important`, since 190px is inline.
 
 ## Unify Page: Video Details
 
@@ -1026,6 +1449,37 @@ The two standalone videos carry `data-vid="homepage"` / `data-vid="settings"` at
 **Re-measuring:** `qlmanage -t -s 1400 -o . <file>.mov` produces a PNG frame; find the first non-background pixel along the middle row/column for the insets, and the row where the left edge reaches its final x for the corner radius.
 
 **Superseded:** `map-courses.mov` previously used `clip-path: inset(0 0 3px 0)` to crop an unwanted bottom line. That crop is now folded into its full inset above — don't re-add it.
+
+### Mobile sizing: `--phone-h` / `--phone-w`
+
+All six mockups take their height from **one** custom property, `--phone-h`, set in the last
+`@media (max-width: 640px)` block (it must stay last — the height is also declared earlier for
+`.feature-media video` and `.scrolly-vid video`, and this wins on source order). Currently
+`clamp(445px, 83.5vh, 640px)`, which is the original `clamp(416px, 78vh, 598px)` with **+7% on all
+three stops**, so the short-phone floor, the vh tracking and the tall-phone ceiling keep the same
+relationship.
+
+Captions attached to a video (`.feature-copy`, `.scrolly-panel` — *not* other paragraphs) are
+constrained to `--phone-w` and centred, matching the reference where the text spans the phone.
+
+**`--phone-w` is derived from the VISIBLE phone, not the element box.** Because every video is
+clip-path'd to the bezel, ~3.6% of the element is cropped away and the box stays wider than what
+you see. Per video that is `height × aspect × (1 − horizontal insets)`:
+
+| video | ratio |
+|---|---|
+| homepage | 0.4736 |
+| settings | 0.4730 |
+| timetable / socials / map-friends | 0.4688 |
+| map-courses | 0.4696 |
+
+One shared `0.47` rather than four rules: at the 640px ceiling those span 300.0–303.1px, so it
+lands within **2.3px worst case** of every one — below the threshold where an edge misalignment is
+visible. If the clip-paths are ever re-measured, redo this table.
+
+**Testing gotcha:** Chrome collapses `inset()` shorthand in `getComputedStyle().clipPath` when
+sides are equal, so a naive parser reads a corner radius as an inset. Split on `round` and drop
+the radii before parsing, or the measured "visible width" will be badly wrong.
 
 **Transparent video files are NOT worth it for this site.** `.mov`/H.264 can't carry an alpha channel; real transparency needs WebM/VP9 (Chrome/Firefox) *plus* HEVC-with-alpha (Safari) — 12 files to replace 6, with quality loss. Only go there if the videos are needed outside the website. Requires `ffmpeg`, which is **not installed** on this machine.
 
@@ -1088,4 +1542,8 @@ The two standalone videos carry `data-vid="homepage"` / `data-vid="settings"` at
   </div>
   ```
   Confirm the fix by checking the hover target reports `getComputedStyle(el).animationName === "none"` and `el.getAnimations().length === 0`. **These were the only two pages with `.anim` on a hoverable element** (all others checked), which is exactly why the nav and the homepage "top" button never exhibited it. **Diagnostic rule: if a hover transform does nothing, or flickers, or won't ease — look for a competing `animation` on that element before touching a single value.**
+- **A percentage width inside a shrink-to-fit parent is circular, and browsers silently resolve it to ZERO.** Cost a "the egg doesn't render at all" bug across the whole 641–860px band on `kaffeemaschine2d.html` (see "Cybercoffee project"). `justify-items: center` on a grid makes the item shrink-to-fit; its child's `width: min(480px, 100%)` then depends on a parent whose width depends on the child, so the whole subtree collapses to 0×0 with no error. Same trap applies to `align-items: center/start/end` on a flex container. **Fix: give the parent a definite width (`justify-self: stretch` / `align-self: stretch`), not the child.** Symptom to recognise: an element measures `0x0` at some widths but is fine at both narrower and wider ones.
+- **A media query inside an iframe resolves against the IFRAME's box, not the device.** This is usable as a *feature* — `kaffeemaschine.html` uses `@media (max-width: 479px)` to detect "I'm embedded at phone size", which provably can't fire on desktop because its host box is exactly 480px at every viewport ≥481px. But it is also the trap recorded in memory as the nav's orientation bug: an `orientation` query inside the 140px-tall nav iframe reports *landscape* on a portrait phone. **Width-based queries inside an iframe are safe and predictable; orientation/aspect ones are not.**
+- **A `display: none` iframe performs no layout, so it cannot self-measure.** Any postMessage/ResizeObserver auto-height scheme reports nothing until the frame is visible, which is why the 3D overlays flashed at their previous size on open. First-paint heights have to be set in CSS (`src/style.css`, under `@media (pointer: coarse)`); measuring after reveal is always one frame too late.
+- **`inset()` shorthand is collapsed in `getComputedStyle().clipPath`** when opposing sides are equal, so a naive whitespace parser reads a corner radius as an inset and reports a wildly wrong crop. Split on `round` and discard the radii first. (Cost one bogus measurement pass on the Unify caption widths.)
 - **A real CSS border beats an absolutely-positioned pseudo-element for "draw a line spanning this box."** Twice this session (see item 20 in "Recent Changes"), a divider built as `::after { position: absolute; top: 0; bottom: <value>; }` failed to reliably reach the container's true edge — first because a negative `bottom` value depended on how an ancestor's `overflow: hidden`/`clip` trimmed it (inconsistent, Safari especially), then because `bottom: 0` only matched the *pseudo-element's own* containing block, not the visual edge the user actually wanted. The fix that actually held up: a real `border-left`/`border-top` etc. on an already-correctly-sized flexbox/grid item — borders automatically span the box's full rendered dimension with zero positioning math and zero overflow-dependence. **Prefer a real border over an absolutely-positioned divider whenever the layout (flex/grid stretch) already gives the element the right size.**

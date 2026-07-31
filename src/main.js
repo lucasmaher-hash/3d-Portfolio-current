@@ -284,10 +284,16 @@ const FIXTURE_LIGHTS = [
   //                     throwing away the containment the cone just bought.
   //
   // Side benefit: this is a shadow-casting spot, and at SHADOW_CASTER_MAX_SIZE = 6 the
-  // 5.39-wide PinkRoom_CentralColumn and the 3.45-wide creature both qualify as casters
-  // while the 21.36-wide wall does not. So the column and the figure now throw real shadows
-  // across the room and up the far wall — the strongest contrast available here, and the
-  // thing a centred point light could never produce.
+  // 3.45-wide creature qualifies as a caster while the 21.36-wide wall does not. So the
+  // figure throws a real shadow across the room and up the far wall — the strongest
+  // contrast available here, and the thing a centred point light could never produce.
+  //
+  // NOTE (2026-07-31): PinkRoom_CentralColumn used to qualify too at 5.39 wide, and this
+  // comment used to claim it as a second caster. It no longer does: the column absorbed
+  // PinkRoom_Floor and PinkRoom_Ceiling to kill a shading seam at their junction (see
+  // CLAUDE.md), which took it to 18.3 wide — past the threshold. Accepted deliberately;
+  // the room was judged to look better with the seam gone than with the column's contact
+  // shadow. To get the shadow back, the column has to stop being the floor/ceiling again.
   // intensity 110, and it needs to be that high — much higher than the creature light's 14.
   // The throw is what costs it: the far wall is ~19.6 units away, so illuminance there is
   // I · window / 19.6² = I · 0.308 / 384 = I · 0.0008. At 40 that gave 0.032, which is only
