@@ -360,7 +360,14 @@
       </div>
     </div>
 
-    <iframe id="top-bar" src="/top_row_permanent_V3.html" allowtransparency="true"></iframe>
+    <!-- scrolling="no" is required, and this was the only page missing it (all 8
+         2D pages already have it). The nav document's body carries
+         padding-top: 130px, but this page sizes the frame to 100px — the 2D
+         pages give it 140px — so 30px of it overflows and the frame renders a
+         scrollbar down its right edge, over the scene. Nothing is actually
+         down there to scroll to: .top-row inside is position: fixed, so the
+         padding contributes height without contributing content. -->
+    <iframe id="top-bar" src="/top_row_permanent_V3.html" allowtransparency="true" scrolling="no"></iframe>
 
     <!-- Fullscreen controls intro — shown once the loader finishes; click/key dismisses.
          src is set from JS below rather than here so that a gated reload does not fetch

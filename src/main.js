@@ -1365,27 +1365,11 @@ loader.load(
       } catch (e) { /* malformed/stale — fall through to the fixed spawn */ }
     }
     if (!restoredReturnState) {
-      // ── TEMPORARY spawn: BlueRoom doorway, for iterating on the tile gradient ──
-      // REMOVE THIS BLOCK and un-comment the real spawn below when the tiles are done.
-      //
-      // Stands just inside the tunnel mouth (BlueRoom_Tunnel spans z 25.67..27.84, the
-      // room's near wall is at z 27.59..28.01) looking down the length of the room, so
-      // the whole tiled floor is in frame on every refresh.
-      //
-      // yaw = PI faces +z. Derived, not guessed: with rotation.order 'YXZ' the forward
-      // vector is (-sin yaw, 0, -cos yaw), which checks out against the real spawn below
-      // — from (2.297, 9.662) at yaw 2.34 that gives (-0.719, 0.696), and the direction to
-      // MainRoom's tower is (-0.735, 0.679). Same heading, so the formula is right.
-      camera.position.set(-4.8200, -0.7653, 28.6000)
-      yaw = Math.PI
-      pitch = -0.1500
-
-      // ── THE REAL SPAWN — restore these three lines when finished ──
       // Captured with the P debug key; frames the green centre-column pillar in MainRoom
       // with a doorway either side.
-      // camera.position.set(2.2970, -0.7653, 9.6615)
-      // yaw = 2.3400
-      // pitch = 0.0540
+      camera.position.set(2.2970, -0.7653, 9.6615)
+      yaw = 2.3400
+      pitch = 0.0540
     }
     applyRotation()
     spawnPos = camera.position.clone()
