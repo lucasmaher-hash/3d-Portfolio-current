@@ -2154,7 +2154,9 @@
       var projectNavEl = document.querySelector('.project-nav');
       if (projectNavEl) projectNavEl.style.display = 'none';
       var style = document.createElement('style');
-      style.textContent = '.exit-3d-btn{position:fixed;top:24px;left:24px;z-index:10000;background:var(--bg-surface);border:none;border-radius:9999px;padding:10px 24px;font-family:"VT323",monospace;font-size:16px;letter-spacing:0.04em;text-transform:uppercase;color:var(--text-primary);box-shadow:var(--shadow-raised-sm);cursor:pointer;text-decoration:none;transition:left 200ms ease, transform 150ms ease, box-shadow 150ms ease;}.exit-3d-btn:hover{transform:translateY(-2px) scale(1.03);box-shadow:11px 11px 24px rgba(174,174,192,0.9), -8px -8px 20px rgba(255,255,255,1);}';
+      // Both shadows are gated on .is-raised — see updateExitShadow() below.
+      // The transform lift is NOT gated: it works on any background.
+      style.textContent = '.exit-3d-btn{position:fixed;top:24px;left:24px;z-index:10000;background:var(--bg-surface);border:none;border-radius:9999px;padding:10px 24px;font-family:"VT323",monospace;font-size:16px;letter-spacing:0.04em;text-transform:uppercase;color:var(--text-primary);box-shadow:none;cursor:pointer;text-decoration:none;transition:left 200ms ease, transform 150ms ease, box-shadow 260ms cubic-bezier(.2,.7,.2,1);}.exit-3d-btn.is-raised{box-shadow:var(--shadow-raised-sm);}.exit-3d-btn:hover{transform:translateY(-2px) scale(1.03);transition:left 200ms ease, transform 150ms ease, box-shadow 150ms ease;}.exit-3d-btn.is-raised:hover{box-shadow:11px 11px 24px rgba(174,174,192,0.9), -8px -8px 20px rgba(255,255,255,1);}';
       document.head.appendChild(style);
       var btn = document.createElement('a');
       btn.href = '/';
@@ -2181,6 +2183,63 @@
       positionExitBtn();
       window.addEventListener('resize', positionExitBtn);
       if (document.fonts && document.fonts.ready) document.fonts.ready.then(positionExitBtn);
+
+      // A neumorphic shadow only reads correctly over the page's own surface
+      // colour; over a picture it becomes a glowing halo, worst on the dark
+      // renders. So the pill drops both shadows whenever a picture is behind it.
+      //
+      // This is a real geometric test against everything on the page, not just
+      // the hero: the process/gallery shots further down cover the button too,
+      // and an earlier hero-only version left the halo on over those. The button
+      // is position: fixed, so its rect and the media rects are both
+      // viewport-relative and directly comparable.
+      //
+      // `.hero` is in the selector alongside img/video because vaccine2d's hero
+      // letterboxes its video inside a black container — the <video> rect alone
+      // covers under half the button and would miss the black margin it actually
+      // sits on. Iframes are deliberately NOT included: the only one that passes
+      // under the button is Cybercoffee's machine, which is drawn on
+      // transparency, so the real backdrop there is the page surface.
+      var EXIT_MEDIA_SEL = '.hero, img, video';
+
+      function updateExitShadow() {
+        var b = btn.getBoundingClientRect();
+        var area = b.width * b.height;
+        if (!area) return;
+        // Overlaps are SUMMED. That double-counts nested media (a .hero and the
+        // <video> inside it), but only ever in cases where the outer element
+        // already covers the button on its own, so it cannot change the outcome —
+        // whereas summing is what correctly handles two SEPARATE images that each
+        // cover a third of the button.
+        var covered = 0;
+        var media = document.querySelectorAll(EXIT_MEDIA_SEL);
+        for (var i = 0; i < media.length; i++) {
+          var r = media[i].getBoundingClientRect();
+          if (!r.width || !r.height) continue;   // hidden, or not laid out yet
+          var w = Math.min(b.right, r.right) - Math.max(b.left, r.left);
+          var h = Math.min(b.bottom, r.bottom) - Math.max(b.top, r.top);
+          if (w > 0 && h > 0) covered += w * h;
+        }
+        btn.classList.toggle('is-raised', covered <= area * 0.5);
+      }
+
+      // rAF-throttled: this reads layout for every image on the page, so it must
+      // not run more than once per frame during a scroll.
+      var exitTick = false;
+      function requestExitShadow() {
+        if (exitTick) return;
+        exitTick = true;
+        requestAnimationFrame(function () { exitTick = false; updateExitShadow(); });
+      }
+      window.addEventListener('scroll', requestExitShadow, { passive: true });
+      window.addEventListener('resize', requestExitShadow, { passive: true });
+      // Images that arrive late change what is behind the button without any
+      // scroll happening, so re-check on load as well as on these timers.
+      window.addEventListener('load', updateExitShadow);
+      updateExitShadow();
+      requestAnimationFrame(updateExitShadow);
+      setTimeout(updateExitShadow, 120);
+      setTimeout(updateExitShadow, 500);
     })();
   </script>
 

@@ -1,6 +1,10 @@
 import './style.css'
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
+// Needed by any THREE.RectAreaLight (BlueRoom's ceiling panel). It uploads the LTC lookup
+// textures the area-light shader integrates against; without init() having run, the light
+// is constructed fine and simply emits NOTHING, with no error or warning.
+import { RectAreaLightUniformsLib } from 'three/addons/lights/RectAreaLightUniformsLib.js'
 
 // Scene
 const scene = new THREE.Scene()
@@ -35,6 +39,9 @@ renderer.toneMapping = THREE.ACESFilmicToneMapping
 // This is the single best knob for overall "too bright / too dark" — adjust it first.
 renderer.toneMappingExposure = 0.55
 document.body.appendChild(renderer.domElement)
+
+// One-time setup for RectAreaLight. Must run before the first frame that contains one.
+RectAreaLightUniformsLib.init()
 
 // Environment map — gives metalness/roughness materials something to reflect.
 // Without this, any metallic material renders black/dead (no IBL to sample).
@@ -201,13 +208,38 @@ const FIXTURE_LIGHTS = [
   // distance drops 12 -> 8 to keep containment no worse while the lights spread outward.
   // REMOVED at Lucas's request while the room is being rebuilt (the back wall is becoming a
   // curved cove in Blender). Commented rather than deleted so it can go straight back.
-  //
-  // NOTE: with this gone BlueRoom has NO light of its own. Its panels are no longer emissive
-  // either (the tile gradient needs them off — see VERTEX_GRADIENTS), so the only thing
-  // lighting the room now is the global fill: AmbientLight 0.08 + HemisphereLight 0.18 +
-  // DirectionalLight 0.12 + the uniform environment at 0.175. Expect it to read dark.
   // { test: (n, mats) => mats.includes('BlueRoom_EmissivePanel') && n.includes('Ceiling'),
   //   color: 0xb8dbff, intensity: 45, distance: 8, grid: { x: 3, z: 3 } },
+  //
+  // SUPERSEDED by the entry below: rather than lamps, BlueRoom is now lit by a single
+  // invisible AREA light filling its whole ceiling — see the `area` branch in
+  // addFixtureLights() for what that is and its three constraints.
+  //
+  // Matched on the MESH name, not the material: BlueRoom_EmissivePanel is shared by FIVE
+  // meshes (floor panels, front wall, both podium tops), so a material match would light
+  // this room from five places at once. BlueRoom_Ceiling_Panels is a single-primitive node,
+  // so its runtime name is the node name — the multi-material renaming trap documented at
+  // the top of this table does not apply here.
+  //
+  // Sized from the ceiling's own footprint (10.41 x 10.91) and then pushed OUTWARD 1.5 on
+  // every side (negative inset) and raised 1.4 above the slab, so that neither of the
+  // emitter's two hard boundaries — its plane and its four edges — lands on a surface the
+  // player can see. See the `area` branch in addFixtureLights() for why that matters.
+  //
+  // `bounce: 0` — DELIBERATELY OFF, and this is the settled state. The up-facing twin lit
+  // the ceiling nicely, but its own plane sat just under the ceiling at the top of the
+  // walls, and a point below an up-facing emitter receives exactly zero from it. That
+  // cutoff drew a hard line right around the room at the top of every wall — the artifact
+  // that took three passes to track down, because raising the MAIN panel (`lift`) could
+  // never move it. Diagnosis: the line did not shift when `lift` changed by 1.4, and
+  // vanished entirely at bounce 0.
+  //
+  // Consequence, accepted by Lucas: the ceiling is no longer separately lit, so it reads
+  // darker than the floor. He judged the clean walls worth more than the bright ceiling
+  // ("not exactly what I wanted but I prefer this way"). Do NOT re-enable `bounce` to
+  // "fix" the ceiling without solving the plane cutoff — the line comes straight back.
+  { test: n => n === 'BlueRoom_Ceiling_Panels',
+    color: 0xb8dbff, intensity: 2.6, area: { inset: -1.5, lift: 1.4, bounce: 0 } },
 
   // PinkRoom — the only light in the scene that is NOT a ceiling fixture. It sits at the
   // floating creature itself, so the room reads as lit by the figure.
@@ -359,6 +391,29 @@ const EMISSIVE_CLAMP = 2.0
 // Emissive colours deliberately match each part's own base colour, so this reads as "more
 // light on it" rather than a colour shift.
 const MATERIAL_FIXUPS = {
+  // BlueRoom's two podium objects — the Cybercoffee egg and the VR panel. Authored at
+  // metalness 0.65 / roughness 0.28 over a mid grey (0.403, 0.410, 0.429), which reads as
+  // painted plastic rather than metal. Pushed to full metal and polished.
+  //
+  // Brightness has to come from `color`, not from a light. At metalness 1 a surface has NO
+  // diffuse term — everything you see is reflected environment — so the base colour acts as
+  // the reflection tint, and raising it is what makes the object brighter. envMapIntensity
+  // is NOT the lever here: it was measured to render byte-identical frames in this scene
+  // (these materials have no envMap of their own; they inherit scene.environment, which is
+  // scaled by scene.environmentIntensity instead).
+  //
+  // The small emissive is a floor, not the main lift. BlueRoom's fixture light is currently
+  // commented out and its panels are no longer emissive, so the room is lit only by the
+  // global fill — without a little self-lift, going to full metal would land these DARKER
+  // than they started, since metal 0.65 at least kept some diffuse response.
+  //
+  // Worth knowing before tuning further: the environment is a uniform white shell, so a
+  // polished metal reflects it evenly and gains sheen rather than highlights. Sparkle needs
+  // an actual light in the room — restoring BlueRoom's fixture entry is what would give
+  // roughness something to bite on.
+  'M_Silver_Egg':   { metalness: 1.0, roughness: 0.14, color: 0xc9ced8, emissive: 0x353b47, emissiveIntensity: 1.0 },
+  'M_Silver_Panel': { metalness: 1.0, roughness: 0.14, color: 0xc9ced8, emissive: 0x353b47, emissiveIntensity: 1.0 },
+
   'label': {
     metalness: 0.0,                 // the real fix — see above; a label is a dielectric
     emissive: 0xffffff,
@@ -439,6 +494,41 @@ const SHADOW_CASTER_MAX_SIZE = 6
 // the curve starts at 39.05 - 2.505 = 36.55. Stopping a touch short of that keeps you off
 // the curve entirely. Lower it to stand further back, raise it to get closer to the wall.
 const BLUEROOM_Z_LIMIT = 36.4
+
+// Podiums keep the player out with an explicit no-go rectangle instead of raycast
+// collision. Two reasons the raycast can't do it: the size filter below drops anything
+// thin (podium top panels and bars are), and a podium's sides are open/loose geometry in
+// several rooms, so a ray fired at eye height can pass straight between the pieces — you
+// walk clean through the pedestal, and since camera.y is pinned to floorY + playerHeight
+// you're never *over* it either, you're inside it.
+//
+// The zones are derived at load from the podium meshes' own bounding boxes, so a Blender
+// re-export that moves or resizes a podium updates them with no code change.
+const PODIUM_MARGIN = 0.45
+// 'CoffeeTable' is in here for the same reason, not as an afterthought: YellowRoom's table
+// (holding the Mac-Lamp) IS in collidables and still didn't stop anyone, because it stands
+// 0.79 units tall with its top at y -1.93 while the eye ray fires from roughly a metre
+// higher. Every one of these supports is short enough for the ray to pass clean over it —
+// that's the shared root cause of "you walk through and over the podiums", and why height
+// is irrelevant to the zones below: they block on the XZ footprint alone.
+const PODIUM_NAME_PATTERNS = ['Podest', 'Podium', 'CoffeeTable']
+
+// PinkRoom's centre needs a CIRCLE, and must not go through the rectangle list above.
+// PinkRoom_CentralColumn was merged with the room's floor and ceiling in Blender, so its
+// bounding box is the entire 19 × 19 annulus — a rectangle built from it would seal off
+// the whole room.
+//
+// It also escapes collision for a subtler reason than the podiums do. Measured against the
+// GLB, the column has ZERO triangles crossing eye height (y -0.765): what stands on the
+// floor is a ~0.7-unit stump topping out around y -2.0, and the dome hangs down from the
+// ceiling. Between them is open air exactly where the collision ray fires, so there is
+// nothing for it to hit and you walk straight through the middle of the room.
+//
+// Centre and radius are measured off the stump itself: bbox centre (18.121, 16.755), max
+// vertex radius 2.07. PinkRoom_OuterWall needs nothing — all 752 of its triangles at eye
+// height face inward toward the player, so it already blocks correctly.
+const PINK_COLUMN = { x: 18.121, z: 16.755, r: 2.07 }
+let podiumZones = []
 
 // ── Fake-lighting vertex gradients, baked at load ────────────────
 // Rewrites a mesh's COLOR_0 with a vertical brightness ramp: `bottom` at the lowest
@@ -937,6 +1027,113 @@ function addFixtureLights(model) {
       return
     }
 
+    // `area` = an invisible emitting PLANE spanning the fixture's own footprint, instead of
+    // one or more discrete lamps. This is what "a light panel in the ceiling" physically is,
+    // and a THREE.RectAreaLight is pure light with NO renderable geometry — nothing new
+    // appears in the room, it only changes how surfaces are lit.
+    //
+    // Why not just make the ceiling emissive: Three.js has no global illumination, so an
+    // emissive material GLOWS but casts zero light. That is the reason every room in this
+    // scene needs a real light next to its fixture at all.
+    //
+    // Why not a grid of PointLights (what this room used to have): a point source puts a
+    // hotspot directly beneath itself and falls off radially, so on BlueRoom's dark blue
+    // walls a 3x3 grid still read as several separate lamps. An area source the size of the
+    // ceiling gives soft wall-to-wall falloff with no locatable origin.
+    //
+    // Three constraints before reusing this elsewhere:
+    //  - RectAreaLightUniformsLib.init() must have run (done once at renderer setup).
+    //    Without it the light emits nothing, silently.
+    //  - It lights MeshStandardMaterial / MeshPhysicalMaterial ONLY. Every material in this
+    //    GLB is glTF PBR so that holds, but a Basic/Lambert/Phong added later is ignored.
+    //  - It cannot cast shadows and has no `distance` cutoff — falloff is physical
+    //    inverse-square from the panel's area, so containment comes from `intensity` and the
+    //    gap to the next room, not from a hard radius the way PointLight `distance` works.
+    if (spec.area) {
+      // NEGATIVE inset = the panel OVERHANGS the fixture footprint. That is deliberate here:
+      // the rectangle's four edges are a falloff boundary too, so an emitter that stops at
+      // the walls puts its edge gradient on surfaces the player is looking at. Pushing the
+      // edges out past the walls keeps only the flat middle of the light's field inside the
+      // room. Light spilling outside costs nothing — there is nothing out there to see.
+      const inset = spec.area.inset ?? 0
+      const w = (box.max.x - box.min.x) - inset * 2
+      const h = (box.max.z - box.min.z) - inset * 2
+      const al = new THREE.RectAreaLight(spec.color, spec.intensity, w, h)
+      // The emitter goes ABOVE the fixture slab (its top face), not below it.
+      //
+      // This is the fix for a bright STRIPE along the top of the side walls. An area light
+      // obeys Lambert's cosine law about its OWN normal, so a wall point level with the
+      // panel sees it edge-on (cos ~ 0) and gets nothing, while one just below catches the
+      // panel's edge at near-zero range — a near-field spike. Sitting the panel at the
+      // ceiling's underside put both of those exactly at the top of the visible wall, so
+      // instead of a top-to-bottom ramp you got a hard bright line with dark above it.
+      //
+      // Raised to the slab's top face, the visible wall now starts a full slab-thickness
+      // BELOW the emitter, so the cos-weighted peak (which lands at ~45°, i.e. about one
+      // slab-thickness inward) falls on the wall proper and the falloff reads as a smooth
+      // gradient. The degenerate edge-on band still exists — it just sits at the emitter's
+      // own height, hidden above the ceiling where nothing can see it.
+      //
+      // Passing light DOWN through the slab is free: an area light casts no shadow, so
+      // being above the ceiling costs it nothing on the floor below.
+      //
+      // `lift` raises it FURTHER, and is what removes the remaining hard line that ran right
+      // around the room at the top of the walls. The emitter's own plane is a hard cutoff:
+      // a point just below it sees the full rectangle, a point just above it is behind the
+      // emitter and receives exactly zero, and there is nothing in between. Any surface that
+      // CROSSES that height therefore gets a visible seam — and BlueRoom's cove sweeps
+      // continuously from wall to ceiling, so it crossed the plane and drew the line.
+      // Sitting the emitter flush on the slab top was not enough because the cove's own
+      // curve reaches that same height.
+      //
+      // `lift` puts the plane above every surface the player can see, so the cutoff has
+      // nothing to land on. It also SOFTENS the gradient generally: the near-field falloff
+      // is spread over a longer run, at the cost of overall brightness (roughly 1/d²), which
+      // is why `intensity` goes up alongside it.
+      al.position.set(pos.x, box.max.y + model.position.y + (spec.area.lift ?? 0), pos.z)
+      // A RectAreaLight emits along its local -Z and spans local X (width) by Y (height).
+      // -90° about X maps local -Z to world -Y (straight down) and local Y to world Z, i.e.
+      // a horizontal ceiling panel. Set explicitly rather than with lookAt(): aiming
+      // straight down is degenerate for lookAt's default up vector (0,1,0) and would give
+      // an arbitrary roll — which for a non-square panel also swaps its width and depth.
+      al.rotation.x = -Math.PI / 2
+      scene.add(al)
+
+      // `bounce` = a second, UP-facing panel co-located with the first, i.e. the pair acts
+      // as one double-sided emitter (a RectAreaLight is single-sided; Three.js has no
+      // two-sided option).
+      //
+      // Why it is needed: the ceiling's visible face is its UNDERSIDE, whose normal points
+      // down — directly away from a downward-emitting panel — so the fixture lights the
+      // floor, walls and props but leaves its own ceiling black. In a real room the ceiling
+      // is lit by light bouncing back up off the floor, and Three.js has no global
+      // illumination to produce that. This is that bounce, done explicitly.
+      //
+      // Note moving the panel ABOVE the ceiling does NOT fix it: an area light casts no
+      // shadow so the light still reaches the floor through the slab, but the underside's
+      // normal still faces away from it and stays unlit. The light has to come from below.
+      //
+      // Its intensity is tuned SEPARATELY and is lower than the main panel's: it sits ~0.06
+      // from the ceiling versus ~4.2 from the floor, so the same value would read far
+      // brighter up there. Because it emits strictly upward it cannot touch anything else
+      // in the room — no uplighting on the podiums or props.
+      //
+      // NOTE the bounce panel stays BELOW the slab (at `pos`, the underside) even though the
+      // main panel moved above it. It has to: it exists to light the ceiling's underside,
+      // and a light on the far side of that surface cannot.
+      if (spec.area.bounce > 0) {
+        const up = new THREE.RectAreaLight(spec.color, spec.area.bounce, w, h)
+        up.position.copy(pos)
+        up.rotation.x = Math.PI / 2
+        scene.add(up)
+      }
+
+      seen.push(`${child.name} area ${w.toFixed(1)}x${h.toFixed(1)} @ ` +
+                `${pos.x.toFixed(1)},${pos.y.toFixed(1)},${pos.z.toFixed(1)}` +
+                `${spec.area.bounce > 0 ? ` +bounce ${spec.area.bounce}` : ''}`)
+      return
+    }
+
     let light
     if (spec.spot) {
       light = new THREE.SpotLight(
@@ -1251,6 +1448,98 @@ function canMove(origin, direction) {
   return ray.intersectObjects(collidables, false).length === 0
 }
 
+// YellowRoom's benches get a SECOND collision ray, fired LOW_RAY_DROP below the camera
+// (~0.35 above that room's floor) instead of at eye height. They're the same walk-over
+// problem as the podiums — the seat tops out well under the eye, which sits ~1.95 above
+// the floor, so the normal ray sails straight over — but they can't be solved the same
+// way: the bench is part of the same mesh as the curved wall, so its bounding box is
+// 7.5 × 5.9 × 17.3, near enough the whole room, and a rectangle built from it would seal
+// the room off. Its geometry, though, is exactly the right shape to hit.
+//
+// The low ray tests its OWN list, not `collidables`, and that restriction is load-bearing:
+// BlueRoom's floor is a 0.72-thick slab spanning y -2.72..-2.00, so a ray at -2.365 sits
+// INSIDE it and would block movement across that entire room. Every room's floor sits at a
+// different height, and the camera's y is a single global constant, so there is no one drop
+// value that clears all of them — hence an explicit opt-in list rather than a global pass.
+const LOW_RAY_DROP = 1.6
+const LOW_RAY_MESH_PATTERNS = ['Sofa']
+let lowCollidables = []
+const lowRay = new THREE.Raycaster()
+
+// Probing is done with THREE parallel rays across the player's width, not one down the
+// centre line, and the surface normal handed back is the AVERAGE of whatever they hit.
+//
+// That averaging is the fix for snagging on the ribbed walls and the podium panels. A
+// single centre ray reports the normal of the one facet it happens to land on, so dropping
+// into a groove it returns the groove's side wall — pointing across your path rather than
+// out of it — and the slide computed from that drives you straight into the opposite side.
+// You stick. Sampling across the player's width instead spans several ribs at once, and
+// their side normals largely cancel, leaving the wall's overall facing. You slide along the
+// run of the wall and ride over the detail.
+//
+// PROBE_HALF_WIDTH also gives the player some actual girth: with one ray you could clip a
+// corner or a rib edge with your shoulder, because nothing was testing anywhere but dead
+// ahead.
+const PROBE_HALF_WIDTH = 0.22
+const _probeOrigin = new THREE.Vector3()
+const _probeLat    = new THREE.Vector3()
+const _probeNormal = new THREE.Vector3()
+const _faceNormal  = new THREE.Vector3()
+const _slideA      = new THREE.Vector3()
+const _slideB      = new THREE.Vector3()
+const _probeResult = { blocked: false, normal: null, name: '' }
+
+function probeMove(origin, direction) {
+  _probeResult.blocked = false
+  _probeResult.normal  = null
+  _probeResult.name    = ''
+  if (collidables.length === 0) return _probeResult
+
+  // Lateral axis, perpendicular to travel and horizontal — the player's shoulder line.
+  _probeLat.set(direction.z, 0, -direction.x)
+  if (_probeLat.lengthSq() < 1e-8) return _probeResult
+  _probeLat.normalize()
+
+  _probeNormal.set(0, 0, 0)
+  let normalCount = 0
+
+  for (const lateral of [-PROBE_HALF_WIDTH, 0, PROBE_HALF_WIDTH]) {
+    for (const drop of [0, LOW_RAY_DROP]) {
+      // The low pass exists only for the opted-in meshes (see LOW_RAY_MESH_PATTERNS), so
+      // skip it entirely when there are none rather than paying for a wasted cast.
+      const targets = drop === 0 ? collidables : lowCollidables
+      if (targets.length === 0) continue
+      const caster = drop === 0 ? ray : lowRay
+      caster.far = COLLISION_DIST
+      _probeOrigin.copy(origin).addScaledVector(_probeLat, lateral)
+      _probeOrigin.y -= drop
+      caster.set(_probeOrigin, direction)
+      const hits = caster.intersectObjects(targets, false)
+      if (hits.length === 0) continue
+
+      _probeResult.blocked = true
+      if (!_probeResult.name) _probeResult.name = hits[0].object.name
+      if (!hits[0].face) continue
+      _faceNormal.copy(hits[0].face.normal)
+      hits[0].object.updateWorldMatrix(true, false)
+      _faceNormal.transformDirection(hits[0].object.matrixWorld)
+      _faceNormal.y = 0
+      if (_faceNormal.lengthSq() < 1e-8) continue
+      _faceNormal.normalize()
+      _probeNormal.add(_faceNormal)
+      normalCount++
+    }
+  }
+
+  // Opposed normals can cancel to nothing — a dead-end or a slot narrower than the probe
+  // width. Treat that as "no usable normal" so the caller simply stops, rather than
+  // sliding along a direction derived from near-zero noise.
+  if (normalCount > 0 && _probeNormal.lengthSq() > 1e-4) {
+    _probeResult.normal = _probeNormal.normalize()
+  }
+  return _probeResult
+}
+
 // ── Load model ───────────────────────────────────────────────────
 const loader = new GLTFLoader()
 loader.load(
@@ -1281,6 +1570,22 @@ loader.load(
       const nameExcluded = EXCLUDE_NAMES.some(p => child.name.includes(p))
       const isThinCylinder = child.name.includes('Wall_Cylinder') && minDim < thinThresh
 
+      // NOTE mb is in MODEL-LOCAL space: assigning model.position above does not refresh
+      // matrixWorld, and Box3.setFromObject calls updateWorldMatrix(false, true) — it
+      // reuses the parent's stale matrix. Sizes are unaffected by a translation (which is
+      // why the filter below is fine as-is) but positions need model.position added, the
+      // same correction the fixture lights carry. Do NOT "fix" this with
+      // model.updateMatrixWorld(true) — the spawn floor-probe depends on the stale
+      // matrices and refreshing them ejects the camera from the scene.
+      if (LOW_RAY_MESH_PATTERNS.some(p => child.name.includes(p))) lowCollidables.push(child)
+
+      if (PODIUM_NAME_PATTERNS.some(p => child.name.includes(p))) {
+        podiumZones.push({
+          minX: mb.min.x + model.position.x, maxX: mb.max.x + model.position.x,
+          minZ: mb.min.z + model.position.z, maxZ: mb.max.z + model.position.z,
+        })
+      }
+
       if (nameExcluded || isThinCylinder || (minDim < thinThresh && volume < volThresh)) {
         console.log('Kollision ignoriert:', JSON.stringify(child.name), `minDim=${minDim.toFixed(3)} vol=${volume.toFixed(3)}`)
       } else {
@@ -1292,6 +1597,39 @@ loader.load(
         clickables.push(child)
     })
     console.log('Clickables gefunden:', clickables.length)
+
+    // One podium is many meshes (sides, top panels, top bars — plus the object standing
+    // on it, which also matches the name patterns). Left as separate rectangles they'd
+    // overlap, and pushing out of each in turn can shove the player back into a
+    // neighbour. So merge every overlapping pair into its union until nothing overlaps,
+    // leaving one rectangle per physical podium. Margin is added last, after merging, so
+    // it never causes a merge that the real geometry doesn't justify.
+    for (let merged = true; merged; ) {
+      merged = false
+      outer:
+      for (let i = 0; i < podiumZones.length; i++) {
+        for (let j = i + 1; j < podiumZones.length; j++) {
+          const a = podiumZones[i], b = podiumZones[j]
+          if (a.minX > b.maxX || b.minX > a.maxX || a.minZ > b.maxZ || b.minZ > a.maxZ) continue
+          a.minX = Math.min(a.minX, b.minX); a.maxX = Math.max(a.maxX, b.maxX)
+          a.minZ = Math.min(a.minZ, b.minZ); a.maxZ = Math.max(a.maxZ, b.maxZ)
+          podiumZones.splice(j, 1)
+          merged = true
+          break outer
+        }
+      }
+    }
+    for (const z of podiumZones) {
+      z.minX -= PODIUM_MARGIN; z.maxX += PODIUM_MARGIN
+      z.minZ -= PODIUM_MARGIN; z.maxZ += PODIUM_MARGIN
+    }
+    console.log('Low-Ray Meshes:', lowCollidables.length, lowCollidables.map(m => {
+      const b = new THREE.Box3().setFromObject(m)
+      return `${m.name} [x ${(b.min.x + model.position.x).toFixed(1)}..${(b.max.x + model.position.x).toFixed(1)}` +
+             ` z ${(b.min.z + model.position.z).toFixed(1)}..${(b.max.z + model.position.z).toFixed(1)}]`
+    }).join('  '))
+    console.log('Podium-Sperrzonen:', podiumZones.length,
+      podiumZones.map(z => `x ${z.minX.toFixed(1)}..${z.maxX.toFixed(1)} z ${z.minZ.toFixed(1)}..${z.maxZ.toFixed(1)}`).join(' | '))
 
     // Place a PointLight at each emissive ceiling fixture (and clamp over-bright
     // emissives). Must run AFTER model.position.sub(center) above, since it reads each
@@ -1461,34 +1799,73 @@ function animate() {
 
   if (move.lengthSq() > 0) {
     move.normalize()
-    ray.far = COLLISION_DIST
-    ray.set(camera.position, move)
-    const hits = ray.intersectObjects(collidables, false)
-    if (hits.length > 0) {
+    const probe = probeMove(camera.position, move)
+    if (probe.blocked) {
       const now = performance.now()
       if (now - lastCollisionLog > 500) {
         lastCollisionLog = now
-        console.log('BLOCKIERT von:', JSON.stringify(hits[0].object.name), '| Parent:', JSON.stringify(hits[0].object.parent?.name), '| face:', !!hits[0].face)
+        console.log('BLOCKIERT von:', JSON.stringify(probe.name), '| normal:', probe.normal ? 'ja' : 'nein')
       }
     }
-    if (hits.length === 0) {
+    if (!probe.blocked) {
       camera.position.addScaledVector(move, SPEED * delta)
-    } else if (hits[0].face) {
-      // Wand-Normal in World-Space umrechnen
-      const normal = hits[0].face.normal.clone()
-      hits[0].object.updateWorldMatrix(true, false)
-      normal.transformDirection(hits[0].object.matrixWorld)
-      normal.y = 0
-      normal.normalize()
-      // Bewegung entlang der Wand projizieren (Normal-Anteil entfernen)
-      const slide = move.clone().addScaledVector(normal, -move.dot(normal))
+    } else if (probe.normal) {
+      // Project the movement onto the wall (strip the normal component), then, if that
+      // slide is itself blocked, project ONCE more against whatever stopped it. The second
+      // pass is what gets you out of a groove: entering one, the first slide runs you into
+      // the groove's opposite face, and with a single pass you'd simply stop dead — which
+      // is exactly the "caught on the ribs" feel. Projecting again resolves the two faces
+      // into the one direction that satisfies both, so you slide along the wall's overall
+      // run instead of pinballing between its details.
+      const slide = _slideA.copy(move).addScaledVector(probe.normal, -move.dot(probe.normal))
       slide.y = 0
       if (slide.lengthSq() > 0.001) {
         slide.normalize()
-        ray.set(camera.position, slide)
-        if (ray.intersectObjects(collidables, false).length === 0)
+        const p2 = probeMove(camera.position, slide)
+        if (!p2.blocked) {
           camera.position.addScaledVector(slide, SPEED * delta)
+        } else if (p2.normal) {
+          const slide2 = _slideB.copy(slide).addScaledVector(p2.normal, -slide.dot(p2.normal))
+          slide2.y = 0
+          if (slide2.lengthSq() > 0.001) {
+            slide2.normalize()
+            if (!probeMove(camera.position, slide2).blocked)
+              camera.position.addScaledVector(slide2, SPEED * delta)
+          }
+        }
       }
+    }
+  }
+
+  // ── Podiums: push back out along the shallowest axis ─────────────
+  // Runs after the move + slide so it corrects the final position instead of fighting the
+  // collision solver. Choosing the smallest of the four penetration depths means you're
+  // ejected through the nearest face, so walking into a podium's side slides you along it
+  // rather than teleporting you around a corner.
+  for (const z of podiumZones) {
+    const { x, z: pz } = camera.position
+    if (x <= z.minX || x >= z.maxX || pz <= z.minZ || pz >= z.maxZ) continue
+    const dxMin = x - z.minX, dxMax = z.maxX - x
+    const dzMin = pz - z.minZ, dzMax = z.maxZ - pz
+    const m = Math.min(dxMin, dxMax, dzMin, dzMax)
+    if      (m === dxMin) camera.position.x = z.minX
+    else if (m === dxMax) camera.position.x = z.maxX
+    else if (m === dzMin) camera.position.z = z.minZ
+    else                  camera.position.z = z.maxZ
+  }
+
+  // PinkRoom's central column — circular, so push radially out to the boundary rather than
+  // through a face. The dead-centre case can't be normalised, so it ejects along +x.
+  {
+    const dx = camera.position.x - PINK_COLUMN.x
+    const dz = camera.position.z - PINK_COLUMN.z
+    const d  = Math.hypot(dx, dz)
+    const rr = PINK_COLUMN.r + PODIUM_MARGIN
+    if (d < rr) {
+      const ux = d > 1e-4 ? dx / d : 1
+      const uz = d > 1e-4 ? dz / d : 0
+      camera.position.x = PINK_COLUMN.x + ux * rr
+      camera.position.z = PINK_COLUMN.z + uz * rr
     }
   }
 

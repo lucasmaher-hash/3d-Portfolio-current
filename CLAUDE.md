@@ -460,9 +460,9 @@ Organized by project for clarity:
 - ✅ Camera look-around triggers on right-click **or middle-click**; arrow keys now alias WASD —
   see "3D Mode: Camera Controls"
 - ✅ YellowRoom relit with downward spots; floor pool + Blender-baked wall gradient
-- ⏳ **BlueRoom is mid-rebuild** (curved cove in Blender): its fixture light is commented out and
-  its panels are non-emissive, so **the room reads dark by design right now** — see "3D Mode:
-  Lighting" before treating that as a bug
+- ✅ **BlueRoom is lit again** — one invisible `RectAreaLight` filling the ceiling, plus an
+  up-facing `bounce` twin so the ceiling itself isn't black. Its panels stay non-emissive (the
+  tile gradient needs them off). See "3D Mode: Lighting"
 - ⏳ `nav-out.json` at the repo root is an orphaned debug dump — safe to delete
 
 **Deployment:**
@@ -1051,11 +1051,77 @@ wash. A 2×3 grid per panel was then tried for evenness and **rolled back at Luc
 technically more uniform, but it flattened the room's character. **Don't reintroduce it without
 asking.** The lighter wall *tops* come from the baked vertex gradient, not from these lights.
 
-**BlueRoom currently has NO light of its own.** Its `FIXTURE_LIGHTS` entry is **commented out,
-not deleted** (the back wall is being rebuilt as a curved cove in Blender), and its panels are no
-longer emissive because the tile gradient needs them off. The only thing lighting it is the global
-fill — Ambient 0.08 + Hemi 0.18 + Dir 0.12 + environment 0.175 — so **it is expected to read
-dark**; that is not a regression to chase. Uncomment the entry when the room lands.
+**BlueRoom is lit by an invisible AREA light filling its ceiling — the only one in the scene.**
+Its old gridded PointLight entry is still commented out below the live one (kept for reference);
+its panels remain non-emissive because the tile gradient needs them off.
+
+`area: { inset, bounce }` on a `FIXTURE_LIGHTS` entry builds a `THREE.RectAreaLight` sized to the
+anchor mesh's own footprint (here 9.9 × 10.4, inset 0.25 so the emitter stops short of the side
+walls — flush against one puts a bright band down it that reads as a seam). A RectAreaLight has
+**no renderable geometry**, so nothing new appears in the room; it only changes the lighting. This
+is what a ceiling light panel physically is, and it beats the old 3×3 PointLight grid, which still
+produced a hotspot under each lamp and read as several separate sources on the dark blue walls.
+
+**`bounce` is not optional decoration — without it the ceiling renders black.** A RectAreaLight is
+**single-sided** (Three.js has no two-sided option), and the ceiling's visible face is its
+*underside*, whose normal points straight down, away from a downward-emitting panel. So `bounce`
+adds a second, UP-facing panel co-located with the first; the pair behaves as one double-sided
+emitter. In a real room that light is the floor bouncing it back up, and Three.js has no GI to
+produce it. It emits strictly upward, so it cannot uplight the podiums or props.
+
+**Moving the panel above the ceiling does NOT fix that**, which is the intuitive thing to try: an
+area light casts no shadow, so its light still reaches the floor straight through the slab, but the
+underside's normal still faces away from it and stays unlit. The light has to come from below.
+
+**The main emitter sits WELL ABOVE the ceiling (`box.max.y + lift`), and OVERHANGS the room
+(negative `inset`).** Both exist to kill hard seams, and each fixes a different one. This took
+three passes to get right; the underlying rule is that **a RectAreaLight has two hard boundaries —
+its plane and its four edges — and neither may fall on a surface the player can see.**
+
+*The plane.* A point just below the emitter sees the full rectangle; a point just above it is
+behind the emitter and receives **exactly zero**, with nothing in between. Any surface crossing
+that height gets a seam. BlueRoom's cove sweeps continuously from wall to ceiling, so it crossed
+the plane and drew a line right around the room at the top of the walls. Sitting the emitter flush
+on the slab top was **not** enough, because the cove's own curve reaches that same height — hence
+`lift`, which puts the plane above everything visible so the cutoff has nothing to land on.
+
+*The edges.* The rectangle's perimeter is a falloff boundary too, so an emitter that stops at the
+walls lays its edge gradient on surfaces you are looking at. A negative `inset` pushes the edges
+out past the walls, keeping only the flat middle of the light's field inside the room. Spill
+outside costs nothing — there is nothing out there to see, and no shadows to compute.
+
+There was also an earlier, distinct artifact: a bright **stripe** at the top of the walls when the
+emitter sat at the ceiling's *underside*. An area light obeys Lambert's cosine law about its own
+normal, so a wall point level with the panel sees it edge-on (cos ≈ 0) and gets nothing, while one
+just below catches the panel edge at near-zero range — a near-field spike. Raising the emitter
+fixed that too, for the same reason.
+
+`lift` also softens the gradient generally (the near-field falloff spreads over a longer run) at
+the cost of brightness, roughly 1/d² — which is why `intensity` is tuned upward alongside it.
+Passing light down through the slab costs nothing, since an area light casts no shadow.
+
+**`bounce` is currently 0 — off, and that is the settled state.** The mechanism still exists: it
+adds a second, UP-facing panel co-located with the first (a RectAreaLight is single-sided, so the
+pair acts as one double-sided emitter), which is the only way to light the ceiling's *underside* —
+its normal points down, away from a downward emitter, and Three.js has no GI to bounce floor light
+back up.
+
+It had to be switched off because **its own plane sat just under the ceiling, exactly at the top of
+the walls**, and a point below an up-facing emitter receives exactly zero from it. That cutoff drew
+a hard line right around the room at the top of every wall. This took three passes to find, because
+raising the *main* panel (`lift`) can never move it — the two emitters have independent planes.
+**Diagnosis worth reusing:** the line did not shift when `lift` changed by 1.4, was absent with the
+light fully off, and vanished at `bounce: 0`. A shading artifact that ignores a light's position
+but disappears with its intensity belongs to a *different* light.
+
+**Accepted consequence:** the ceiling is no longer separately lit and reads darker than the floor.
+Lucas judged clean walls worth more than a bright ceiling — *"not exactly what I wanted but I
+prefer this way."* Do NOT re-enable `bounce` to brighten the ceiling without first solving the
+plane cutoff; the line comes straight back. Three constraints if reusing `area` elsewhere: `RectAreaLightUniformsLib.init()` must have
+run (done once at renderer setup — without it the light silently emits **nothing**); it lights
+`MeshStandardMaterial`/`MeshPhysicalMaterial` only; and it cannot cast shadows and has no
+`distance` cutoff, so containment comes from `intensity` and the gap to the next room rather than
+from a hard radius the way PointLight `distance` works.
 
 **`BLUEROOM_Z_LIMIT = 36.4` is a movement clamp, and collision genuinely cannot replace it.** The
 cove is built from loose, unwelded tile quads that don't close up around the curve, and raycast

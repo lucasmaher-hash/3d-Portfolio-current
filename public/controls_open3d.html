@@ -235,6 +235,18 @@
       box-shadow: inset -6px -6px 15px rgba(255,255,255,1), inset 6px 6px 15px rgba(174,174,192,0.65);
     }
 
+    /* The real logo asset, not a typed "LM" — this card tells you to tap the
+       nav's logo button, so the badge has to be the thing you are looking for.
+       78.5% is the nav's own ratio (.logo-mark is 34.56px inside a 44px .logo in
+       top_row_permanent_V3.html); as a percentage it holds at both this page's
+       sizes, 56px desktop and 44px mobile, with no second declaration. */
+    .lm-mark {
+      width: 78.5%;
+      height: auto;
+      display: block;
+      pointer-events: none;
+    }
+
     /* ── Mobile ────────────────────────────────────────────────────────────
        These rules used to sit as bare selectors INSIDE the .lm-button block
        above, with no @media wrapper and no closing brace before them. Under CSS
@@ -350,8 +362,122 @@
         line-height: 1.45;
       }
       .card-title { font-size: 24px; }
+
+      /* Match the .lm-button's mobile size so the icon column stays even. */
+      .touch-joystick,
+      .touch-swipe,
+      .touch-tap { width: 44px; height: 44px; }
+    }
+
+    /* ── Touch controls ────────────────────────────────────────────────────
+       The scene binds a virtual joystick and drag-to-look whenever
+       navigator.maxTouchPoints > 0 (`isMobile` in src/main.js); a pointer
+       device gets the WASD + mouse path instead. This guide has to describe
+       whichever one is actually live, so it switches on that SAME expression —
+       applied as .is-touch on <html> by the script in the head — rather than on
+       a width breakpoint. Width would be wrong in both directions: a narrow
+       desktop window still uses the keyboard, and a phone in landscape is still
+       touch. */
+    .visual-touch,
+    .desc-touch { display: none; }
+
+    .is-touch .visual-pointer,
+    .is-touch .desc-pointer { display: none; }
+
+    .is-touch .visual-touch { display: flex; }
+    .is-touch .desc-touch   { display: inline; }
+
+    /* Joystick — a recessed base with a raised thumb pushed off centre, so it
+       reads as being held rather than at rest. Mirrors the real control
+       (#joystick-base / #joystick-thumb in index.html). */
+    .touch-joystick {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--bg-base);
+      box-shadow: inset 4px 4px 10px rgba(174,174,192,0.6), inset -4px -4px 10px rgba(255,255,255,1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .touch-joystick-thumb {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--bg-base);
+      box-shadow: 3px 3px 7px rgba(174,174,192,0.65), -3px -3px 7px rgba(255,255,255,1);
+      transform: translate(5px, -5px);
+    }
+
+    /* Swipe — a raised pad carrying the contact dot and its motion trail. The
+       dot uses the same #4a4a4a as .mouse-dot so the two icon sets read as one
+       family. */
+    .touch-swipe {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      background: var(--bg-base);
+      box-shadow: 5px 5px 12px rgba(174,174,192,0.65), -5px -5px 12px rgba(255,255,255,1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+    }
+
+    .touch-swipe span {
+      width: 4px;
+      height: 2px;
+      border-radius: 1px;
+      background: rgba(74,74,74,0.3);
+    }
+
+    .touch-swipe span:nth-child(2) { width: 7px; background: rgba(74,74,74,0.55); }
+
+    .touch-swipe span:last-child {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #4a4a4a;
+    }
+
+    /* Tap — contact dot inside a ripple ring. */
+    .touch-tap {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--bg-base);
+      box-shadow: 5px 5px 12px rgba(174,174,192,0.65), -5px -5px 12px rgba(255,255,255,1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .touch-tap::before {
+      content: '';
+      position: absolute;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 2px solid rgba(74,74,74,0.22);
+    }
+
+    .touch-tap-dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: #4a4a4a;
     }
   </style>
+  <script>
+    /* Runs before first paint so the correct guide is what renders — no flash of
+       the mouse/keyboard version on a phone. Deliberately the same expression as
+       `isMobile` in src/main.js, which is what decides whether the joystick and
+       drag-to-look are bound at all, so this can never describe controls the
+       scene has not actually enabled. */
+    if (navigator.maxTouchPoints > 0) document.documentElement.classList.add('is-touch');
+  </script>
 </head>
 <body>
   <div class="container">
@@ -361,21 +487,33 @@
     </div>
 
     <div class="grid">
+      <!-- Each card carries BOTH a pointer and a touch variant, of the copy and
+           of the icon; .is-touch on <html> picks one. Two elements rather than
+           rewriting text at runtime because the i18n pass below assigns
+           textContent per data-i18n key, so each variant needs its own key. -->
       <div class="card">
         <div>
           <div class="card-title" data-i18n="move-title">MOVE</div>
-          <div class="card-description" data-i18n="move-desc">W, A, S, D or arrow keys to walk the scene</div>
+          <div class="card-description">
+            <span class="desc-pointer" data-i18n="move-desc">W, A, S, D or arrow keys to walk the scene</span>
+            <span class="desc-touch" data-i18n="move-desc-touch">Drag the joystick (bottom left) to walk the scene</span>
+          </div>
         </div>
         <div class="card-visual">
           <!-- Classes rather than inline styles so the gaps can be scaled per
                breakpoint; inline styles can only be overridden with !important. -->
-          <div class="key-stack">
-            <div class="key">W</div>
-            <div class="key-row">
-              <div class="key">A</div>
-              <div class="key">S</div>
-              <div class="key">D</div>
+          <div class="visual-pointer">
+            <div class="key-stack">
+              <div class="key">W</div>
+              <div class="key-row">
+                <div class="key">A</div>
+                <div class="key">S</div>
+                <div class="key">D</div>
+              </div>
             </div>
+          </div>
+          <div class="visual-touch">
+            <div class="touch-joystick"><div class="touch-joystick-thumb"></div></div>
           </div>
         </div>
       </div>
@@ -383,14 +521,22 @@
       <div class="card">
         <div>
           <div class="card-title" data-i18n="camera-title">CAMERA</div>
-          <div class="card-description" data-i18n="camera-desc">Rightclick or trackpad to move camera</div>
+          <div class="card-description">
+            <span class="desc-pointer" data-i18n="camera-desc">Rightclick or trackpad to move camera</span>
+            <span class="desc-touch" data-i18n="camera-desc-touch">Swipe anywhere to look around</span>
+          </div>
         </div>
         <div class="card-visual">
-          <div class="mouse-icon">
-            <div class="mouse-left"></div>
-            <div class="mouse-right">
-              <div class="mouse-dot"></div>
+          <div class="visual-pointer">
+            <div class="mouse-icon">
+              <div class="mouse-left"></div>
+              <div class="mouse-right">
+                <div class="mouse-dot"></div>
+              </div>
             </div>
+          </div>
+          <div class="visual-touch">
+            <div class="touch-swipe"><span></span><span></span><span></span></div>
           </div>
         </div>
       </div>
@@ -398,14 +544,22 @@
       <div class="card">
         <div>
           <div class="card-title" data-i18n="inspect-title">INSPECT</div>
-          <div class="card-description" data-i18n="inspect-desc">Leftclick to select item</div>
+          <div class="card-description">
+            <span class="desc-pointer" data-i18n="inspect-desc">Leftclick to select item</span>
+            <span class="desc-touch" data-i18n="inspect-desc-touch">Tap an object to open its project</span>
+          </div>
         </div>
         <div class="card-visual">
-          <div class="mouse-icon">
-            <div class="mouse-left mouse-left--pressed">
-              <div class="mouse-dot"></div>
+          <div class="visual-pointer">
+            <div class="mouse-icon">
+              <div class="mouse-left mouse-left--pressed">
+                <div class="mouse-dot"></div>
+              </div>
+              <div class="mouse-right mouse-right--raised"></div>
             </div>
-            <div class="mouse-right mouse-right--raised"></div>
+          </div>
+          <div class="visual-touch">
+            <div class="touch-tap"><div class="touch-tap-dot"></div></div>
           </div>
         </div>
       </div>
@@ -416,7 +570,7 @@
           <div class="card-description" data-i18n="reset-desc">Tap icon (top left) to reset to center</div>
         </div>
         <div class="card-visual">
-          <div class="lm-button">LM</div>
+          <div class="lm-button"><img src="/images/site/logo-lm.png" alt="" class="lm-mark" /></div>
         </div>
       </div>
     </div>
@@ -429,15 +583,21 @@
         de: {
           'controls-title': 'STEUERUNG',
           'move-title': 'BEWEGEN', 'move-desc': 'W, A, S, D oder Pfeiltasten, um durch die Szene zu laufen',
+          'move-desc-touch': 'Joystick (unten links) ziehen, um durch die Szene zu laufen',
           'camera-title': 'KAMERA', 'camera-desc': 'Rechtsklick oder Trackpad, um die Kamera zu bewegen',
+          'camera-desc-touch': 'Wischen, um dich umzusehen',
           'inspect-title': 'ANSEHEN', 'inspect-desc': 'Linksklick, um ein Objekt auszuwählen',
+          'inspect-desc-touch': 'Objekt antippen, um das Projekt zu öffnen',
           'reset-title': 'RESET', 'reset-desc': 'Icon (oben links) tippen, um zur Mitte zurückzukehren'
         },
         en: {
           'controls-title': 'CONTROLS',
           'move-title': 'MOVE', 'move-desc': 'W, A, S, D or arrow keys to walk the scene',
+          'move-desc-touch': 'Drag the joystick (bottom left) to walk the scene',
           'camera-title': 'CAMERA', 'camera-desc': 'Rightclick or trackpad to move camera',
+          'camera-desc-touch': 'Swipe anywhere to look around',
           'inspect-title': 'INSPECT', 'inspect-desc': 'Leftclick to select item',
+          'inspect-desc-touch': 'Tap an object to open its project',
           'reset-title': 'RESET', 'reset-desc': 'Tap icon (top left) to reset to center'
         }
       };
