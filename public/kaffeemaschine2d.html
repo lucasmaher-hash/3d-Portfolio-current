@@ -596,26 +596,37 @@
       }
       .machine-frame-wrap { width: min(480px, 100%); }
 
-      /* Hero extended 30% taller, with the added band ABOVE the image so the flat
-         dark area at the top of the render simply continues upward.
-         16/9 -> 160/117 (= 16/11.7) is exactly +30% height at the same width.
-         #141B30 is sampled from the image's own top row — measured (20,27,48), and
-         that row is flat to within ±3 across its full width — so the band and the
-         image read as one continuous surface rather than two tones.
-         The image keeps its ORIGINAL box: 9/11.7 = 76.9231% of the new height,
-         anchored to the bottom. That matters — leaving it at height:100% would let
-         object-fit: cover re-crop the render to the taller box instead of just
-         adding space above it. The +2px / -1px preserves the existing overscan
-         that hides sub-pixel gaps at the edges (see .hero img above). */
-      .hero {
-        aspect-ratio: 160 / 117;
-        background: #141B30;
-      }
+      /* Hero cropped to a portrait frame so the machine reads at phone scale.
+         The render (02_straight_on_widescreen.png) is 3556x2000, i.e. 16:9 — a
+         shape built for a desktop banner. Letterboxed into a phone-width strip
+         the machine came out ~117px wide, a thumbnail of the page's own subject.
 
-      .hero img {
-        top: auto;
-        bottom: -1px;
-        height: calc(76.9231% + 2px);
+         Turning the frame portrait and letting the base rule's `object-fit:
+         cover` do the work crops the empty floor off the SIDES and shows the
+         full height, which is where all the subject actually is. Measured off
+         the source, the machine body sits at x 0.352 -> 0.650 (width 0.298,
+         centre 0.501 — already dead centre, so no object-position shift is
+         needed) and y 0.284 -> 0.810.
+
+         4/5 specifically: under full-height cover the machine's rendered width
+         is 0.298 x (16/9) / aspect of the hero width, so 4/5 puts it at 0.663 —
+         matching the reference. It ends up ~258px wide at a 390px viewport,
+         2.2x its previous size. 5/6 or 27/32 would leave it at 0.63-0.64.
+
+         This REPLACES the earlier "+30% taller with a dark band above" treatment
+         (aspect 160/117, image pinned to the bottom at 76.9231% height). That
+         band existed to add height without re-cropping; here re-cropping is the
+         point, so the image fills the frame and the band never shows. The
+         background colour stays — it is sampled from the render's own top row
+         (20,27,48), so it covers the frame with the right tone before the 4.9MB
+         PNG has painted rather than flashing white.
+
+         The base .hero img rule is deliberately left alone now: its
+         top/left -1px + calc(100% + 2px) overscan and centre-centre cover are
+         exactly what this needs. */
+      .hero {
+        aspect-ratio: 4 / 5;
+        background: #141B30;
       }
     }
 

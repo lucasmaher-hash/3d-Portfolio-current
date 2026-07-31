@@ -199,8 +199,15 @@ const FIXTURE_LIGHTS = [
   // z 27.6..39.24), not a lamp. As a single point it produced one hotspot per side wall,
   // which on these dark blue walls read as two separate light sources. See `grid` below;
   // distance drops 12 -> 8 to keep containment no worse while the lights spread outward.
-  { test: (n, mats) => mats.includes('BlueRoom_EmissivePanel') && n.includes('Ceiling'),
-    color: 0xb8dbff, intensity: 45, distance: 8, grid: { x: 3, z: 3 } },
+  // REMOVED at Lucas's request while the room is being rebuilt (the back wall is becoming a
+  // curved cove in Blender). Commented rather than deleted so it can go straight back.
+  //
+  // NOTE: with this gone BlueRoom has NO light of its own. Its panels are no longer emissive
+  // either (the tile gradient needs them off — see VERTEX_GRADIENTS), so the only thing
+  // lighting the room now is the global fill: AmbientLight 0.08 + HemisphereLight 0.18 +
+  // DirectionalLight 0.12 + the uniform environment at 0.175. Expect it to read dark.
+  // { test: (n, mats) => mats.includes('BlueRoom_EmissivePanel') && n.includes('Ceiling'),
+  //   color: 0xb8dbff, intensity: 45, distance: 8, grid: { x: 3, z: 3 } },
 
   // PinkRoom — the only light in the scene that is NOT a ceiling fixture. It sits at the
   // floating creature itself, so the room reads as lit by the figure.
@@ -421,6 +428,12 @@ const MATERIAL_FIXUPS = {
 // the lamp — are what actually need contact shadows.
 const SHADOW_CASTER_MAX_SIZE = 6
 
+// BlueRoom's back wall is a curved cove; see the clamp in the animation loop for why this
+// exists. The room's back plane sits at world z ~39.05 and the cove's radius is 2.505, so
+// the curve starts at 39.05 - 2.505 = 36.55. Stopping a touch short of that keeps you off
+// the curve entirely. Lower it to stand further back, raise it to get closer to the wall.
+const BLUEROOM_Z_LIMIT = 36.4
+
 // ── Fake-lighting vertex gradients, baked at load ────────────────
 // Rewrites a mesh's COLOR_0 with a vertical brightness ramp: `bottom` at the lowest
 // vertex (1.0 = the authored colour, unchanged) rising to `top` at the highest. Cheaper
@@ -496,14 +509,31 @@ const VERTEX_GRADIENTS = [
   // its edges — the reference look. Not to be confused with 'radial', which stretches ONE
   // gradient across the whole mesh; that was tried here first and read as a single dark
   // patch in the middle of the room. `centre`/`rim` mean per-tile centre and per-tile edge.
-  { material: 'BlueRoom_EmissivePanel', mesh: 'BlueRoom_Floor_Panels', mode: 'tiles',
+  // ALL FIVE meshes carrying this material — floor, ceiling, front wall and both podium
+  // tops — so every tile in the room reads the same way. Listed explicitly rather than
+  // matching on material alone because `mesh` is also what keeps this off anything else
+  // that might later share the material.
+  //
+  // Killing the emissive on the CEILING is the notable one: those panels are the room's
+  // visible glow. The room stays lit — its light comes from the 3x3 PointLight grid that
+  // addFixtureLights parks at the ceiling, which is independent of the material — but the
+  // ceiling now reads as a lit tiled surface rather than a light box. Drop
+  // BlueRoom_Ceiling_Panels from this list to put the glow back (its gradient goes with it;
+  // a constant emissive flattens the ramp, which is the whole reason it has to go).
+  //
+  // Safe against the fixture-light matcher even though `clone` renames the material: the
+  // `mats` array it matches on is snapshotted BEFORE the clone, and only the clone is
+  // renamed — so `BlueRoom_EmissivePanel` is still found and the ceiling grid still spawns.
+  { material: 'BlueRoom_EmissivePanel', mode: 'tiles',
+    mesh: ['BlueRoom_Floor_Panels', 'BlueRoom_Ceiling_Panels', 'BlueRoom_FrontWall_Panels',
+           'BlueRoom_PodestL_TopPanels', 'BlueRoom_PodestR_TopPanels'],
     clone: true, emissive: 0x000000,
     // The core's LIGHTNESS is `centre` — the tint only sets its hue, and no tint can
     // rescue a 0.20 multiplier: at 0.20 the core was authored x 0.20 x tint = ~(0.09,
     // 0.13, 0.20), i.e. near-black whatever colour it nominally was. Lightening the middle
     // therefore *has* to raise this number, which unavoidably narrows the centre-to-edge
     // range (11x at 0.20, ~3x here). Raise `rim` too if the falloff needs to come back.
-    centre: 0.85, rim: 2.2, centreTint: 0xbcd4ff },
+    centre: 1.05, rim: 2.2, centreTint: 0xdaeaff },
 ]
 
 function addFixtureLights(model) {
@@ -567,7 +597,7 @@ function addFixtureLights(model) {
     // unaffected — this only changes what happens when minHeight is omitted.
     const grad = VERTEX_GRADIENTS.find(gr =>
       mats.some(m => m && m.name === gr.material) && _size.y > (gr.minHeight ?? -1) &&
-      (!gr.mesh || gr.mesh === child.name))
+      (!gr.mesh || (Array.isArray(gr.mesh) ? gr.mesh.includes(child.name) : gr.mesh === child.name)))
     if (grad && !child.geometry.userData._gradApplied) {
       const posAttr = child.geometry.attributes.position
       const v = new THREE.Vector3()
@@ -671,25 +701,45 @@ function addFixtureLights(model) {
         // This CANNOT be done with vertex colours. A quad's interior is interpolated from
         // its 4 corners, so a dark middle with bright corners is unrepresentable — there is
         // no vertex in the middle to hold the dark value. A texture is the only option.
-        const wx = new Float64Array(n), wz = new Float64Array(n)
-        const nX = new Float64Array(n).fill(Infinity),  nZ = new Float64Array(n).fill(Infinity)
-        const xX = new Float64Array(n).fill(-Infinity), xZ = new Float64Array(n).fill(-Infinity)
+        // Tangent basis PER TILE, taken from the tile's own normal — not two axes chosen
+        // once for the whole mesh. The back of BlueRoom is now a curved cove, so its floor
+        // and ceiling tiles each sit at a different angle; a single per-mesh axis pair
+        // would project the tilted ones edge-on and squash their gradient to a smear.
+        // Every tile is flat, so any vertex's normal describes the whole tile.
+        const nrmAttr = child.geometry.attributes.normal
+        const nMat = new THREE.Matrix3().getNormalMatrix(child.matrixWorld)
+        const basisT1 = new Map(), basisT2 = new Map()
+        const _n = new THREE.Vector3(), _t1 = new THREE.Vector3(), _t2 = new THREE.Vector3()
+        const pa = new Float64Array(n), pb = new Float64Array(n)
+        const nA = new Float64Array(n).fill(Infinity),  nB = new Float64Array(n).fill(Infinity)
+        const xA = new Float64Array(n).fill(-Infinity), xB = new Float64Array(n).fill(-Infinity)
         let tiles = 0
         for (let i = 0; i < n; i++) {
           v.fromBufferAttribute(posAttr, i).applyMatrix4(child.matrixWorld)
-          wx[i] = v.x; wz[i] = v.z
           const r = find(i)
           if (i === r) tiles++
-          if (v.x < nX[r]) nX[r] = v.x
-          if (v.x > xX[r]) xX[r] = v.x
-          if (v.z < nZ[r]) nZ[r] = v.z
-          if (v.z > xZ[r]) xZ[r] = v.z
+          if (!basisT1.has(r)) {
+            // build an arbitrary but stable pair of tangents in this tile's plane
+            _n.fromBufferAttribute(nrmAttr, i).applyMatrix3(nMat).normalize()
+            // cross with whichever world axis is least parallel to the normal, so the
+            // cross product never degenerates on axis-aligned tiles (floor, ceiling, wall)
+            const ax = Math.abs(_n.x) < 0.9 ? _t1.set(1, 0, 0) : _t1.set(0, 1, 0)
+            _t1.copy(ax).cross(_n).normalize()
+            _t2.copy(_n).cross(_t1).normalize()
+            basisT1.set(r, _t1.clone()); basisT2.set(r, _t2.clone())
+          }
+          const a = v.dot(basisT1.get(r)), b = v.dot(basisT2.get(r))
+          pa[i] = a; pb[i] = b
+          if (a < nA[r]) nA[r] = a
+          if (a > xA[r]) xA[r] = a
+          if (b < nB[r]) nB[r] = b
+          if (b > xB[r]) xB[r] = b
         }
         const uv = new Float32Array(n * 2)
         for (let i = 0; i < n; i++) {
           const r = find(i)
-          uv[i * 2]     = (wx[i] - nX[r]) / Math.max(xX[r] - nX[r], 1e-6)
-          uv[i * 2 + 1] = (wz[i] - nZ[r]) / Math.max(xZ[r] - nZ[r], 1e-6)
+          uv[i * 2]     = (pa[i] - nA[r]) / Math.max(xA[r] - nA[r], 1e-6)
+          uv[i * 2 + 1] = (pb[i] - nB[r]) / Math.max(xB[r] - nB[r], 1e-6)
         }
         child.geometry.setAttribute('uv', new THREE.BufferAttribute(uv, 2))
 
@@ -1450,6 +1500,21 @@ function animate() {
           camera.position.addScaledVector(slide, SPEED * delta)
       }
     }
+  }
+
+  // ── BlueRoom cove: hard stop before the curve ────────────────────
+  // Its back wall is a curved cove built from loose, unwelded tile quads, and the tiles do
+  // not close up perfectly around the curve — you could walk straight through the gaps.
+  // Raycast collision can't help: it tests the tile geometry, and the holes ARE the gaps.
+  // So the room gets an explicit boundary instead, placed at the cove's tangent line so you
+  // stop exactly where the curve begins and never reach the leaky part.
+  //
+  // Scoped to BlueRoom's own footprint (measured world extents x -10.34..0.14,
+  // z 27.58..39.26) so no other room is affected. Applied AFTER the move + slide above, so
+  // it clamps the final position rather than fighting the collision solver.
+  if (camera.position.x > -10.9 && camera.position.x < 0.7 &&
+      camera.position.z > BLUEROOM_Z_LIMIT) {
+    camera.position.z = BLUEROOM_Z_LIMIT
   }
 
   const isMoving = move.lengthSq() > 0
