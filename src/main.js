@@ -465,6 +465,45 @@ const VERTEX_GRADIENTS = [
   // recompile keeps the same material instance and id — the Blender route reshuffled ids
   // because the GLB's material creation ORDER changed, which is what moved the draw order.
   { material: 'YellowRoom_Floor_DarkBrown', mode: 'radial', centre: 2.4, rim: 0.45 },
+
+  // BlueRoom floor tiles: the INVERSE of the pool above — bright at the walls falling to a
+  // deep blue core in the middle, matching the reference (glowing tiles that darken toward
+  // the centre). Needs three things the YellowRoom entry does not:
+  //
+  //   mesh    — BlueRoom_EmissivePanel is shared by FIVE meshes (floor panels, ceiling
+  //             panels, front wall, both podium tops), so a material-name match alone would
+  //             gradient all of them. Safe as a name match because BlueRoom_Floor_Panels is
+  //             a single-primitive node, so its runtime mesh name is exactly this string
+  //             (multi-primitive nodes become Groups with unpredictable child names).
+  //   clone   — same reason, for the material side: the map/colour/emissive changes must not
+  //             leak onto the other four users.
+  //   emissive 0x000000 — these tiles are authored emissive (colour 0.72/0.86/1.0 at
+  //             strength 1.5) and that glow is most of what you see. Emission is added after
+  //             shading and cannot vary per-fragment from a colour map, so leaving it on
+  //             would flatten the ramp exactly the way a flat emissive washed out the bottle
+  //             label. Killing it is what makes the gradient readable at all. The room is
+  //             still lit by the 3x3 ceiling grid overhead, which is untouched — but the
+  //             floor now takes its brightness from that lighting instead of from itself,
+  //             which is why `rim` has to overshoot 1.0 to hold the edges bright.
+  //
+  // Deliberately DRASTIC per Lucas ("if it's too much I'll let you know"): centre 0.10 vs
+  // rim 2.2 is a 22x spread, and centreTint pushes the core hard toward the wall blue.
+  // Final centre = authored x 0.10 x (0.20, 0.35, 1.00) = ~(0.014, 0.030, 0.100);
+  // final rim    = authored x 2.2                       = ~(1.58, 1.89, 2.20).
+  // The three dials: `centre` (how dark the core), `rim` (how bright the edges),
+  // `centreTint` (how blue the core).
+  // mode 'tiles': EVERY TILE gets its own gradient, dark in its middle and bright toward
+  // its edges — the reference look. Not to be confused with 'radial', which stretches ONE
+  // gradient across the whole mesh; that was tried here first and read as a single dark
+  // patch in the middle of the room. `centre`/`rim` mean per-tile centre and per-tile edge.
+  { material: 'BlueRoom_EmissivePanel', mesh: 'BlueRoom_Floor_Panels', mode: 'tiles',
+    clone: true, emissive: 0x000000,
+    // The core's LIGHTNESS is `centre` — the tint only sets its hue, and no tint can
+    // rescue a 0.20 multiplier: at 0.20 the core was authored x 0.20 x tint = ~(0.09,
+    // 0.13, 0.20), i.e. near-black whatever colour it nominally was. Lightening the middle
+    // therefore *has* to raise this number, which unavoidably narrows the centre-to-edge
+    // range (11x at 0.20, ~3x here). Raise `rim` too if the falloff needs to come back.
+    centre: 0.85, rim: 2.2, centreTint: 0xbcd4ff },
 ]
 
 function addFixtureLights(model) {
@@ -522,11 +561,20 @@ function addFixtureLights(model) {
     // traversal has already computed the mesh's bbox, and setFromObject has refreshed
     // child.matrixWorld (model-local frame — fine: the ramp is normalised per mesh, so
     // the recentre offset cancels out).
+    // Default -1, not 0: BlueRoom's floor panels are a PERFECTLY flat plane, so _size.y is
+    // exactly 0 and the old `> 0` default silently rejected them. Entries that set an
+    // explicit minHeight (to keep a wall ramp off a short prop sharing the material) are
+    // unaffected — this only changes what happens when minHeight is omitted.
     const grad = VERTEX_GRADIENTS.find(gr =>
-      mats.some(m => m && m.name === gr.material) && _size.y > (gr.minHeight ?? 0))
+      mats.some(m => m && m.name === gr.material) && _size.y > (gr.minHeight ?? -1) &&
+      (!gr.mesh || gr.mesh === child.name))
     if (grad && !child.geometry.userData._gradApplied) {
       const posAttr = child.geometry.attributes.position
       const v = new THREE.Vector3()
+      // Optional per-end tints let a ramp shift HUE, not just brightness. Shared by the
+      // 'radial' and 'tiles' modes below.
+      const tint = hex => hex === undefined ? [1, 1, 1]
+        : [(hex >> 16 & 255) / 255, (hex >> 8 & 255) / 255, (hex & 255) / 255]
 
       if (grad.mode === 'radial') {
         // Per-FRAGMENT radial pool via a generated texture + planar UVs — NOT vertex
@@ -550,29 +598,135 @@ function addFixtureLights(model) {
         // material.color (multiplied by `centre`) and the texture itself carries only
         // the centre->rim RATIO, sRGB-encoded to match its colorSpace. Net result:
         // centre = authored colour x centre-factor, rim = authored x rim-factor.
-        const ratio = grad.rim / grad.centre
+        // Normalised by the PEAK end, not by `centre`. That is what allows rim > centre —
+        // a DARK middle with bright edges, the inverse of the YellowRoom pool. With
+        // centre >= rim this is arithmetically identical to the old centre-normalised
+        // form (YellowRoom still resolves to a white centre stop and a 117 rim byte).
+        const peak = Math.max(grad.centre, grad.rim)
+        const stop = (f, t) => 'rgb(' + t.map(c =>
+          Math.round(255 * Math.pow(Math.min(1, f / peak * c), 1 / 2.2))).join(',') + ')'
         const cvs = document.createElement('canvas')
         cvs.width = cvs.height = 256
         const g2d = cvs.getContext('2d')
         const rg = g2d.createRadialGradient(128, 128, 0, 128, 128, 128)
-        const rimByte = Math.round(255 * Math.pow(ratio, 1 / 2.2))
-        rg.addColorStop(0, '#ffffff')
-        rg.addColorStop(1, `rgb(${rimByte},${rimByte},${rimByte})`)
+        rg.addColorStop(0, stop(grad.centre, tint(grad.centreTint)))
+        rg.addColorStop(1, stop(grad.rim,    tint(grad.rimTint)))
         g2d.fillStyle = rg
         g2d.fillRect(0, 0, 256, 256)
         const tex = new THREE.CanvasTexture(cvs)
         tex.colorSpace = THREE.SRGBColorSpace
-        for (const m of mats) {
+        // `clone` is mandatory when the material is SHARED across meshes — otherwise the
+        // map, the colour boost and the killed emissive all leak onto its other users.
+        const targets = grad.clone ? mats.map(m => m && m.clone()) : mats
+        if (grad.clone) {
+          targets.forEach((m, i) => { if (m) m.name = mats[i].name + '_' + child.name })
+          child.material = Array.isArray(child.material) ? targets : targets[0]
+        }
+        for (const m of targets) {
           if (!m) continue
           m.map = tex
-          m.color.multiplyScalar(grad.centre)
+          m.color.multiplyScalar(peak)
+          if (grad.emissive !== undefined) {
+            // Emission is ADDED after shading and cannot vary per-fragment from a colour
+            // map, so a constant glow flattens the ramp — the same thing that washed out
+            // the bottle label. 0x000000 kills it.
+            m.emissive.set(grad.emissive)
+            m.emissiveIntensity = 1
+          }
           // Recompiles this material's program (USE_MAP/USE_UV), but material.id is
           // unchanged so the opaque sort order is stable — see the entry's comment on
           // why that keeps the centre-tower flicker trap out of reach.
           m.needsUpdate = true
         }
         child.geometry.userData._gradApplied = true
-        gradApplied.push(`${child.name} radial-tex ${grad.centre}->${grad.rim}`)
+        gradApplied.push(`${child.name} radial-tex ${grad.centre}->${grad.rim}` +
+                         `${grad.clone ? ' (cloned mat)' : ''}` +
+                         `${grad.emissive !== undefined ? ' emissive killed' : ''}`)
+      } else if (grad.mode === 'tiles') {
+        // Per-TILE FLAT colour — the discrete stepped look of the reference, which the
+        // 'radial' mode above cannot produce: that one is a texture, so it interpolates
+        // per-fragment and sweeps straight across tile boundaries as one smooth ramp.
+        //
+        // These panels are already modelled as individual tiles — BlueRoom_Floor_Panels is
+        // 1292 verts / 323 quads, i.e. exactly 4 verts each with NO shared vertices — so
+        // every tile is its own connected component in the index buffer. Union-find over
+        // the triangles recovers those components without assuming anything about vertex
+        // ordering, then each component gets one flat colour from its own centroid.
+        const idxAttr = child.geometry.index
+        const n = posAttr.count
+        const parent = new Int32Array(n)
+        for (let i = 0; i < n; i++) parent[i] = i
+        const find = a => { while (parent[a] !== a) { parent[a] = parent[parent[a]]; a = parent[a] } return a }
+        if (idxAttr) {
+          for (let i = 0; i < idxAttr.count; i += 3) {
+            const a = find(idxAttr.getX(i)), b = find(idxAttr.getX(i + 1)), c = find(idxAttr.getX(i + 2))
+            if (a !== b) parent[b] = a
+            if (a !== c) parent[c] = a
+          }
+        }
+        // Per-tile 0..1 UVs: each tile is mapped to the WHOLE texture, so every tile shows
+        // the same gradient with its own dark centre — as opposed to `radial`, which
+        // stretches one gradient across the entire mesh.
+        //
+        // This CANNOT be done with vertex colours. A quad's interior is interpolated from
+        // its 4 corners, so a dark middle with bright corners is unrepresentable — there is
+        // no vertex in the middle to hold the dark value. A texture is the only option.
+        const wx = new Float64Array(n), wz = new Float64Array(n)
+        const nX = new Float64Array(n).fill(Infinity),  nZ = new Float64Array(n).fill(Infinity)
+        const xX = new Float64Array(n).fill(-Infinity), xZ = new Float64Array(n).fill(-Infinity)
+        let tiles = 0
+        for (let i = 0; i < n; i++) {
+          v.fromBufferAttribute(posAttr, i).applyMatrix4(child.matrixWorld)
+          wx[i] = v.x; wz[i] = v.z
+          const r = find(i)
+          if (i === r) tiles++
+          if (v.x < nX[r]) nX[r] = v.x
+          if (v.x > xX[r]) xX[r] = v.x
+          if (v.z < nZ[r]) nZ[r] = v.z
+          if (v.z > xZ[r]) xZ[r] = v.z
+        }
+        const uv = new Float32Array(n * 2)
+        for (let i = 0; i < n; i++) {
+          const r = find(i)
+          uv[i * 2]     = (wx[i] - nX[r]) / Math.max(xX[r] - nX[r], 1e-6)
+          uv[i * 2 + 1] = (wz[i] - nZ[r]) / Math.max(xZ[r] - nZ[r], 1e-6)
+        }
+        child.geometry.setAttribute('uv', new THREE.BufferAttribute(uv, 2))
+
+        // Same peak-normalised construction as `radial`, but the gradient now lives inside
+        // one tile: dark at the tile's centre, bright at its edge.
+        const peakT = Math.max(grad.centre, grad.rim)
+        const stopT = (f, t) => 'rgb(' + t.map(c =>
+          Math.round(255 * Math.pow(Math.min(1, f / peakT * c), 1 / 2.2))).join(',') + ')'
+        const cvsT = document.createElement('canvas')
+        cvsT.width = cvsT.height = 256
+        const g2dT = cvsT.getContext('2d')
+        // radius 128 reaches the edge MIDPOINTS; the corners sit at 181 and so clamp to the
+        // outermost stop, which is what keeps the tile corners the brightest part.
+        const rgT = g2dT.createRadialGradient(128, 128, 0, 128, 128, 128)
+        rgT.addColorStop(0, stopT(grad.centre, tint(grad.centreTint)))
+        rgT.addColorStop(1, stopT(grad.rim,    tint(grad.rimTint)))
+        g2dT.fillStyle = rgT
+        g2dT.fillRect(0, 0, 256, 256)
+        const texT = new THREE.CanvasTexture(cvsT)
+        texT.colorSpace = THREE.SRGBColorSpace
+
+        const targets = grad.clone ? mats.map(m => m && m.clone()) : mats
+        if (grad.clone) {
+          targets.forEach((m, i) => { if (m) m.name = mats[i].name + '_' + child.name })
+          child.material = Array.isArray(child.material) ? targets : targets[0]
+        }
+        for (const m of targets) {
+          if (!m) continue
+          m.map = texT
+          m.color.multiplyScalar(peakT)
+          if (grad.emissive !== undefined) { m.emissive.set(grad.emissive); m.emissiveIntensity = 1 }
+          m.needsUpdate = true
+        }
+        child.geometry.userData._gradApplied = true
+        gradApplied.push(`${child.name} per-tile x${tiles} ${grad.centre}->${grad.rim}` +
+                         `${grad.clone ? ' (cloned mat)' : ''}` +
+                         `${grad.emissive !== undefined ? ' emissive killed' : ''}`)
       } else {
         const ys = new Float32Array(posAttr.count)
         let yMin = Infinity, yMax = -Infinity
@@ -938,7 +1092,16 @@ if (joystickBase) {
 
 // ── WASD ─────────────────────────────────────────────────────────
 const keys = {}
-window.addEventListener('keydown', e => { keys[e.code] = true })
+// The four arrows are the browser's own scroll keys, so they need preventDefault or
+// holding one both walks the camera AND scrolls the document. WASD never needed this.
+// Safe for the overlays: About/Contact/Craft are iframes, and a keydown inside an
+// iframe does not bubble to the parent window, so this listener never sees — and so
+// never blocks — arrow-key scrolling of their content.
+const ARROWS = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight']
+window.addEventListener('keydown', e => {
+  keys[e.code] = true
+  if (ARROWS.includes(e.code)) e.preventDefault()
+}, { passive: false })   // explicit: a passive listener silently ignores preventDefault
 window.addEventListener('keyup',   e => { keys[e.code] = false })
 
 const SPEED          = 3.0
@@ -1152,9 +1315,27 @@ loader.load(
       } catch (e) { /* malformed/stale — fall through to the fixed spawn */ }
     }
     if (!restoredReturnState) {
-      camera.position.set(2.2970, -0.7653, 9.6615)
-      yaw = 2.3400
-      pitch = 0.0540
+      // ── TEMPORARY spawn: BlueRoom doorway, for iterating on the tile gradient ──
+      // REMOVE THIS BLOCK and un-comment the real spawn below when the tiles are done.
+      //
+      // Stands just inside the tunnel mouth (BlueRoom_Tunnel spans z 25.67..27.84, the
+      // room's near wall is at z 27.59..28.01) looking down the length of the room, so
+      // the whole tiled floor is in frame on every refresh.
+      //
+      // yaw = PI faces +z. Derived, not guessed: with rotation.order 'YXZ' the forward
+      // vector is (-sin yaw, 0, -cos yaw), which checks out against the real spawn below
+      // — from (2.297, 9.662) at yaw 2.34 that gives (-0.719, 0.696), and the direction to
+      // MainRoom's tower is (-0.735, 0.679). Same heading, so the formula is right.
+      camera.position.set(-4.8200, -0.7653, 28.6000)
+      yaw = Math.PI
+      pitch = -0.1500
+
+      // ── THE REAL SPAWN — restore these three lines when finished ──
+      // Captured with the P debug key; frames the green centre-column pillar in MainRoom
+      // with a doorway either side.
+      // camera.position.set(2.2970, -0.7653, 9.6615)
+      // yaw = 2.3400
+      // pitch = 0.0540
     }
     applyRotation()
     spawnPos = camera.position.clone()
@@ -1215,9 +1396,24 @@ function animate() {
     if (Math.abs(pitchVel) < 0.00005) pitchVel = 0
   }
 
+  // Arrow keys are full aliases for WASD, not a separate mode — they feed the same
+  // two axes below, so diagonals (e.g. ArrowUp + KeyD) and mixed WASD/arrow presses
+  // work exactly like pure WASD. Note `right`/`forward` above are direction Vector3s,
+  // hence the goL/goR/goF/goB names here rather than the obvious ones.
+  const goL = keys['KeyA'] || keys['ArrowLeft']
+  const goR = keys['KeyD'] || keys['ArrowRight']
+  const goF = keys['KeyW'] || keys['ArrowUp']
+  const goB = keys['KeyS'] || keys['ArrowDown']
+
   const move = new THREE.Vector3()
-  if (keys['KeyA'] || keys['KeyD']) move.addScaledVector(right,   keys['KeyD'] ? 1 : -1)
-  if (keys['KeyW'] || keys['KeyS']) move.addScaledVector(forward, keys['KeyW'] ? 1 : -1)
+  // `||` (truthiness), NOT `!==`. `keys` has THREE states — undefined (never pressed),
+  // true (down), false (released) — so a strict comparison between the two sides is
+  // wrong: after releasing ArrowLeft, goL is `false` while goR is still `undefined`,
+  // and `false !== undefined` is TRUE, which left the branch permanently satisfied and
+  // walked the camera forever. WASD hid it, because pressing those keys at least once
+  // makes both sides real booleans. Truthiness treats undefined and false alike.
+  if (goL || goR) move.addScaledVector(right,   goR ? 1 : -1)
+  if (goF || goB) move.addScaledVector(forward, goF ? 1 : -1)
   if (joystickX !== 0 || joystickY !== 0) {
     move.addScaledVector(right,   joystickX)
     move.addScaledVector(forward, -joystickY)

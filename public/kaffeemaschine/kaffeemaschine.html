@@ -36,6 +36,25 @@
          Figma coordinate frame that screen + buttons are positioned in */
       background: transparent;
     }
+    /* ── Phone-sized container: fill it completely ──────────────────────────
+       This file is embedded in an iframe, so a width query here resolves
+       against the IFRAME's box, not the device. On kaffeemaschine2d.html that
+       box (.machine-frame-wrap) is exactly 480px at every viewport from 481px
+       up — desktop included — and only ever narrower than that on a phone,
+       where the page now hands the egg the full screen width. So 479px is a
+       clean split: this block cannot fire on desktop.
+       Both declarations are needed. The 4% left by 96vw and the 20px body
+       padding are breathing room that only makes sense when the egg is a
+       component sitting inside a larger page; at phone size they are just lost
+       pixels. Dropping the padding is also what makes the full width FIT:
+       .machine-frame-wrap is an exact 969/1344 box, so a full-width egg is
+       already exactly as tall as the frame and 20px of padding would push its
+       base out of view. */
+    @media (max-width: 479px) {
+      body { padding-top: 0; }
+      .machine { width: 100vw; }
+    }
+
     /* exact egg silhouette traced from Figma "new egg shape" (398:1156) */
     .egg-body {
       position: absolute;

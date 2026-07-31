@@ -438,15 +438,20 @@
       .nav-island { max-width: 1330px; }
     }
 
-    /* ── Mobile only: readable language toggle ─────────────────────────────
-       "de / en" was 14px VT323 — effectively ~11-12px of a proportional face
-       given VT323's small x-height and 1px strokes, and it's a tap target.
-       Width-based query, so this is safe inside the iframe (unlike an
-       orientation query, which would resolve against the iframe's own
-       landscape-shaped 390x140 box rather than the device). Desktop keeps 14px. */
+    /* ── Mobile only: the language toggle moves into the hamburger menu ──────
+       "de / en" here was 14px VT323 — effectively ~11-12px of a proportional
+       face given VT323's small x-height and 1px strokes — and it was a tap
+       target at that size, wedged beside the logo. It now lives in the mobile
+       menu as a proper 2D/3D-style segmented toggle (see .mobile-lang-toggle in
+       each page), so the bar drops it entirely at phone widths.
+       Hidden rather than removed: the .lang-btn elements are still what the
+       language IIFE below reads and marks active, and the desktop bar (>640px)
+       still shows and uses them unchanged.
+       Width-based query, so this is safe inside the iframe — an orientation
+       query would resolve against the iframe's own landscape-shaped 390x140
+       box rather than the device. */
     @media (max-width: 640px) {
-      .lang-btn,
-      .lang-sep { font-size: 16px; }
+      .lang-toggle { display: none; }
     }
   </style>
 </head>
@@ -467,6 +472,12 @@
       <!-- Left: lang toggle + logo -->
       <div class="nav-left">
         <a href="#" class="logo" aria-label="Lucas Maher home" id="logo-btn"><img src="/images/site/logo-lm.png" alt="" class="logo-mark" /></a>
+        <!-- Deliberately still "de / en", NOT the "Deutsch / English" used in the mobile
+             menu: .lang-toggle is hidden below 640px (see the @media block above), so this
+             is the DESKTOP control and the bar's width budget is tight here — it has been
+             narrowed 10px per side twice for MacBook aspect ratios. The long labels are
+             ~75px wider and belong to the mobile menu, which has a full-width column to
+             spend. Keep the two spellings separate. -->
         <div class="lang-toggle">
           <button class="lang-btn" data-lang="de">de</button>
           <span class="lang-sep">/</span>
@@ -687,6 +698,17 @@
           applyNavLang(l);
           try { window.parent.postMessage({ type: 'lang-change', lang: l }, '*'); } catch(e) {}
         });
+      });
+      // The mobile menu's own DE/EN toggle (the bar's pair is hidden below
+      // 640px) posts the change in here rather than translating the page
+      // itself, so this iframe stays the single place that owns language.
+      // Re-broadcasting to the parent is what actually translates the page —
+      // every page already listens for 'lang-change'. No loop: the parent's
+      // handlers only apply, they never post back.
+      window.addEventListener('message', e => {
+        if (!e.data || e.data.type !== 'lang-change') return;
+        applyNavLang(e.data.lang);
+        try { window.parent.postMessage({ type: 'lang-change', lang: e.data.lang }, '*'); } catch(err) {}
       });
       setTimeout(() => {
         try { window.parent.postMessage({ type: 'lang-change', lang: localStorage.getItem('lang') || 'de' }, '*'); } catch(e) {}

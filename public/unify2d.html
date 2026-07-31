@@ -689,27 +689,76 @@
       box-shadow: var(--shadow-raised-sm);
       padding: 5px;
     }
+    /* Mobile menu only: extra breathing room under the 2D/3D toggle so it reads as
+       its own control rather than as the first item of the Craft/About/Contact
+       stack below it. Sits on top of the panel's uniform 24px gap.
+       :first-child scopes this to the 2D/3D toggle specifically — .mobile-lang-toggle
+       reuses the same .mobile-view-toggle class but is the panel's LAST child, so it
+       keeps the plain 24px and the two toggles do not drift apart. */
+    .mobile-menu-panel > .mobile-view-toggle:first-child { margin-bottom: 22px; }
+
     .mobile-mode-btn {
       border: none; background: transparent; border-radius: 9999px;
-      padding: 11px 0; font-family: 'VT323', monospace; font-size: 18px;
+      padding: 11px 0; font-family: 'VT323', monospace; /* Matched to .mobile-nav-btn: same 22px VT323 and the same inherited 1.6
+         line-height, so a segment's text box is identical to a nav button's. The
+         segment keeps 11px vertical padding, which is exactly what makes the TRACK
+         come out level with a nav button: the track adds its own 5px padding top and
+         bottom, so 5+11 and 11+5 sum to the nav button's 16px — the two pills end up
+         the same height without hardcoding one. line-height is stated explicitly
+         because these are <button>s, which do not reliably inherit it. */
+      font-size: 22px;
+      line-height: 1.6;
       color: #555; cursor: pointer; text-align: center;
       -webkit-tap-highlight-color: transparent;
       transition: box-shadow 150ms ease, color 150ms ease, transform 150ms ease;
     }
     .mobile-mode-btn.is-active {
-      background: var(--bg-surface); color: #000;
-      /* --shadow-pressed's 5px offset / 10px blur reduced 35%, matching the
-         desktop nav's .pill__seg.is-active in top_row_permanent_V3.html so the
-         2D/3D toggle reads the same on both. Scoped to the segments INSIDE the
-         toggle — .mobile-view-toggle's own raised track shadow is untouched,
-         mirroring the desktop .pill track. */
+      /* Shared by BOTH toggles: the selected segment is a recessed well. The inset is
+         --shadow-pressed's 5px offset / 10px blur reduced 35%, matching the desktop nav's
+         .pill__seg.is-active in top_row_permanent_V3.html. Scoped to the segments INSIDE
+         the toggle — .mobile-view-toggle's own raised track shadow is untouched, mirroring
+         the desktop .pill track.
+         background must be a real colour, NOT transparent: an inset shadow paints over the
+         element's own background, so without one the segment would read as a hole punched
+         through to the track rather than a well.
+         Deliberately sets NO color — selecting a segment must not darken its text, so both
+         toggles keep the base #555 and the inset alone marks the language selection. */
+      background: var(--bg-surface);
       box-shadow: inset 3.25px 3.25px 6.5px rgba(174, 174, 192, 0.6), inset -3.25px -3.25px 6.5px rgba(255, 255, 255, 1);
     }
+
+    /* 2D/3D toggle ONLY: a flat orange fill, and explicitly NO inset — the neumorphic
+       shading and white highlight are cancelled here so the orange reads as a solid pill.
+       The language toggle shares .mobile-view-toggle / .mobile-mode-btn and keeps both the
+       surface fill and the inset from the rule above.
+       Matched on [data-mode] rather than child position or the .mobile-lang-toggle class,
+       so the orange cannot wander onto the wrong control if the panel is reordered — the
+       language segments carry [data-lang] instead. Specificity (0,3,0) beats the shared
+       rule, so source order does not matter.
+       --accent-orange is undefined on index.html (the 3D page declares no such custom
+       property), hence the literal fallback. */
+    .mobile-mode-btn[data-mode].is-active {
+      background: var(--accent-orange, #FF5C00);
+      /* Same well as the language toggle above — same offsets, same blur, same
+         alphas — recoloured so it reads on orange instead of on the grey
+         surface. The grey/white pair was built to sit on #DCDCE3; over #FF5C00
+         a white highlight desaturates to a pale wash and the cool grey shadow
+         reads as dirt. So the two hues are re-derived from the orange itself:
+         top-left gets a darker orange, bottom-right a lighter one, keeping the
+         site's light-from-top-left convention. */
+      box-shadow: inset 3.25px 3.25px 6.5px rgba(168, 56, 0, 0.6), inset -3.25px -3.25px 6.5px rgba(255, 173, 122, 1);
+    }
     .mobile-mode-btn:active:not(.is-active) {
-      /* Same reduced spread, so tapping the inactive half doesn't flash a wider
-         inset than the settled state it lands in. */
-      box-shadow: inset 3.25px 3.25px 6.5px rgba(174, 174, 192, 0.6), inset -3.25px -3.25px 6.5px rgba(255, 255, 255, 1);
+      /* Scale is the tap feedback both toggles share. */
       transform: scale(0.96);
+    }
+
+    /* Press inset for the LANGUAGE toggle only. A tap should preview the state it lands
+       in: a language segment lands in an inset well, but a 2D/3D segment now lands in a
+       flat orange pill, so flashing an inset there would animate to something that no
+       longer exists in that control. Same reduced spread as the settled state. */
+    .mobile-mode-btn[data-lang]:active:not(.is-active) {
+      box-shadow: inset 3.25px 3.25px 6.5px rgba(174, 174, 192, 0.6), inset -3.25px -3.25px 6.5px rgba(255, 255, 255, 1);
     }
     .mobile-nav-btn {
       display: block; background: var(--bg-surface); border-radius: 9999px;
@@ -896,13 +945,15 @@
       align-items: center;
       gap: clamp(28px, 4vw, 56px);
       max-width: 640px;
-      will-change: transform;
     }
 
-    /* organic idle drift — each row floats on its own rhythm */
-    .character-row:nth-child(1) { animation: charFloat1 9s ease-in-out infinite; }
-    .character-row:nth-child(2) { animation: charFloat2 11s ease-in-out infinite; }
-    .character-row:nth-child(3) { animation: charFloat3 10s ease-in-out infinite; }
+    /* Organic idle drift — each figure floats on its own rhythm.
+       Applied to .character-figure, NOT .character-row: the row also contains
+       the paragraph, so animating it dragged the body copy around with the
+       character. Only the figure should move. */
+    .character-row:nth-child(1) .character-figure { animation: charFloat1 9s ease-in-out infinite; }
+    .character-row:nth-child(2) .character-figure { animation: charFloat2 11s ease-in-out infinite; }
+    .character-row:nth-child(3) .character-figure { animation: charFloat3 10s ease-in-out infinite; }
 
     @keyframes charFloat1 {
       0%, 100% { transform: translate(0, 0) rotate(0deg); }
@@ -921,7 +972,7 @@
     }
 
     @media (prefers-reduced-motion: reduce) {
-      .character-row { animation: none !important; }
+      .character-figure { animation: none !important; }
     }
 
     /* text left, character right — pushed to the right side */
@@ -938,6 +989,7 @@
     .character-figure {
       flex-shrink: 0;
       width: clamp(130px, 15vw, 180px);
+      will-change: transform;
     }
 
     .character-figure img {
@@ -1038,7 +1090,7 @@
       .accent-dot { animation: none !important; opacity: 1; }
       .machine-overlay-btn,
       .hero-blob,
-      .character-row,
+      .character-figure,
       .spin-scrolly .spin { animation: none !important; }
       .project-nav-item:hover .project-nav-item-inner,
       .meta-tile:hover,
@@ -1276,6 +1328,56 @@
          divider. !important because the 190px is an inline style. */
       .process-section .dot-divider + .process-title { margin-top: 40px !important; }
     }
+
+    /* ── Mobile: phone mockups +7%, and their captions matched to their width ──
+       Appended last so the height here beats the two earlier declarations of it
+       (.feature-media video in the first 640px block, .scrolly-vid video in the
+       block above) on source order. Desktop is untouched. */
+    @media (max-width: 640px) {
+      :root {
+        /* Single source of truth for every phone mockup. Was
+           clamp(416px, 78vh, 598px), declared separately for the feature videos
+           and the scrolly videos; +7% is applied to all three stops so the
+           short-phone floor, the vh tracking and the tall-phone ceiling keep the
+           same relationship to each other. */
+        --phone-h: clamp(445px, 83.5vh, 640px);
+
+        /* Visible width of a mockup as a fraction of its height — NOT just the
+           file's aspect ratio. Every video is clip-path'd to the phone bezel, so
+           ~3.6% of the element box is cropped away and the element box stays
+           wider than the phone you actually see. Per video that is
+           height x aspect x (1 - horizontal insets):
+             homepage                  685/1400 x 0.9679 = 0.4736
+             settings                  672/1370 x 0.9642 = 0.4730
+             timetable/socials/friends 672/1382 x 0.9642 = 0.4688
+             map-courses               614/1250 x 0.9561 = 0.4696
+           One shared value rather than four: at the 640px ceiling those span
+           300.0px to 303.1px, so 0.47 lands within ~2px of every one of them —
+           below the threshold where an edge misalignment is visible. */
+        --phone-w: calc(var(--phone-h) * 0.47);
+      }
+
+      .feature-media video,
+      .scrolly-vid video,
+      .scrolly-vid.is-active video { height: var(--phone-h); }
+
+      /* Only the copy that belongs to a mockup: .feature-copy is the Home and
+         Settings caption, .scrolly-panel the four scrolly captions. Every other
+         paragraph on the page keeps the full column width.
+         Constrained with auto margins rather than justify-self/align-self
+         because these two sit in different formatting contexts — .feature-copy
+         is a grid item, .scrolly-panel a flex item (display: contents dissolves
+         .scrolly-copy above) — and auto margins centre correctly in both.
+         max-width guards the short-phone case, where the 445px floor could put
+         --phone-w above the column width on a very narrow screen. */
+      .feature-copy,
+      .scrolly-panel {
+        width: var(--phone-w);
+        max-width: 100%;
+        margin-left: auto;
+        margin-right: auto;
+      }
+    }
   </style>
 </head>
 <body>
@@ -1290,6 +1392,14 @@
       <a class="mobile-nav-btn" data-page="craft" data-i18n="menu-craft">Craft</a>
       <a class="mobile-nav-btn" data-page="about" data-i18n="menu-about">About</a>
       <a class="mobile-nav-btn" data-page="contact" data-i18n="menu-contact">Contact</a>
+      <!-- Language toggle. Deliberately the SAME component as the 2D/3D toggle
+           above — same two classes, no styling of its own — so the pair can
+           never drift apart. The nav bar's own de/en text is hidden below
+           640px; this replaces it. -->
+      <div class="mobile-view-toggle mobile-lang-toggle">
+        <button class="mobile-mode-btn" data-lang="de">Deutsch</button>
+        <button class="mobile-mode-btn" data-lang="en">English</button>
+      </div>
     </div>
   </div>
 
@@ -1637,6 +1747,31 @@
           else if (btn.dataset.page === 'about')   window.location.href = '/about2d.html';
           else if (btn.dataset.page === 'contact') window.location.href = '/contact2d.html';
         });
+      });
+
+      // Language toggle. It does NOT translate this page directly — it writes
+      // the preference and hands the change to the nav iframe, which is already
+      // the site's single owner of language and broadcasts 'lang-change' back to
+      // the handler this page has always had. One path, so nothing desyncs.
+      const langBtns = menu.querySelectorAll('[data-lang]');
+      function markLang(l) {
+        langBtns.forEach(b => b.classList.toggle('is-active', b.dataset.lang === l));
+      }
+      // Seed the highlight synchronously; the nav also broadcasts the stored
+      // language ~100ms after it loads, which corrects a stale value (e.g. an
+      // old 'fr' preference, which the nav rewrites to 'en').
+      try { markLang(localStorage.getItem('lang') || 'de'); } catch (e) { markLang('de'); }
+      langBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const l = btn.dataset.lang;
+          try { localStorage.setItem('lang', l); } catch (e) {}
+          markLang(l);
+          const bar = document.getElementById('top-bar');
+          if (bar && bar.contentWindow) bar.contentWindow.postMessage({ type: 'lang-change', lang: l }, '*');
+        });
+      });
+      window.addEventListener('message', e => {
+        if (e.data && e.data.type === 'lang-change') markLang(e.data.lang);
       });
     })();
 

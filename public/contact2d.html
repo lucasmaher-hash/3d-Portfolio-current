@@ -258,27 +258,76 @@
       box-shadow: var(--shadow-raised-sm);
       padding: 5px;
     }
+    /* Mobile menu only: extra breathing room under the 2D/3D toggle so it reads as
+       its own control rather than as the first item of the Craft/About/Contact
+       stack below it. Sits on top of the panel's uniform 24px gap.
+       :first-child scopes this to the 2D/3D toggle specifically — .mobile-lang-toggle
+       reuses the same .mobile-view-toggle class but is the panel's LAST child, so it
+       keeps the plain 24px and the two toggles do not drift apart. */
+    .mobile-menu-panel > .mobile-view-toggle:first-child { margin-bottom: 22px; }
+
     .mobile-mode-btn {
       border: none; background: transparent; border-radius: 9999px;
-      padding: 11px 0; font-family: 'VT323', monospace; font-size: 18px;
+      padding: 11px 0; font-family: 'VT323', monospace; /* Matched to .mobile-nav-btn: same 22px VT323 and the same inherited 1.6
+         line-height, so a segment's text box is identical to a nav button's. The
+         segment keeps 11px vertical padding, which is exactly what makes the TRACK
+         come out level with a nav button: the track adds its own 5px padding top and
+         bottom, so 5+11 and 11+5 sum to the nav button's 16px — the two pills end up
+         the same height without hardcoding one. line-height is stated explicitly
+         because these are <button>s, which do not reliably inherit it. */
+      font-size: 22px;
+      line-height: 1.6;
       color: #555; cursor: pointer; text-align: center;
       -webkit-tap-highlight-color: transparent;
       transition: box-shadow 150ms ease, color 150ms ease, transform 150ms ease;
     }
     .mobile-mode-btn.is-active {
-      background: var(--bg-surface); color: #000;
-      /* --shadow-pressed's 5px offset / 10px blur reduced 35%, matching the
-         desktop nav's .pill__seg.is-active in top_row_permanent_V3.html so the
-         2D/3D toggle reads the same on both. Scoped to the segments INSIDE the
-         toggle — .mobile-view-toggle's own raised track shadow is untouched,
-         mirroring the desktop .pill track. */
+      /* Shared by BOTH toggles: the selected segment is a recessed well. The inset is
+         --shadow-pressed's 5px offset / 10px blur reduced 35%, matching the desktop nav's
+         .pill__seg.is-active in top_row_permanent_V3.html. Scoped to the segments INSIDE
+         the toggle — .mobile-view-toggle's own raised track shadow is untouched, mirroring
+         the desktop .pill track.
+         background must be a real colour, NOT transparent: an inset shadow paints over the
+         element's own background, so without one the segment would read as a hole punched
+         through to the track rather than a well.
+         Deliberately sets NO color — selecting a segment must not darken its text, so both
+         toggles keep the base #555 and the inset alone marks the language selection. */
+      background: var(--bg-surface);
       box-shadow: inset 3.25px 3.25px 6.5px rgba(174, 174, 192, 0.6), inset -3.25px -3.25px 6.5px rgba(255, 255, 255, 1);
     }
+
+    /* 2D/3D toggle ONLY: a flat orange fill, and explicitly NO inset — the neumorphic
+       shading and white highlight are cancelled here so the orange reads as a solid pill.
+       The language toggle shares .mobile-view-toggle / .mobile-mode-btn and keeps both the
+       surface fill and the inset from the rule above.
+       Matched on [data-mode] rather than child position or the .mobile-lang-toggle class,
+       so the orange cannot wander onto the wrong control if the panel is reordered — the
+       language segments carry [data-lang] instead. Specificity (0,3,0) beats the shared
+       rule, so source order does not matter.
+       --accent-orange is undefined on index.html (the 3D page declares no such custom
+       property), hence the literal fallback. */
+    .mobile-mode-btn[data-mode].is-active {
+      background: var(--accent-orange, #FF5C00);
+      /* Same well as the language toggle above — same offsets, same blur, same
+         alphas — recoloured so it reads on orange instead of on the grey
+         surface. The grey/white pair was built to sit on #DCDCE3; over #FF5C00
+         a white highlight desaturates to a pale wash and the cool grey shadow
+         reads as dirt. So the two hues are re-derived from the orange itself:
+         top-left gets a darker orange, bottom-right a lighter one, keeping the
+         site's light-from-top-left convention. */
+      box-shadow: inset 3.25px 3.25px 6.5px rgba(168, 56, 0, 0.6), inset -3.25px -3.25px 6.5px rgba(255, 173, 122, 1);
+    }
     .mobile-mode-btn:active:not(.is-active) {
-      /* Same reduced spread, so tapping the inactive half doesn't flash a wider
-         inset than the settled state it lands in. */
-      box-shadow: inset 3.25px 3.25px 6.5px rgba(174, 174, 192, 0.6), inset -3.25px -3.25px 6.5px rgba(255, 255, 255, 1);
+      /* Scale is the tap feedback both toggles share. */
       transform: scale(0.96);
+    }
+
+    /* Press inset for the LANGUAGE toggle only. A tap should preview the state it lands
+       in: a language segment lands in an inset well, but a 2D/3D segment now lands in a
+       flat orange pill, so flashing an inset there would animate to something that no
+       longer exists in that control. Same reduced spread as the settled state. */
+    .mobile-mode-btn[data-lang]:active:not(.is-active) {
+      box-shadow: inset 3.25px 3.25px 6.5px rgba(174, 174, 192, 0.6), inset -3.25px -3.25px 6.5px rgba(255, 255, 255, 1);
     }
     .mobile-nav-btn {
       display: block; background: var(--bg-surface); border-radius: 9999px;
@@ -354,6 +403,14 @@
       <a class="mobile-nav-btn" data-page="craft" data-i18n="menu-craft">Craft</a>
       <a class="mobile-nav-btn" data-page="about" data-i18n="menu-about">About</a>
       <a class="mobile-nav-btn is-active" data-page="contact" data-i18n="menu-contact">Contact</a>
+      <!-- Language toggle. Deliberately the SAME component as the 2D/3D toggle
+           above — same two classes, no styling of its own — so the pair can
+           never drift apart. The nav bar's own de/en text is hidden below
+           640px; this replaces it. -->
+      <div class="mobile-view-toggle mobile-lang-toggle">
+        <button class="mobile-mode-btn" data-lang="de">Deutsch</button>
+        <button class="mobile-mode-btn" data-lang="en">English</button>
+      </div>
     </div>
   </div>
 
@@ -485,6 +542,31 @@
           else if (btn.dataset.page === 'contact') window.location.href = '/contact2d.html';
         });
       });
+
+      // Language toggle. It does NOT translate this page directly — it writes
+      // the preference and hands the change to the nav iframe, which is already
+      // the site's single owner of language and broadcasts 'lang-change' back to
+      // the handler this page has always had. One path, so nothing desyncs.
+      const langBtns = menu.querySelectorAll('[data-lang]');
+      function markLang(l) {
+        langBtns.forEach(b => b.classList.toggle('is-active', b.dataset.lang === l));
+      }
+      // Seed the highlight synchronously; the nav also broadcasts the stored
+      // language ~100ms after it loads, which corrects a stale value (e.g. an
+      // old 'fr' preference, which the nav rewrites to 'en').
+      try { markLang(localStorage.getItem('lang') || 'de'); } catch (e) { markLang('de'); }
+      langBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const l = btn.dataset.lang;
+          try { localStorage.setItem('lang', l); } catch (e) {}
+          markLang(l);
+          const bar = document.getElementById('top-bar');
+          if (bar && bar.contentWindow) bar.contentWindow.postMessage({ type: 'lang-change', lang: l }, '*');
+        });
+      });
+      window.addEventListener('message', e => {
+        if (e.data && e.data.type === 'lang-change') markLang(e.data.lang);
+      });
     })();
 
     let lastScrollY = 0;
@@ -588,6 +670,51 @@
       document.addEventListener('DOMContentLoaded', scheduleFix);
       window.addEventListener('load', scheduleFix);
       window.addEventListener('resize', scheduleFix);
+    })();
+  </script>
+  <script>
+    // Mobile only: pixel-snap the card's BOTTOM border.
+    //
+    // .page-wrapper's border-bottom is the last painted row of the entire document, and
+    // the document does not end on a whole pixel. Measured on a 390px phone: the
+    // wrapper's border-box bottom sits at y = 5585.078 while documentElement.scrollHeight
+    // is 5585 — so the final 0.078px of that 1px border falls outside the scrollable
+    // area. .project-nav's border-top, the line at the TOP of the same section, has
+    // ordinary content above and below it and sits at no boundary at all. That asymmetry
+    // is why only the bottom line reads as thin/clipped. Blink happens to snap both to a
+    // clean 3 device rows (verified at DPR 3: identical ink, 328.5 each), so this does
+    // NOT reproduce in Chrome — WebKit is under no obligation to make the same choice.
+    //
+    // Fix: measure the real fractional bottom and grow padding-bottom by exactly enough
+    // to land it on a whole CSS pixel, so the border fills an exact device-pixel band
+    // with nothing hanging past the end of the document. Same measure-then-set approach
+    // as the dot-divider fix above, and for the same reason: a static CSS value cannot
+    // know where the box happens to land. The added padding is always < 1px, and it sits
+    // below .project-nav (whose -12px margin cancels the base 12px), so nothing moves
+    // visibly.
+    //
+    // Desktop is untouched — outside the mobile query the inline value is cleared and
+    // the stylesheet's own padding-bottom applies.
+    (function () {
+      var wrap = document.querySelector('.page-wrapper');
+      if (!wrap) return;
+      var mq = window.matchMedia('(max-width: 640px)');
+      function snap() {
+        wrap.style.paddingBottom = '';        // always measure against the CSS value
+        if (!mq.matches) return;              // desktop: leave the stylesheet alone
+        var bottom = wrap.getBoundingClientRect().bottom + window.pageYOffset;
+        var delta = Math.ceil(bottom) - bottom;
+        if (delta > 0.002) {
+          var base = parseFloat(getComputedStyle(wrap).paddingBottom) || 0;
+          wrap.style.paddingBottom = (base + delta).toFixed(3) + 'px';
+        }
+      }
+      var raf;
+      function scheduleSnap() { cancelAnimationFrame(raf); raf = requestAnimationFrame(snap); }
+      document.addEventListener('DOMContentLoaded', scheduleSnap);
+      window.addEventListener('load', scheduleSnap);
+      window.addEventListener('resize', scheduleSnap);
+      if (mq.addEventListener) mq.addEventListener('change', scheduleSnap);
     })();
   </script>
 
