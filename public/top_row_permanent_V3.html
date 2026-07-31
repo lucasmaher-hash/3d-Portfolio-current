@@ -413,7 +413,10 @@
 
     /* ── Responsive ───────────────────────────────────────────── */
     @media (max-width: 640px) {
-      :root { --island-edge-x: 14px; }
+      /* 19, not the original 14: .top-row's padding is
+         calc(var(--island-edge-x) + 10px), so +5px here takes 5px off each side
+         and makes the bar 10px narrower overall. */
+      :root { --island-edge-x: 19px; }
 
       .view-toggle,
       .nav-pill { display: none; }
@@ -424,6 +427,16 @@
         grid-template-columns: 1fr auto;
         padding: 8px;
         gap: 12px;
+        /* Clip the children's hover/raised shadows to the bar's own rounded
+           silhouette. .logo carries --shadow-raised-sm, whose blur always
+           extends past the 8px padding — invisible on a 2D page while the bar
+           sat on a background the exact same colour as itself, but obvious now
+           that the bar passes over images, as a white glow bleeding off the
+           left end. Same fix the 3D view already uses (.nav-island.is-3d-view),
+           applied here for every mobile view.
+           Safe: the Craft dropdown is position: fixed off the viewport, and it
+           is display: none at this width anyway, as is .nav-pill. */
+        overflow: hidden;
       }
     }
 
@@ -553,8 +566,61 @@
       // this beats the iframe-vs-parent race that used to leave the shadow
       // stuck (missing, or wrongly on over the hero) until a manual refresh.
       if (is2DView) {
+        // ── Mobile: test what is actually PAINTED behind the bar ──────────────
+        // The hero rule below is not enough on a phone: the bar is fixed at the
+        // top of a narrow column, so a process shot or a project video scrolls
+        // under it constantly, and there the shadow reads as a halo exactly the
+        // way it did over the hero. Same mechanism as the 3D Exit pill.
+        //
+        // Two things make this different from the Exit pill's version. The hit
+        // test has to run against window.top.document, because inside this
+        // iframe elementsFromPoint would only ever see the nav's own document.
+        // And the stack it returns starts with the nav IFRAME itself, which has
+        // to be skipped or every sample would report the frame rather than the
+        // page behind it. Coordinates need no conversion: #top-bar is fixed at
+        // top:0/left:0 and full width on every host page, so a point in this
+        // iframe's viewport is the same point in the parent's.
+        var navPaintMQ = window.matchMedia('(max-width: 640px)');
+        var NAV_SAMPLES = 3;
+
+        function navOverPicture() {
+          var doc = window.top.document, win = window.top;
+          if (!doc.body) return false;
+          var r = navIsland.getBoundingClientRect();
+          if (!r.width || !r.height) return false;
+          var surface = win.getComputedStyle(doc.body).backgroundColor;
+          var covered = 0, total = NAV_SAMPLES * NAV_SAMPLES;
+          for (var iy = 0; iy < NAV_SAMPLES; iy++) {
+            for (var ix = 0; ix < NAV_SAMPLES; ix++) {
+              var stack = doc.elementsFromPoint(
+                r.left + r.width  * (ix + 0.5) / NAV_SAMPLES,
+                r.top  + r.height * (iy + 0.5) / NAV_SAMPLES
+              );
+              var paint = null;
+              for (var i = 0; i < stack.length; i++) {
+                var el = stack[i];
+                if (el.tagName === 'IFRAME') continue;   // this nav frame
+                if (el.tagName === 'IMG' || el.tagName === 'VIDEO' || el.tagName === 'CANVAS') { paint = 'media'; break; }
+                var cs = win.getComputedStyle(el);
+                if (cs.backgroundImage.indexOf('url(') === 0) { paint = 'media'; break; }
+                var bg = cs.backgroundColor;
+                if (!bg || bg === 'transparent' || bg === 'rgba(0, 0, 0, 0)') continue;
+                paint = bg; break;
+              }
+              if (paint !== null && paint !== surface) covered++;
+            }
+          }
+          return covered > total * 0.5;
+        }
+
         function updateNavShadow() {
           var doc = window.top.document;
+          if (navPaintMQ.matches) {
+            // Mobile owns the whole decision — the paint test already covers the
+            // hero, since a hero is just another picture behind the bar.
+            navIsland.classList.toggle('is-2d-mode', !navOverPicture());
+            return;
+          }
           var hero = doc.querySelector('.hero');
           if (hero && hero.offsetHeight > 0) {
             navIsland.classList.toggle('is-2d-mode', window.top.scrollY > hero.offsetHeight - 60);
@@ -577,8 +643,18 @@
           // call settle it. Deliberately NOT treated as "no hero": adding the shadow here
           // would flash it on over a hero image and then toggle it back off.
         }
-        window.top.addEventListener('scroll', updateNavShadow, { passive: true });
-        window.top.addEventListener('resize', updateNavShadow, { passive: true });
+        // rAF-throttled on scroll: the mobile branch runs nine hit tests plus a
+        // getComputedStyle walk per sample, which must not happen more than once
+        // per frame. The desktop branch is cheap either way.
+        var navTick = false;
+        function requestNavShadow() {
+          if (navTick) return;
+          navTick = true;
+          requestAnimationFrame(function () { navTick = false; updateNavShadow(); });
+        }
+        window.top.addEventListener('scroll', requestNavShadow, { passive: true });
+        window.top.addEventListener('resize', requestNavShadow, { passive: true });
+        navPaintMQ.addEventListener('change', updateNavShadow);
         window.top.addEventListener('load', updateNavShadow);
         if (window.top.document.readyState !== 'complete') {
           window.top.document.addEventListener('DOMContentLoaded', updateNavShadow);

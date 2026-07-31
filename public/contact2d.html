@@ -308,6 +308,11 @@
        property), hence the literal fallback. */
     .mobile-mode-btn[data-mode].is-active {
       background: var(--accent-orange, #FF5C00);
+      /* Black, overriding the base rule's #555. That grey is tuned for an UNSELECTED
+         segment on the grey surface; over #FF5C00 it measures 2.4:1 and the label reads
+         as disabled rather than selected. Black on this orange is 6.8:1. Scoped to
+         [data-mode], so the language segments keep #555 on their grey well. */
+      color: #000;
       /* Same well as the language toggle above — same offsets, same blur, same
          alphas — recoloured so it reads on orange instead of on the grey
          surface. The grey/white pair was built to sit on #DCDCE3; over #FF5C00

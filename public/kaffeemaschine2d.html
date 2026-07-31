@@ -567,6 +567,18 @@
     @media (max-width: 860px) {
       html, body { padding: 0; }
       .page-wrapper { margin: 0; border-left: none; border-right: none; }
+
+      /* Keep the wrapper's border-bottom off the document's LAST row.
+         That border is the final painted line in the document, and the document
+         does not end on a whole pixel — so its last fraction falls outside the
+         scrollable area. The pixel-snap script near the bottom of this file
+         rounds the wrapper's own bottom edge, but that only makes the border
+         start on a whole pixel; it cannot stop it from being the terminal row,
+         and WebKit drops that sliver outright. Chrome happens not to, which is
+         why this only ever showed on the phone.
+         One pixel of sill beneath the card demotes the border to an ordinary
+         interior row with something after it, so there is no edge case left. */
+      body { padding-bottom: 1px; }
     }
 
     @media (max-width: 640px) {
@@ -704,6 +716,11 @@
        property), hence the literal fallback. */
     .mobile-mode-btn[data-mode].is-active {
       background: var(--accent-orange, #FF5C00);
+      /* Black, overriding the base rule's #555. That grey is tuned for an UNSELECTED
+         segment on the grey surface; over #FF5C00 it measures 2.4:1 and the label reads
+         as disabled rather than selected. Black on this orange is 6.8:1. Scoped to
+         [data-mode], so the language segments keep #555 on their grey well. */
+      color: #000;
       /* Same well as the language toggle above — same offsets, same blur, same
          alphas — recoloured so it reads on orange instead of on the grey
          surface. The grey/white pair was built to sit on #DCDCE3; over #FF5C00
@@ -942,6 +959,31 @@
       .process-shot,
       .guide-media { width: 100%; margin-left: 0; margin-right: 0; }
     }
+  
+    /* Keyword emphasis for skimming — inert by default (desktop unchanged);
+       the mobile block below supplies the darker ink. */
+    b.kw { font-weight: inherit; color: inherit; }
+
+    /* ── Mobile breathing room (design pass, 2026-07-31) ─────────────────
+       Appended LAST so it wins earlier ≤640px rules on source order. Same
+       treatment as virtual_cooking2d.html (tianqicraft / junhyungpark-hanwha
+       references): more air border-to-border, air below the divider before
+       the body, darker skim keywords. Sticky/scrolly sections keep their own
+       geometry — padding on .guide-section only adds air around the spacer. */
+    @media (max-width: 640px) {
+      .guide-section { padding: 52px 20px; }
+      .section { padding: 32px 20px; }
+      /* This page has no .guide-section — content sections are plain .section.
+         The ones carrying a real heading get the full 52px tier; header/meta
+         blocks keep 32px. Graceful without :has() support: they stay at 32px. */
+      .section:has(.section-title) { padding: 52px 20px; }
+      .guide-section .dot-divider,
+      .section .dot-divider { margin-bottom: 12px; }
+      b.kw { color: #4a4a52; }
+      /* The At-a-Glance lead reads as the project's one-paragraph pitch — full
+         primary ink, no partial highlights (they were unwrapped from this key). */
+      .glance-lead { color: var(--text-primary); }
+    }
   </style>
 </head>
 <body>
@@ -989,7 +1031,7 @@
     <!-- At a Glance -->
     <div class="section" style="border-bottom: none; padding-bottom: 0;">
       <h2 class="section-title" data-i18n="section-glance">At a Glance</h2>
-      <p class="glance-lead" style="margin-top: clamp(20px, 3vw, 32px);" data-i18n="glance-lead">Coffee machines have some of the most forgettable interfaces in the world. I wanted to push that mundanity somewhere visually specific — a retro-futuristic interface controlled entirely by six physical side buttons, with CRT scanlines and a Digital-7 readout pulled straight from a 2003 sci-fi film. Designed in Figma, rebuilt pixel-perfect in HTML, then modeled into a full 3D machine in Blender so it could actually sit on a counter.</p>
+      <p class="glance-lead" style="margin-top: clamp(20px, 3vw, 32px);" data-i18n-html="glance-lead">Coffee machines have some of the most forgettable interfaces in the world. I wanted to push that mundanity somewhere visually specific — a retro-futuristic interface controlled entirely by six physical side buttons, with CRT scanlines and a Digital-7 readout pulled straight from a 2003 sci-fi film. Designed in Figma, rebuilt pixel-perfect in HTML, then modeled into a full 3D machine in Blender so it could actually sit on a counter.</p>
     </div>
 
     <!-- Meta tiles -->
@@ -1001,7 +1043,7 @@
         </div>
         <div class="meta-tile">
           <div class="meta-label" data-i18n="label-team">Team</div>
-          <div class="meta-inset" data-i18n="val-team">Just Me</div>
+          <div class="meta-inset" data-i18n="val-team">Lucas Maher</div>
         </div>
         <div class="meta-tile">
           <div class="meta-label" data-i18n="label-role">Role</div>
@@ -1022,7 +1064,7 @@
       </div>
       <div class="dot-divider" style="margin-bottom: clamp(20px, 3vw, 28px);"></div>
 
-      <p class="guide-text" data-i18n="process-intro">Coffee-machine interfaces are one of the most overlooked corners of product design — nobody expects them to be interesting, which is exactly why I wanted to make one that is. Brushed aluminium, a stark digital typeface, and a CRT-era colour palette give it a distinctly retro feel, but the goal was never nostalgia for its own sake — it's a machine that's meant to read as familiar and futuristic at the same time.</p>
+      <p class="guide-text" data-i18n-html="process-intro">Coffee-machine interfaces are one of the most overlooked corners of product design — nobody expects them to be interesting, which is exactly why I wanted to make one that is. Brushed aluminium, a stark digital typeface, and a CRT-era colour palette give it a distinctly retro feel, but the goal was never nostalgia for its own sake — it's a machine that's meant to read as familiar and futuristic at the same time.</p>
 
       <!-- Sticky scroll-spin: machine starts centred + spins a full turn while
            pinned, then slides to the right as the caption fades in on the left.
@@ -1030,7 +1072,7 @@
       <section class="spin-scrolly" id="spin-scrolly" style="margin-top: clamp(40px, 6vw, 80px);">
         <div class="spin-sticky">
           <div class="spin-stage">
-            <p class="spin-copy guide-text" id="spin-copy" data-i18n="process-1">A full turn around the finished machine — interface and body as one object. Even the renders lean into the era: a soft cream-and-blue backdrop and a touch of film grain, so the presentation stays as in-period as the machine itself.</p>
+            <p class="spin-copy guide-text" id="spin-copy" data-i18n-html="process-1">A full turn around the finished machine — interface and body as one object. Even the renders lean into the era: a soft cream-and-blue backdrop and a touch of film grain, so the presentation stays as in-period as the machine itself.</p>
             <div class="spin" id="spin">
               <img id="spin-img" src="/images/cybercoffee/spin/frame_001.webp" alt="Cybercoffee machine — rotating render" />
             </div>
@@ -1043,14 +1085,14 @@
           <div class="guide-media">
             <img src="/images/cybercoffee/03_low_hero_egg_focus.png" alt="Cybercoffee machine — low hero, egg in focus" />
           </div>
-          <p class="guide-text" data-i18n="process-2">Materials stay deliberately minimal: brushed aluminium for the body, white plastic for the buttons and handles, with a hint of red on the interface controls to match the display's own black-and-red palette.</p>
+          <p class="guide-text" data-i18n-html="process-2">Materials stay deliberately minimal: brushed aluminium for the body, white plastic for the buttons and handles, with a hint of red on the interface controls to match the display's own black-and-red palette.</p>
         </div>
 
         <div class="process-shot shift-right">
           <div class="guide-media">
             <img src="/images/cybercoffee/07_custom_view.png" alt="Cybercoffee machine — custom angle render" />
           </div>
-          <p class="guide-text" data-i18n="process-3">Every one of the six side buttons maps to a single dedicated action — the whole point was to design out arrow keys and confirm presses entirely, so each click simply moves you to what's next.</p>
+          <p class="guide-text" data-i18n-html="process-3">Every one of the six side buttons maps to a single dedicated action — the whole point was to design out arrow keys and confirm presses entirely, so each click simply moves you to what's next.</p>
         </div>
       </div>
     </div>
@@ -1309,14 +1351,14 @@
         'section-glance': 'At a Glance',
         'glance-lead': 'Coffee machines have some of the most forgettable interfaces in the world. I wanted to push that mundanity somewhere visually specific — a retro-futuristic interface controlled entirely by six physical side buttons, with CRT scanlines and a Digital-7 readout pulled straight from a 2003 sci-fi film. Designed in Figma, rebuilt pixel-perfect in HTML, then modeled into a full 3D machine in Blender so it could actually sit on a counter.',
         'label-timeline': 'Timeline', 'val-timeline': 'May 2026 —<br>Jun 2026',
-        'label-team': 'Team', 'val-team': 'Just Me',
+        'label-team': 'Team', 'val-team': 'Lucas Maher',
         'label-role': 'Role', 'val-role': 'UI/UX<br>User Testing',
         'label-skills': 'Skills', 'val-skills': 'Figma<br>Prototyping<br>Claude Code',
         'section-process': 'Design process',
-        'process-intro': 'Coffee-machine interfaces are one of the most overlooked corners of product design — nobody expects them to be interesting, which is exactly why I wanted to make one that is. Brushed aluminium, a stark digital typeface, and a CRT-era colour palette give it a distinctly retro feel, but the goal was never nostalgia for its own sake — it\'s a machine that\'s meant to read as familiar and futuristic at the same time.',
-        'process-1': 'A full turn around the finished machine — interface and body as one object. Even the renders lean into the era: a soft cream-and-blue backdrop and a touch of film grain, so the presentation stays as in-period as the machine itself.',
-        'process-2': 'Materials stay deliberately minimal: brushed aluminium for the body, white plastic for the buttons and handles, with a hint of red on the interface controls to match the display\'s own black-and-red palette.',
-        'process-3': 'Every one of the six side buttons maps to a single dedicated action — the whole point was to design out arrow keys and confirm presses entirely, so each click simply moves you to what\'s next.',
+        'process-intro': 'Coffee-machine interfaces are one of the most overlooked corners of product design — nobody expects them to be interesting, which is exactly why I wanted to make one that is. <b class="kw">Brushed aluminium</b>, a stark digital typeface, and a CRT-era colour palette give it a distinctly retro feel, but the goal was never nostalgia for its own sake — it\'s a machine that\'s meant to read as <b class="kw">familiar and futuristic</b> at the same time.',
+        'process-1': 'A <b class="kw">full turn around the finished machine</b> — interface and body as one object. Even the renders lean into the era: a soft cream-and-blue backdrop and a touch of film grain, so the presentation stays as in-period as the machine itself.',
+        'process-2': 'Materials stay <b class="kw">deliberately minimal</b>: brushed aluminium for the body, white plastic for the buttons and handles, with a hint of red on the interface controls to match the display\'s own black-and-red palette.',
+        'process-3': 'Every one of the six side buttons maps to a <b class="kw">single dedicated action</b> — the whole point was to design out arrow keys and confirm presses entirely, so each click simply moves you to what\'s next.',
         'section-result': 'Final result',
         'nav-prev': '<< PREVIOUS', 'nav-next': 'NEXT >>',
       },
@@ -1328,14 +1370,14 @@
         'section-glance': 'Auf einen Blick',
         'glance-lead': 'Kaffeemaschinen haben einige der unauffälligsten Oberflächen der Welt. Ich wollte diese Banalität visuell konkret machen — eine retro-futuristische Oberfläche, gesteuert über sechs physische Seitentasten, mit CRT-Scanlines und einer Digital-7-Anzeige wie aus einem Sci-Fi-Film von 2003. In Figma entworfen, pixelgenau in HTML umgesetzt und in Blender zur vollen 3D-Maschine modelliert.',
         'label-timeline': 'Zeitraum', 'val-timeline': 'Mai 2026 —<br>Jun. 2026',
-        'label-team': 'Team', 'val-team': 'Nur ich',
+        'label-team': 'Team', 'val-team': 'Lucas Maher',
         'label-role': 'Rolle', 'val-role': 'UI/UX<br>Nutzertests',
         'label-skills': 'Werkzeuge', 'val-skills': 'Figma<br>Prototyping<br>Claude Code',
         'section-process': 'Designprozess',
-        'process-intro': 'Oberflächen von Kaffeemaschinen gehören zu den am meisten übersehenen Ecken im Produktdesign — niemand erwartet, dass sie interessant sind, genau deshalb wollte ich eine bauen, die es ist. Gebürstetes Aluminium, eine schroffe digitale Schrift und eine CRT-Farbpalette geben ihr einen klar retro geprägten Look, aber es ging nie um Nostalgie um ihrer selbst willen — die Maschine soll gleichzeitig vertraut und futuristisch wirken.',
-        'process-1': 'Eine volle Umdrehung um die fertige Maschine — Oberfläche und Korpus als ein Objekt. Auch die Renders spielen mit der Ära: sanftes Creme-Blau und ein Hauch Filmkorn passend zur Maschine selbst.',
-        'process-2': 'Die Materialien bleiben bewusst minimal: gebürstetes Aluminium für den Korpus, weißer Kunststoff für Tasten und Griffe, mit einem Hauch Rot an den Bedienelementen passend zur Schwarz-Rot-Palette des Displays.',
-        'process-3': 'Jede der sechs Seitentasten ist genau einer festen Aktion zugeordnet — es ging darum, Pfeiltasten und Bestätigungsklicks komplett wegzulassen, sodass jeder Klick einfach zum nächsten Schritt führt.',
+        'process-intro': 'Oberflächen von Kaffeemaschinen gehören zu den am meisten übersehenen Ecken im Produktdesign — niemand erwartet, dass sie interessant sind, genau deshalb wollte ich eine bauen, die es ist. <b class="kw">Gebürstetes Aluminium</b>, eine schroffe digitale Schrift und eine CRT-Farbpalette geben ihr einen klar retro geprägten Look, aber es ging nie um Nostalgie um ihrer selbst willen — die Maschine soll gleichzeitig <b class="kw">vertraut und futuristisch</b> wirken.',
+        'process-1': 'Eine <b class="kw">volle Umdrehung um die fertige Maschine</b> — Oberfläche und Korpus als ein Objekt. Auch die Renders spielen mit der Ära: sanftes Creme-Blau und ein Hauch Filmkorn passend zur Maschine selbst.',
+        'process-2': 'Die Materialien bleiben <b class="kw">bewusst minimal</b>: gebürstetes Aluminium für den Korpus, weißer Kunststoff für Tasten und Griffe, mit einem Hauch Rot an den Bedienelementen passend zur Schwarz-Rot-Palette des Displays.',
+        'process-3': 'Jede der sechs Seitentasten ist <b class="kw">genau einer festen Aktion</b> zugeordnet — es ging darum, Pfeiltasten und Bestätigungsklicks komplett wegzulassen, sodass jeder Klick einfach zum nächsten Schritt führt.',
         'section-result': 'Endergebnis',
         'nav-prev': '<< ZURÜCK', 'nav-next': 'WEITER >>',
       }

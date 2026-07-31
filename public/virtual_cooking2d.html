@@ -345,6 +345,15 @@
     @media (max-width: 860px) {
       html, body { padding: 0; }
       .page-wrapper { margin: 0; border-left: none; border-right: none; }
+      /* Keep the wrapper's border-bottom off the document's LAST row. That
+         border is the final painted line in the document, and the document does
+         not end on a whole pixel, so its last fraction falls outside the
+         scrollable area. The pixel-snap script near the bottom of this file only
+         rounds where the border STARTS; it cannot stop it being the terminal
+         row, and WebKit drops that sliver outright (Chrome happens not to, which
+         is why this only showed on the phone). One pixel of sill beneath the
+         card demotes the border to an ordinary interior row. */
+      body { padding-bottom: 1px; }
     }
 
     @media (max-width: 640px) {
@@ -495,6 +504,11 @@
        property), hence the literal fallback. */
     .mobile-mode-btn[data-mode].is-active {
       background: var(--accent-orange, #FF5C00);
+      /* Black, overriding the base rule's #555. That grey is tuned for an UNSELECTED
+         segment on the grey surface; over #FF5C00 it measures 2.4:1 and the label reads
+         as disabled rather than selected. Black on this orange is 6.8:1. Scoped to
+         [data-mode], so the language segments keep #555 on their grey well. */
+      color: #000;
       /* Same well as the language toggle above — same offsets, same blur, same
          alphas — recoloured so it reads on orange instead of on the grey
          surface. The grey/white pair was built to sit on #DCDCE3; over #FF5C00
@@ -845,6 +859,46 @@
       .process-shot,
       .guide-media { width: 100%; margin-left: 0; margin-right: 0; }
     }
+  
+    /* Keyword emphasis for skimming (Hanwha-style). Inert by default — the <b>
+       must not bold or recolor anything on desktop, which stays as designed;
+       the mobile block below is what turns the ink darker. */
+    b.kw { font-weight: inherit; color: inherit; }
+
+    /* ── Mobile breathing room (design pass, 2026-07-31) ─────────────────
+       Appended LAST so it wins every earlier ≤640px rule on source order.
+       References: tianqicraft.com (section rhythm: hairline dividers with
+       generous symmetric air), junhyungpark.com/hanwha (grey body text with
+       darker keywords for skimming; media never crowded by text).
+       Measured before: sections met their border with 32px each side, body
+       paragraphs sat 12px apart, divider→body 20px. */
+    @media (max-width: 640px) {
+      /* Section rhythm: 64px → 104px border-to-border. */
+      .guide-section { padding: 52px 20px; }
+      /* Header/glance/meta blocks: slighter bump, they are shorter units. */
+      .section { padding: 32px 20px; }
+
+      /* The heading + divider stay one tight unit (20px); the air goes below
+         the divider, before the body. */
+      .guide-section .dot-divider,
+      .section .dot-divider { margin-bottom: 12px; }
+
+      /* Paragraph gap 12px → 20px: the base sheet pulls consecutive
+         paragraphs together with -8px; on a phone that reads as one slab. */
+      .guide-text + .guide-text { margin-top: 0; }
+
+      /* Endergebnis: the two demo units separate more than their internals
+         (52px → 76px). Only subheads FOLLOWING content — the first subhead
+         after the divider keeps its existing 84px. */
+      .guide-text + .result-subhead { margin-top: 24px; }
+
+      /* Skim keywords: darker grey ink, weight unchanged (only wght 400 is
+         loaded here; synthetic bold renders muddy on this face). */
+      b.kw { color: #4a4a52; }
+      /* The At-a-Glance lead reads as the project's one-paragraph pitch — full
+         primary ink, no partial highlights (they were unwrapped from this key). */
+      .glance-lead { color: var(--text-primary); }
+    }
   </style>
 </head>
 <body>
@@ -892,7 +946,7 @@
     <!-- At a Glance -->
     <div class="section" style="border-bottom: none; padding-bottom: 0;">
       <h2 class="section-title" data-i18n="section-glance">At a Glance</h2>
-      <p class="glance-lead" style="margin-top: clamp(20px, 3vw, 32px);" data-i18n="glance-lead">I love cooking, but I hate what pulls me away from it — checking my phone for a measurement, a step, or a timer. Virtual Cooking is a VR/AR concept that keeps the recipe, the ingredients, and the timer in view the whole time, so your hands never have to leave the food.</p>
+      <p class="glance-lead" style="margin-top: clamp(20px, 3vw, 32px);" data-i18n-html="glance-lead">I love cooking, but I hate what pulls me away from it — checking my phone for a measurement, a step, or a timer. Virtual Cooking is a VR/AR concept that keeps the recipe, the ingredients, and the timer in view the whole time, so your hands never have to leave the food.</p>
     </div>
 
     <!-- Meta -->
@@ -904,7 +958,7 @@
         </div>
         <div class="meta-tile">
           <div class="meta-label" data-i18n="label-team">Team</div>
-          <div class="meta-inset" data-i18n="val-team">Just Me</div>
+          <div class="meta-inset" data-i18n="val-team">Lucas Maher</div>
         </div>
         <div class="meta-tile">
           <div class="meta-label" data-i18n="label-role">Role</div>
@@ -924,9 +978,9 @@
         <span class="step-badge">1</span>
       </div>
       <div class="dot-divider"></div>
-      <p class="guide-text" data-i18n="problem-text-1">Cooking is something I genuinely enjoy — but following a recipe rarely stays enjoyable for long. Every few minutes I'm wiping my hands to unlock my phone: checking an ingredient amount, scrolling back to the step I was on, glancing at a timer I forgot to start. Ingredients, instructions, and timing are the three things a recipe actually asks of you — and they're exactly the three things that keep interrupting the cooking itself.</p>
-      <p class="guide-text" data-i18n="problem-text-2">Virtual Cooking imagines a VR/AR headset that puts all three where you're already looking. The instruction manual sits in the upper left of your view, ingredients and a running timer on the right — nothing to unlock, nothing to wipe off, nothing to look away from the stove for.</p>
-      <p class="guide-text" data-i18n="problem-text-3">This is a concept, not a working product — today's VR/AR headsets are still too heavy and clunky to wear comfortably through an hour of cooking. But headsets keep getting lighter and less intrusive, and I think this becomes a genuinely viable idea once they do. It's also easy to imagine this mattering most somewhere other than a home kitchen: restaurants routinely cook for different numbers of people and switch between recipes all night — exactly the two things this concept is built to handle.</p>
+      <p class="guide-text" data-i18n-html="problem-text-1">Cooking is something I genuinely enjoy — but following a recipe rarely stays enjoyable for long. Every few minutes I'm wiping my hands to unlock my phone: checking an ingredient amount, scrolling back to the step I was on, glancing at a timer I forgot to start. Ingredients, instructions, and timing are the three things a recipe actually asks of you — and they're exactly the three things that keep interrupting the cooking itself.</p>
+      <p class="guide-text" data-i18n-html="problem-text-2">Virtual Cooking imagines a VR/AR headset that puts all three where you're already looking. The instruction manual sits in the upper left of your view, ingredients and a running timer on the right — nothing to unlock, nothing to wipe off, nothing to look away from the stove for.</p>
+      <p class="guide-text" data-i18n-html="problem-text-3">This is a concept, not a working product — today's VR/AR headsets are still too heavy and clunky to wear comfortably through an hour of cooking. But headsets keep getting lighter and less intrusive, and I think this becomes a genuinely viable idea once they do. It's also easy to imagine this mattering most somewhere other than a home kitchen: restaurants routinely cook for different numbers of people and switch between recipes all night — exactly the two things this concept is built to handle.</p>
     </div>
 
     <!-- Design process -->
@@ -937,7 +991,7 @@
       </div>
       <div class="dot-divider"></div>
 
-      <p class="guide-text" data-i18n="process-intro">Most VR interfaces are surprisingly flat — floating 2D windows dropped into a 3D space, using none of the depth VR actually offers. I wanted to actually build with the third dimension instead of ignoring it, and to give the whole interface a distinct visual identity: everything here is modeled with a brushed-metal look, echoing the pans, knives, and utensils already sitting on the counter. Every interaction is designed to work without a controller — clicks and simple hand gestures are the only input the whole concept ever asks for.</p>
+      <p class="guide-text" data-i18n-html="process-intro">Most VR interfaces are surprisingly flat — floating 2D windows dropped into a 3D space, using none of the depth VR actually offers. I wanted to actually build with the third dimension instead of ignoring it, and to give the whole interface a distinct visual identity: everything here is modeled with a brushed-metal look, echoing the pans, knives, and utensils already sitting on the counter. Every interaction is designed to work without a controller — clicks and simple hand gestures are the only input the whole concept ever asks for.</p>
 
       <div class="stagger-list">
         <div class="stagger-row">
@@ -946,7 +1000,7 @@
           </div>
           <div class="stagger-body">
             <h3 class="feature-title" data-i18n="panel-manual-title">Every Step in View</h3>
-            <p class="stagger-copy" data-i18n="panel-manual-text">The left panel is the instruction manual. A progress bar tracks which step of the recipe you're on, with the current step itself shown right beside it — always in view, never more than a glance away.</p>
+            <p class="stagger-copy" data-i18n-html="panel-manual-text">The left panel is the instruction manual. A progress bar tracks which step of the recipe you're on, with the current step itself shown right beside it — always in view, never more than a glance away.</p>
           </div>
         </div>
         <div class="stagger-row right">
@@ -955,7 +1009,7 @@
           </div>
           <div class="stagger-body">
             <h3 class="feature-title" data-i18n="panel-ingredients-title">Ingredients That Scale</h3>
-            <p class="stagger-copy" data-i18n="panel-ingredients-text">The right panel holds the ingredient list, with a control to adjust the serving size on the fly. Beside it, a running timer counts down visually — click it, and it opens into a full-screen timer view.</p>
+            <p class="stagger-copy" data-i18n-html="panel-ingredients-text">The right panel holds the ingredient list, with a control to adjust the serving size on the fly. Beside it, a running timer counts down visually — click it, and it opens into a full-screen timer view.</p>
           </div>
         </div>
         <div class="stagger-row indent">
@@ -964,20 +1018,20 @@
           </div>
           <div class="stagger-body">
             <h3 class="feature-title" data-i18n="panel-timer-title">Set by Gesture</h3>
-            <p class="stagger-copy" data-i18n="panel-timer-text">Clicking the countdown on the right panel opens this full-screen timer, where the time can be set or adjusted with a simple gesture.</p>
+            <p class="stagger-copy" data-i18n-html="panel-timer-text">Clicking the countdown on the right panel opens this full-screen timer, where the time can be set or adjusted with a simple gesture.</p>
           </div>
         </div>
       </div>
 
       <div class="process-shot shift-right" style="margin-top: clamp(84px, 12.6vw, 168px);">
-        <p class="guide-text" data-i18n="process-blender-text">Each panel started as a 3D model in Blender, shaped into that brushed-metal form language before being exported into Three.js.</p>
+        <p class="guide-text" data-i18n-html="process-blender-text">Each panel started as a 3D model in Blender, shaped into that brushed-metal form language before being exported into Three.js.</p>
         <div class="guide-media">
           <img src="/images/vr-cookbook/blender-modeling.png" alt="Modelling the panels in Blender" />
         </div>
       </div>
 
       <div class="process-shot shift-left" style="margin-top: clamp(72px, 11vw, 96px); margin-bottom: clamp(72px, 11vw, 96px);">
-        <p class="guide-text" data-i18n="process-vscode-text">From there, the scene came together in VS Code with Claude Code — a real background video shot on a GoPro, with the 3D panels layered on top and wired up to respond to clicks.</p>
+        <p class="guide-text" data-i18n-html="process-vscode-text">From there, the scene came together in VS Code with Claude Code — a real background video shot on a GoPro, with the 3D panels layered on top and wired up to respond to clicks.</p>
         <div class="guide-media">
           <img src="/images/vr-cookbook/app-preview.png" alt="The concept running in the browser" />
         </div>
@@ -999,14 +1053,14 @@
           <source src="/videos/vr-cookbook/manual_click_V2.mov" type="video/mp4" />
         </video>
       </div>
-      <p class="guide-text" data-i18n="result-manual-text">A look at the finished instruction panel in action — flipping through recipe steps with a simple click, hands otherwise free the entire time.</p>
+      <p class="guide-text" data-i18n-html="result-manual-text">A look at the finished instruction panel in action — flipping through recipe steps with a simple click, hands otherwise free the entire time.</p>
 
       <h3 class="result-subhead" style="margin-top: clamp(32px, 5vw, 64px);" data-i18n-html="result-timer-heading">Timer &amp; ingredients</h3>
       <div class="result-image-pair" style="margin-top: clamp(8px, 2vw, 16px);">
         <img src="/images/vr-cookbook/back_final_V2.jpg" alt="Final render — rear view" />
         <img src="/images/vr-cookbook/timer_click_V1.jpg" alt="Final render — timer interaction" />
       </div>
-      <p class="guide-text" data-i18n="result-timer-text">The finished right-hand panel: ingredient quantities adjust to however many people you're cooking for, and the running timer opens into the full gesture-controlled view the moment you click it.</p>
+      <p class="guide-text" data-i18n-html="result-timer-text">The finished right-hand panel: ingredient quantities adjust to however many people you're cooking for, and the running timer opens into the full gesture-controlled view the moment you click it.</p>
       <div class="guide-media">
         <video autoplay loop muted playsinline>
           <source src="/videos/vr-cookbook/timer_V1.mov" type="video/quicktime" />
@@ -1170,30 +1224,30 @@
         'menu-craft': 'Craft', 'menu-about': 'About', 'menu-contact': 'Contact',
         'breadcrumb': 'Portfolio&nbsp;&nbsp;/&nbsp;&nbsp;Projects&nbsp;&nbsp;/&nbsp;&nbsp;Virtual Cooking',
         'label-timeline': 'Timeline', 'val-timeline': 'May 2026 —<br>Jul 2026',
-        'label-team': 'Team', 'val-team': 'Just Me',
+        'label-team': 'Team', 'val-team': 'Lucas Maher',
         'label-role': 'Role', 'val-role': 'Idea & Concept Designer',
         'label-tools': 'Tools', 'val-tools': 'Blender<br>Three.js<br>HTML / CSS / JS<br>Vibe Coding',
         'section-glance': 'At a Glance',
         'glance-lead': 'I love cooking, but I hate what pulls me away from it — checking my phone for a measurement, a step, or a timer. Virtual Cooking is a VR/AR concept that keeps the recipe, the ingredients, and the timer in view the whole time, so your hands never have to leave the food.',
         'section-problem': 'Identifying the problem',
-        'problem-text-1': 'Cooking is something I genuinely enjoy — but following a recipe rarely stays enjoyable for long. Every few minutes I\'m wiping my hands to unlock my phone: checking an ingredient amount, scrolling back to the step I was on, glancing at a timer I forgot to start. Ingredients, instructions, and timing are the three things a recipe actually asks of you — and they\'re exactly the three things that keep interrupting the cooking itself.',
-        'problem-text-2': 'Virtual Cooking imagines a VR/AR headset that puts all three where you\'re already looking. The instruction manual sits in the upper left of your view, ingredients and a running timer on the right — nothing to unlock, nothing to wipe off, nothing to look away from the stove for.',
-        'problem-text-3': 'This is a concept, not a working product — today\'s VR/AR headsets are still too heavy and clunky to wear comfortably through an hour of cooking. But headsets keep getting lighter and less intrusive, and I think this becomes a genuinely viable idea once they do. It\'s also easy to imagine this mattering most somewhere other than a home kitchen: restaurants routinely cook for different numbers of people and switch between recipes all night — exactly the two things this concept is built to handle.',
+        'problem-text-1': 'Cooking is something I genuinely enjoy — but following a recipe rarely stays enjoyable for long. Every few minutes I\'m wiping my hands to unlock my phone: checking an ingredient amount, scrolling back to the step I was on, glancing at a timer I forgot to start. <b class="kw">Ingredients, instructions, and timing</b> are the three things a recipe actually asks of you — and they\'re exactly the three things that keep interrupting the cooking itself.',
+        'problem-text-2': 'Virtual Cooking imagines a VR/AR headset that puts all three where you\'re already looking. The instruction manual sits in the upper left of your view, ingredients and a running timer on the right — nothing to unlock, nothing to wipe off, <b class="kw">nothing to look away from the stove for</b>.',
+        'problem-text-3': 'This is a <b class="kw">concept, not a working product</b> — today\'s VR/AR headsets are still too heavy and clunky to wear comfortably through an hour of cooking. But headsets keep getting lighter and less intrusive, and I think this becomes a genuinely viable idea once they do. It\'s also easy to imagine this mattering most somewhere other than a home kitchen: <b class="kw">restaurants</b> routinely cook for different numbers of people and switch between recipes all night — exactly the two things this concept is built to handle.',
         'section-process': 'Design process',
-        'process-intro': 'Most VR interfaces are surprisingly flat — floating 2D windows dropped into a 3D space, using none of the depth VR actually offers. I wanted to actually build with the third dimension instead of ignoring it, and to give the whole interface a distinct visual identity: everything here is modeled with a brushed-metal look, echoing the pans, knives, and utensils already sitting on the counter. Every interaction is designed to work without a controller — clicks and simple hand gestures are the only input the whole concept ever asks for.',
+        'process-intro': 'Most VR interfaces are surprisingly flat — floating 2D windows dropped into a 3D space, using none of the depth VR actually offers. I wanted to actually <b class="kw">build with the third dimension</b> instead of ignoring it, and to give the whole interface a distinct visual identity: everything here is modeled with a <b class="kw">brushed-metal look</b>, echoing the pans, knives, and utensils already sitting on the counter. Every interaction is designed to work <b class="kw">without a controller</b> — clicks and simple hand gestures are the only input the whole concept ever asks for.',
         'panel-manual-title': 'Every Step in View',
-        'panel-manual-text': 'The left panel is the instruction manual. A progress bar tracks which step of the recipe you\'re on, with the current step itself shown right beside it — always in view, never more than a glance away.',
+        'panel-manual-text': 'The left panel is the <b class="kw">instruction manual</b>. A <b class="kw">progress bar</b> tracks which step of the recipe you\'re on, with the current step itself shown right beside it — always in view, <b class="kw">never more than a glance away</b>.',
         'panel-ingredients-title': 'Ingredients That Scale',
-        'panel-ingredients-text': 'The right panel holds the ingredient list, with a control to adjust the serving size on the fly. Beside it, a running timer counts down visually — click it, and it opens into a full-screen timer view.',
+        'panel-ingredients-text': 'The right panel holds the <b class="kw">ingredient list</b>, with a control to adjust the <b class="kw">serving size</b> on the fly. Beside it, a <b class="kw">running timer</b> counts down visually — click it, and it opens into a full-screen timer view.',
         'panel-timer-title': 'Set by Gesture',
-        'panel-timer-text': 'Clicking the countdown on the right panel opens this full-screen timer, where the time can be set or adjusted with a simple gesture.',
-        'process-blender-text': 'Each panel started as a 3D model in Blender, shaped into that brushed-metal form language before being exported into Three.js.',
-        'process-vscode-text': 'From there, the scene came together in VS Code with Claude Code — a real background video shot on a GoPro, with the 3D panels layered on top and wired up to respond to clicks.',
+        'panel-timer-text': 'Clicking the countdown on the right panel opens this <b class="kw">full-screen timer</b>, where the time can be set or adjusted with a <b class="kw">simple gesture</b>.',
+        'process-blender-text': 'Each panel started as a <b class="kw">3D model in Blender</b>, shaped into that brushed-metal form language before being exported into <b class="kw">Three.js</b>.',
+        'process-vscode-text': 'From there, the scene came together in <b class="kw">VS Code with Claude Code</b> — a real background video shot on a <b class="kw">GoPro</b>, with the 3D panels layered on top and wired up to <b class="kw">respond to clicks</b>.',
         'section-result': 'Final result',
         'result-manual-heading': 'Instruction manual',
-        'result-manual-text': 'A look at the finished instruction panel in action — flipping through recipe steps with a simple click, hands otherwise free the entire time.',
+        'result-manual-text': 'A look at the finished instruction panel in action — flipping through recipe steps with a <b class="kw">simple click</b>, <b class="kw">hands otherwise free</b> the entire time.',
         'result-timer-heading': 'Timer &amp; ingredients',
-        'result-timer-text': 'The finished right-hand panel: ingredient quantities adjust to however many people you\'re cooking for, and the running timer opens into the full gesture-controlled view the moment you click it.',
+        'result-timer-text': 'The finished right-hand panel: ingredient quantities adjust to <b class="kw">however many people</b> you\'re cooking for, and the running timer opens into the full <b class="kw">gesture-controlled view</b> the moment you click it.',
         'nav-prev': '<< PREVIOUS', 'nav-next': 'NEXT >>',
         'nav-cybercoffee': 'Cybercoffee', 'nav-unify': 'Unify',
       },
@@ -1201,30 +1255,30 @@
         'menu-craft': 'Projekte', 'menu-about': 'Über mich', 'menu-contact': 'Kontakt',
         'breadcrumb': 'Portfolio&nbsp;&nbsp;/&nbsp;&nbsp;Projekte&nbsp;&nbsp;/&nbsp;&nbsp;Virtual Cooking',
         'label-timeline': 'Zeitraum', 'val-timeline': 'Mai 2026 —<br>Jul. 2026',
-        'label-team': 'Team', 'val-team': 'Nur ich',
-        'label-role': 'Rolle', 'val-role': 'Konzept-Designer',
+        'label-team': 'Team', 'val-team': 'Lucas Maher',
+        'label-role': 'Rolle', 'val-role': 'Konzeptentwicklung und Design',
         'label-tools': 'Werkzeuge', 'val-tools': 'Blender<br>Three.js<br>HTML / CSS / JS<br>Vibe-Coding',
         'section-glance': 'Auf einen Blick',
         'glance-lead': 'Ich liebe Kochen, hasse aber alles, was dabei ablenkt — aufs Handy schauen für eine Menge, einen Schritt oder einen Timer. Virtual Cooking ist ein VR/AR-Konzept, das Rezept, Zutaten und Timer stets im Blick behält, sodass die Hände nie vom Essen weg müssen.',
         'section-problem': 'Das Problem erkennen',
-        'problem-text-1': 'Kochen macht mir wirklich Spaß — aber einem Rezept zu folgen bleibt selten lange angenehm. Alle paar Minuten wische ich die Hände ab, um mein Handy zu entsperren: eine Menge nachschauen, zum aktuellen Schritt zurückscrollen, einen vergessenen Timer prüfen. Zutaten, Anleitung und Timing sind die drei Dinge, die ein Rezept verlangt — und genau die, die das Kochen ständig unterbrechen.',
-        'problem-text-2': 'Virtual Cooking stellt sich ein VR/AR-Headset vor, das alle drei genau dorthin bringt, wo man ohnehin schon hinschaut. Die Anleitung sitzt oben links im Blickfeld, Zutaten und ein laufender Timer rechts — nichts zum Entsperren, nichts zum Abwischen, kein Blick weg vom Herd nötig.',
-        'problem-text-3': 'Das hier ist ein Konzept, kein fertiges Produkt — heutige VR/AR-Headsets sind noch zu schwer und klobig, um sie eine Stunde lang beim Kochen bequem zu tragen. Aber Headsets werden stetig leichter und unauffälliger, und ich glaube, daraus wird eine echte Option, sobald das so weit ist. Es liegt auch nahe, dass die Idee außerhalb der heimischen Küche noch mehr Sinn ergibt: Restaurants kochen ständig für unterschiedlich viele Gäste und wechseln die ganze Nacht zwischen Rezepten — genau die zwei Dinge, auf die dieses Konzept ausgelegt ist.',
+        'problem-text-1': 'Kochen macht mir wirklich Spaß — aber einem Rezept zu folgen bleibt selten lange angenehm. Alle paar Minuten wische ich die Hände ab, um mein Handy zu entsperren: eine Menge nachschauen, zum aktuellen Schritt zurückscrollen, einen vergessenen Timer prüfen. <b class="kw">Zutaten, Anleitung und Timing</b> sind die drei Dinge, die ein Rezept verlangt — und genau die, die das Kochen ständig unterbrechen.',
+        'problem-text-2': 'Virtual Cooking stellt sich ein VR/AR-Headset vor, das alle drei genau dorthin bringt, wo man ohnehin schon hinschaut. Die Anleitung sitzt oben links im Blickfeld, Zutaten und ein laufender Timer rechts — nichts zum Entsperren, nichts zum Abwischen, <b class="kw">kein Blick weg vom Herd</b> nötig.',
+        'problem-text-3': 'Das hier ist ein <b class="kw">Konzept, kein fertiges Produkt</b> — heutige VR/AR-Headsets sind noch zu schwer und klobig, um sie eine Stunde lang beim Kochen bequem zu tragen. Aber Headsets werden stetig leichter und unauffälliger, und ich glaube, daraus wird eine echte Option, sobald das so weit ist. Es liegt auch nahe, dass die Idee außerhalb der heimischen Küche noch mehr Sinn ergibt: <b class="kw">Restaurants</b> kochen ständig für unterschiedlich viele Gäste und wechseln die ganze Nacht zwischen Rezepten — genau die zwei Dinge, auf die dieses Konzept ausgelegt ist.',
         'section-process': 'Designprozess',
-        'process-intro': 'Die meisten VR-Oberflächen sind erstaunlich flach — schwebende 2D-Fenster in einem 3D-Raum, ohne dessen Tiefe zu nutzen. Ich wollte die dritte Dimension wirklich einsetzen und der Oberfläche eine eigenständige Identität geben: Alles ist im gebürsteten Metall-Look modelliert, angelehnt an Pfannen, Messer und Utensilien, die ohnehin auf der Arbeitsplatte liegen. Jede Interaktion funktioniert ganz ohne Controller — nur Klicks und einfache Handgesten.',
+        'process-intro': 'Die meisten VR-Oberflächen sind erstaunlich flach — schwebende 2D-Fenster in einem 3D-Raum, ohne dessen Tiefe zu nutzen. Ich wollte die <b class="kw">dritte Dimension wirklich einsetzen</b> und der Oberfläche eine eigenständige Identität geben: Alles ist im <b class="kw">gebürsteten Metall-Look</b> modelliert, angelehnt an Pfannen, Messer und Utensilien, die ohnehin auf der Arbeitsplatte liegen. Jede Interaktion funktioniert <b class="kw">ganz ohne Controller</b> — nur Klicks und einfache Handgesten.',
         'panel-manual-title': 'Jeder Schritt im Blick',
-        'panel-manual-text': 'Das linke Panel ist die Bedienungsanleitung. Ein Fortschrittsbalken zeigt den aktuellen Rezeptschritt direkt daneben — immer sichtbar, nie mehr als einen Blick entfernt.',
+        'panel-manual-text': 'Das linke Panel ist die <b class="kw">Bedienungsanleitung</b>. Ein <b class="kw">Fortschrittsbalken</b> zeigt den aktuellen Rezeptschritt direkt daneben — immer sichtbar, <b class="kw">nie mehr als einen Blick entfernt</b>.',
         'panel-ingredients-title': 'Zutaten, die mitrechnen',
-        'panel-ingredients-text': 'Das rechte Panel zeigt die Zutatenliste, mit einer Steuerung, um die Portionsgröße direkt anzupassen. Daneben zählt ein laufender Timer visuell herunter — ein Klick öffnet die Vollbild-Timeransicht.',
+        'panel-ingredients-text': 'Das rechte Panel zeigt die <b class="kw">Zutatenliste</b>, mit einer Steuerung, um die <b class="kw">Portionsgröße</b> direkt anzupassen. Daneben zählt ein <b class="kw">laufender Timer</b> visuell herunter — ein Klick öffnet die Vollbild-Timeransicht.',
         'panel-timer-title': 'Per Geste gestellt',
-        'panel-timer-text': 'Ein Klick auf den Countdown öffnet diesen Vollbild-Timer, dessen Zeit sich per einfacher Geste einstellen lässt.',
-        'process-blender-text': 'Jedes Panel begann als 3D-Modell in Blender, geformt in dieser gebürsteten Metall-Formsprache, bevor es nach Three.js exportiert wurde.',
-        'process-vscode-text': 'Von dort aus entstand die Szene in VS Code mit Claude Code — ein echtes Hintergrundvideo, gefilmt mit einer GoPro, mit den 3D-Panels darüber gelegt und so verdrahtet, dass sie auf Klicks reagieren.',
+        'panel-timer-text': 'Ein Klick auf den Countdown öffnet diesen <b class="kw">Vollbild-Timer</b>, dessen Zeit sich per <b class="kw">einfacher Geste</b> einstellen lässt.',
+        'process-blender-text': 'Jedes Panel begann als <b class="kw">3D-Modell in Blender</b>, geformt in dieser gebürsteten Metall-Formsprache, bevor es nach <b class="kw">Three.js</b> exportiert wurde.',
+        'process-vscode-text': 'Von dort aus entstand die Szene in <b class="kw">VS Code mit Claude Code</b> — ein echtes Hintergrundvideo, gefilmt mit einer <b class="kw">GoPro</b>, mit den 3D-Panels darüber gelegt und so verdrahtet, dass sie <b class="kw">auf Klicks reagieren</b>.',
         'section-result': 'Endergebnis',
         'result-manual-heading': 'Bedienungsanleitung',
-        'result-manual-text': 'Ein Blick auf das fertige Anleitungs-Panel in Aktion — Rezeptschritte per einfachem Klick durchblättern, die Hände dabei sonst die ganze Zeit frei.',
+        'result-manual-text': 'Ein Blick auf das fertige Anleitungs-Panel in Aktion — Rezeptschritte <b class="kw">per einfachem Klick</b> durchblättern, die Hände dabei sonst die <b class="kw">ganze Zeit frei</b>.',
         'result-timer-heading': 'Timer &amp; Zutaten',
-        'result-timer-text': 'Das fertige rechte Panel: Zutatenmengen passen sich an, für wie viele Personen gekocht wird, und der laufende Timer öffnet mit einem Klick die vollständige, gestengesteuerte Ansicht.',
+        'result-timer-text': 'Das fertige rechte Panel: <b class="kw">Zutatenmengen passen sich an</b>, für wie viele Personen gekocht wird, und der laufende Timer öffnet mit einem Klick die vollständige, <b class="kw">gestengesteuerte Ansicht</b>.',
         'nav-prev': '<< ZURÜCK', 'nav-next': 'WEITER >>',
         'nav-cybercoffee': 'Cybercoffee', 'nav-unify': 'Unify',
       }

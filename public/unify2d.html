@@ -541,6 +541,15 @@
     @media (max-width: 860px) {
       html, body { padding: 0; }
       .page-wrapper { margin: 0; border-left: none; border-right: none; }
+      /* Keep the wrapper's border-bottom off the document's LAST row. That
+         border is the final painted line in the document, and the document does
+         not end on a whole pixel, so its last fraction falls outside the
+         scrollable area. The pixel-snap script near the bottom of this file only
+         rounds where the border STARTS; it cannot stop it being the terminal
+         row, and WebKit drops that sliver outright (Chrome happens not to, which
+         is why this only showed on the phone). One pixel of sill beneath the
+         card demotes the border to an ordinary interior row. */
+      body { padding-bottom: 1px; }
     }
 
     @media (max-width: 640px) {
@@ -739,6 +748,11 @@
        property), hence the literal fallback. */
     .mobile-mode-btn[data-mode].is-active {
       background: var(--accent-orange, #FF5C00);
+      /* Black, overriding the base rule's #555. That grey is tuned for an UNSELECTED
+         segment on the grey surface; over #FF5C00 it measures 2.4:1 and the label reads
+         as disabled rather than selected. Black on this orange is 6.8:1. Scoped to
+         [data-mode], so the language segments keep #555 on their grey well. */
+      color: #000;
       /* Same well as the language toggle above — same offsets, same blur, same
          alphas — recoloured so it reads on orange instead of on the grey
          surface. The grey/white pair was built to sit on #DCDCE3; over #FF5C00
@@ -1378,6 +1392,38 @@
         margin-right: auto;
       }
     }
+  
+    /* Keyword emphasis for skimming — inert by default (desktop unchanged);
+       the mobile block below supplies the darker ink. */
+    b.kw { font-weight: inherit; color: inherit; }
+
+    /* ── Mobile breathing room (design pass, 2026-07-31) ─────────────────
+       Appended LAST so it wins earlier ≤640px rules on source order. Same
+       treatment as virtual_cooking2d.html (tianqicraft / junhyungpark-hanwha
+       references): more air border-to-border, air below the divider before
+       body copy, darker skim keywords. Scrolly sections are deliberately
+       untouched — their heights drive the pin math. */
+    @media (max-width: 640px) {
+      /* At a Glance + both standalone feature rows live in .guide-section. */
+      .guide-section { padding: 52px 20px; }
+      /* Design-story sections (colors / typography / characters): shorter
+         units, slighter bump. */
+      .process-section { padding: 44px 20px; }
+
+      /* Air below the overview divider. Scoped: .process-section's own
+         divider already carries a deliberate 40px on the following title. */
+      .guide-section .dot-divider { margin-bottom: 12px; }
+
+      /* Same -8px paragraph collapse as the other pages — one slab on a
+         phone. Neutralised here only. */
+      .guide-text + .guide-text { margin-top: 0; }
+
+      /* Skim keywords: darker grey ink, weight unchanged. */
+      b.kw { color: #4a4a52; }
+      /* The At-a-Glance lead reads as the project's one-paragraph pitch — full
+         primary ink, no partial highlights (they were unwrapped from this key). */
+      [data-i18n-html="overview-text"] { color: var(--text-primary); }
+    }
   </style>
 </head>
 <body>
@@ -1445,7 +1491,7 @@
       <div class="section-heading-row">
         <h2 class="section-title" data-i18n="section-overview">At a Glance</h2>
       </div>
-      <p class="guide-text" data-i18n="overview-text">Unify started from a problem in my own campus life: my friends study different subjects, so even though we're all on the same campus, we're rarely in the same courses. Meeting up between classes meant memorising everyone's timetable or texting around every break. We began by swapping screenshots of our schedules — Unify turns that into one place where you see your own timetable alongside your friends'. Open it during a break and you can tell at a glance who's on campus right now and who you can meet up with.</p>
+      <p class="guide-text" data-i18n-html="overview-text">Unify started from a problem in my own campus life: my friends study different subjects, so even though we're all on the same campus, we're rarely in the same courses. Meeting up between classes meant memorising everyone's timetable or texting around every break. We began by swapping screenshots of our schedules — Unify turns that into one place where you see your own timetable alongside your friends'. Open it during a break and you can tell at a glance who's on campus right now and who you can meet up with.</p>
     </div>
 
     <!-- Meta -->
@@ -1478,7 +1524,7 @@
       </div>
       <div class="dot-divider"></div>
       <h2 class="process-title" style="margin-top: 190px;" data-i18n="colors-title">Choosing the right colorpalette</h2>
-      <p class="guide-text" data-i18n="colors-text">We chose three soft, pastel-leaning colours: pink and beige as the primaries, with a dark grey as the accent. The goal was a look that feels young, student-y and cheerful — so we picked a bold, slightly unusual pink you don't often see in apps.</p>
+      <p class="guide-text" data-i18n-html="colors-text">We chose three soft, pastel-leaning colours: pink and beige as the primaries, with a dark grey as the accent. The goal was a look that feels young, student-y and cheerful — so we picked a bold, slightly unusual pink you don't often see in apps.</p>
       <div class="color-grid">
         <div class="color-box">
           <div class="color-swatch" style="background: #FF88C8;">
@@ -1501,7 +1547,7 @@
     <!-- Typography -->
     <div class="process-section" style="border-bottom: none; margin-top: 40px;">
       <h2 class="process-title" data-i18n="typography-title">Typography</h2>
-      <p class="guide-text" data-i18n="typography-text">We set the interface in Nunito. Its rounded terminals and soft, edgeless letterforms mirror the playful, youthful feel of the whole app.</p>
+      <p class="guide-text" data-i18n-html="typography-text">We set the interface in Nunito. Its rounded terminals and soft, edgeless letterforms mirror the playful, youthful feel of the whole app.</p>
       <div class="typography-grid" style="margin-top: 35px;">
         <div class="typography-card">
           <div class="typography-info">
@@ -1535,19 +1581,19 @@
           <div class="character-figure">
             <img src="/images/unify/characters/char-arch.svg" alt="" />
           </div>
-          <p class="character-copy" style="margin-left: -15px;" data-i18n="characters-text-1">Characters are the core of Unify's visual identity — the whole app is built around them, giving it a consistent, friendly personality from screen to screen.</p>
+          <p class="character-copy" style="margin-left: -15px;" data-i18n-html="characters-text-1">Characters are the core of Unify's visual identity — the whole app is built around them, giving it a consistent, friendly personality from screen to screen.</p>
         </div>
         <div class="character-row right">
           <div class="character-figure">
             <img src="/images/unify/characters/char-bird.svg" alt="" />
           </div>
-          <p class="character-copy" style="margin-right: -15px;" data-i18n="characters-text-2">Their main role is personalisation: you choose a character as your profile icon, so your friends can spot and recognise you at a glance across the app.</p>
+          <p class="character-copy" style="margin-right: -15px;" data-i18n-html="characters-text-2">Their main role is personalisation: you choose a character as your profile icon, so your friends can spot and recognise you at a glance across the app.</p>
         </div>
         <div class="character-row indent">
           <div class="character-figure">
             <img src="/images/unify/characters/char-mountain.svg" alt="" />
           </div>
-          <p class="character-copy" style="margin-left: -15px;" data-i18n="characters-text-3">The characters also live inside the interface itself — turning up in details like the bar on the map view or the toggle between your timetable and social activities.</p>
+          <p class="character-copy" style="margin-left: -15px;" data-i18n-html="characters-text-3">The characters also live inside the interface itself — turning up in details like the bar on the map view or the toggle between your timetable and social activities.</p>
         </div>
       </div>
     </div>
@@ -1572,7 +1618,7 @@
         </div>
         <div class="feature-copy">
           <h2 class="feature-title" data-i18n="feat-home-title">Your Day at a Glance</h2>
-          <p class="guide-text" data-i18n="feat-home-text">The home screen is your quick daily overview. At a glance it shows who you can meet up with right now or in your next break — which friends are free, and exactly when. Below that sit the day's social activities, and a map of how many friends are around you at this moment. Everything important lives on one scrollable page; when something catches your eye, the dedicated pages let you dig into the detail.</p>
+          <p class="guide-text" data-i18n-html="feat-home-text">The home screen is your quick daily overview. At a glance it shows who you can meet up with right now or in your next break — which friends are free, and exactly when. Below that sit the day's social activities, and a map of how many friends are around you at this moment. Everything important lives on one scrollable page; when something catches your eye, the dedicated pages let you dig into the detail.</p>
         </div>
       </div>
     </div>
@@ -1598,11 +1644,11 @@
         <div class="scrolly-copy">
           <div class="scrolly-panel is-active" data-step="timetable">
             <h2 class="feature-title" data-i18n="feat-timetable-title">Your Timetable, and Everyone's</h2>
-            <p class="guide-text" data-i18n="feat-timetable-text">See your own timetable alongside your friends', and who shares each course. Your schedule splits in two: pink for regular courses, beige for the social activities you add from the Socials page. Below it sit your friends' timetables — and thanks to location tracking, the app knows when you're on campus: the room you're in glows green and pushes you up the list, while a grey room means you're away.</p>
+            <p class="guide-text" data-i18n-html="feat-timetable-text">See your own timetable alongside your friends', and who shares each course. Your schedule splits in two: pink for regular courses, beige for the social activities you add from the Socials page. Below it sit your friends' timetables — and thanks to location tracking, the app knows when you're on campus: the room you're in glows green and pushes you up the list, while a grey room means you're away.</p>
           </div>
           <div class="scrolly-panel" data-step="socials">
             <h2 class="feature-title" data-i18n="feat-socials-title">Beyond the Group Chat</h2>
-            <p class="guide-text" data-i18n="feat-socials-text">Every uni has that one group chat where events and social plans get buried under hundreds of messages. Socials replaces it — activities get posted here instead, so nothing slips through. Scroll through the week, and when something appeals to you, add it straight to your timetable in a tap.</p>
+            <p class="guide-text" data-i18n-html="feat-socials-text">Every uni has that one group chat where events and social plans get buried under hundreds of messages. Socials replaces it — activities get posted here instead, so nothing slips through. Scroll through the week, and when something appeals to you, add it straight to your timetable in a tap.</p>
           </div>
         </div>
       </div>
@@ -1629,11 +1675,11 @@
         <div class="scrolly-copy">
           <div class="scrolly-panel is-active" data-step="friends">
             <h2 class="feature-title" data-i18n="feat-friends-title">Find Your Friends Indoors</h2>
-            <p class="guide-text" data-i18n="feat-friends-text">Apps like Find My are great for locating friends — until everyone's inside the same building and the map turns useless. Unify syncs room-level location with the university's floor plans, so you can see exactly who's around you on the map, or search for someone specific from the menu.</p>
+            <p class="guide-text" data-i18n-html="feat-friends-text">Apps like Find My are great for locating friends — until everyone's inside the same building and the map turns useless. Unify syncs room-level location with the university's floor plans, so you can see exactly who's around you on the map, or search for someone specific from the menu.</p>
           </div>
           <div class="scrolly-panel" data-step="courses">
             <h2 class="feature-title" data-i18n="feat-courses-title">Find the Right Room</h2>
-            <p class="guide-text" data-i18n="feat-courses-text">The same idea, now for your courses. Universities are huge — hundreds of rooms across sprawling buildings — and working out where each class is can be overwhelming, especially when you're new. Unify syncs with your timetable to plot every course room on the map; tap one to see the full details of that class.</p>
+            <p class="guide-text" data-i18n-html="feat-courses-text">The same idea, now for your courses. Universities are huge — hundreds of rooms across sprawling buildings — and working out where each class is can be overwhelming, especially when you're new. Unify syncs with your timetable to plot every course room on the map; tap one to see the full details of that class.</p>
           </div>
         </div>
       </div>
@@ -1650,7 +1696,7 @@
         </div>
         <div class="feature-copy">
           <h2 class="feature-title" data-i18n="feat-settings-title">Profile &amp; Friends</h2>
-          <p class="guide-text" data-i18n="feat-settings-text">The menu is where you set yourself up. Customise your profile, and connect your courses in one step — everything syncs automatically from your matriculation number. It's also home to your friends list, where you add or remove people whenever you need.</p>
+          <p class="guide-text" data-i18n-html="feat-settings-text">The menu is where you set yourself up. Customise your profile, and connect your courses in one step — everything syncs automatically from your matriculation number. It's also home to your friends list, where you add or remove people whenever you need.</p>
         </div>
       </div>
     </div>
@@ -1802,40 +1848,40 @@
         'menu-craft': 'Craft', 'menu-about': 'About', 'menu-contact': 'Contact',
         'breadcrumb': 'Portfolio&nbsp;&nbsp;/&nbsp;&nbsp;Projects&nbsp;&nbsp;/&nbsp;&nbsp;Unify',
         'label-timeline': 'Timeline', 'val-timeline': 'February 2025<br>June 2025',
-        'label-team': 'Team', 'val-team': 'Me<br>Sophie Meyer<br>Moritz Ackermann',
+        'label-team': 'Team', 'val-team': 'Lucas Maher<br>Sophie Meyer<br>Moritz Ackermann',
         'label-role': 'Role', 'val-role': 'Concept<br>Design<br>Prototyping<br>Vibe coding',
         'label-skills': 'Skills', 'val-skills': 'Figma<br>UX research<br>Vibe coding',
         'section-overview': 'At a Glance',
         'overview-text': 'Unify started from a problem in my own campus life: my friends study different subjects, so even though we\'re all on the same campus, we\'re rarely in the same courses. Meeting up between classes meant memorising everyone\'s timetable or texting around every break. We began by swapping screenshots of our schedules — Unify turns that into one place where you see your own timetable alongside your friends\'. Open it during a break and you can tell at a glance who\'s on campus right now and who you can meet up with.',
         'section-design-process': 'Design Process',
         'colors-title': 'Choosing the right colorpalette',
-        'colors-text': 'We chose three soft, pastel-leaning colours: pink and beige as the primaries, with a dark grey as the accent. The goal was a look that feels young, student-y and cheerful — so we picked a bold, slightly unusual pink you don\'t often see in apps.',
+        'colors-text': 'We chose three soft, pastel-leaning colours: pink and beige as the primaries, with a dark grey as the accent. The goal was a look that feels <b class="kw">young, student-y and cheerful</b> — so we picked a bold, slightly unusual pink you don\'t often see in apps.',
         'typography-title': 'Typography',
-        'typography-text': 'We set the interface in Nunito. Its rounded terminals and soft, edgeless letterforms mirror the playful, youthful feel of the whole app.',
+        'typography-text': 'We set the interface in <b class="kw">Nunito</b>. Its rounded terminals and soft, edgeless letterforms mirror the playful, youthful feel of the whole app.',
         'typography-label-header': 'Header', 'typography-spec-header': '72px  ·  bold', 'typography-preview-header': 'soccer match',
         'typography-label-body': 'Body text', 'typography-spec-body': '48px  ·  bold', 'typography-preview-body': 'bring all your friends',
         'typography-label-info': 'Info text', 'typography-spec-info': '48px  ·  light', 'typography-preview-info': 'from 15:00 - 17:00',
         'characters-title': 'Character based design',
-        'characters-text-1': 'Characters are the core of Unify\'s visual identity — the whole app is built around them, giving it a consistent, friendly personality from screen to screen.',
-        'characters-text-2': 'Their main role is personalisation: you choose a character as your profile icon, so your friends can spot and recognise you at a glance across the app.',
-        'characters-text-3': 'The characters also live inside the interface itself — turning up in details like the bar on the map view or the toggle between your timetable and social activities.',
+        'characters-text-1': 'Characters are the core of Unify\'s <b class="kw">visual identity</b> — the whole app is built around them, giving it a consistent, friendly personality from screen to screen.',
+        'characters-text-2': 'Their main role is <b class="kw">personalisation</b>: you choose a character as your <b class="kw">profile icon</b>, so your friends can spot and recognise you at a glance across the app.',
+        'characters-text-3': 'The characters also live <b class="kw">inside the interface itself</b> — turning up in details like the bar on the map view or the toggle between your timetable and social activities.',
         'section-final-product': 'Final Product',
         'glance-what-label': 'What', 'glance-what-value': 'A campus app that helps students find each other and their shared free time.',
         'glance-core-label': 'Core idea', 'glance-core-value': 'Automatic timetable matching surfaces the overlaps that make meeting up easy.',
         'glance-nav-label': 'Navigation', 'glance-nav-value': 'Live friend locations plus interactive campus and building navigation.',
         'glance-status-label': 'Status', 'glance-status-value': '[ Placeholder — add specifics later ]',
         'feat-home-title': 'Your Day at a Glance',
-        'feat-home-text': 'The home screen is your quick daily overview. At a glance it shows who you can meet up with right now or in your next break — which friends are free, and exactly when. Below that sit the day\'s social activities, and a map of how many friends are around you at this moment. Everything important lives on one scrollable page; when something catches your eye, the dedicated pages let you dig into the detail.',
+        'feat-home-text': 'The home screen is your <b class="kw">quick daily overview</b>. At a glance it shows who you can meet up with right now or in your next break — which friends are free, and exactly when. Below that sit the day\'s social activities, and a map of how many friends are around you at this moment. Everything important lives on <b class="kw">one scrollable page</b>; when something catches your eye, the dedicated pages let you dig into the detail.',
         'feat-timetable-title': "Your Timetable, and Everyone's",
-        'feat-timetable-text': 'See your own timetable alongside your friends\', and who shares each course. Your schedule splits in two: pink for regular courses, beige for the social activities you add from the Socials page. Below it sit your friends\' timetables — and thanks to location tracking, the app knows when you\'re on campus: the room you\'re in glows green and pushes you up the list, while a grey room means you\'re away.',
+        'feat-timetable-text': 'See your own timetable alongside your friends\', and who shares each course. Your schedule splits in two: <b class="kw">pink for regular courses</b>, beige for the social activities you add from the Socials page. Below it sit your friends\' timetables — and thanks to location tracking, the app knows when you\'re on campus: the room you\'re in <b class="kw">glows green</b> and pushes you up the list, while a grey room means you\'re away.',
         'feat-courses-title': 'Find the Right Room',
-        'feat-courses-text': 'The same idea, now for your courses. Universities are huge — hundreds of rooms across sprawling buildings — and working out where each class is can be overwhelming, especially when you\'re new. Unify syncs with your timetable to plot every course room on the map; tap one to see the full details of that class.',
+        'feat-courses-text': 'The same idea, now for your courses. Universities are huge — hundreds of rooms across sprawling buildings — and working out where each class is can be overwhelming, especially when you\'re new. Unify syncs with your timetable to plot <b class="kw">every course room on the map</b>; tap one to see the full details of that class.',
         'feat-friends-title': 'Find Your Friends Indoors',
-        'feat-friends-text': 'Apps like Find My are great for locating friends — until everyone\'s inside the same building and the map turns useless. Unify syncs room-level location with the university\'s floor plans, so you can see exactly who\'s around you on the map, or search for someone specific from the menu.',
+        'feat-friends-text': 'Apps like Find My are great for locating friends — until everyone\'s inside the same building and the map turns useless. Unify syncs <b class="kw">room-level location</b> with the university\'s <b class="kw">floor plans</b>, so you can see exactly who\'s around you on the map, or search for someone specific from the menu.',
         'feat-socials-title': 'Beyond the Group Chat',
-        'feat-socials-text': 'Every uni has that one group chat where events and social plans get buried under hundreds of messages. Socials replaces it — activities get posted here instead, so nothing slips through. Scroll through the week, and when something appeals to you, add it straight to your timetable in a tap.',
+        'feat-socials-text': 'Every uni has that one group chat where events and social plans get buried under hundreds of messages. <b class="kw">Socials replaces it</b> — activities get posted here instead, so nothing slips through. Scroll through the week, and when something appeals to you, add it <b class="kw">straight to your timetable</b> in a tap.',
         'feat-settings-title': 'Profile & Friends',
-        'feat-settings-text': 'The menu is where you set yourself up. Customise your profile, and connect your courses in one step — everything syncs automatically from your matriculation number. It\'s also home to your friends list, where you add or remove people whenever you need.',
+        'feat-settings-text': 'The menu is where you set yourself up. Customise your profile, and connect your courses in one step — everything <b class="kw">syncs automatically</b> from your matriculation number. It\'s also home to your <b class="kw">friends list</b>, where you add or remove people whenever you need.',
         'nav-next': 'NEXT >>',
         'nav-virtual-cooking': 'Virtual Cooking',
       },
@@ -1843,40 +1889,40 @@
         'menu-craft': 'Projekte', 'menu-about': 'Über mich', 'menu-contact': 'Kontakt',
         'breadcrumb': 'Portfolio&nbsp;&nbsp;/&nbsp;&nbsp;Projekte&nbsp;&nbsp;/&nbsp;&nbsp;Unify',
         'label-timeline': 'Zeitraum', 'val-timeline': 'Februar 2025<br>Juni 2025',
-        'label-team': 'Team', 'val-team': 'Ich<br>Sophie Meyer<br>Moritz Ackermann',
+        'label-team': 'Team', 'val-team': 'Lucas Maher<br>Sophie Meyer<br>Moritz Ackermann',
         'label-role': 'Rolle', 'val-role': 'Konzept<br>Design<br>Prototyping<br>Vibe-Coding',
         'label-skills': 'Fähigkeiten', 'val-skills': 'Figma<br>UX-Research<br>Vibe-Coding',
         'section-overview': 'Auf einen Blick',
         'overview-text': 'Unify entstand aus einem Problem in meinem Uni-Alltag: Meine Freunde studieren andere Fächer — wir sind zwar auf demselben Campus, aber selten in denselben Kursen. Sich in Pausen zu treffen hiess, jeden Stundenplan auswendig zu kennen oder ständig zu schreiben. Wir tauschten Screenshots unserer Pläne — Unify macht daraus einen Ort für deinen und die Stundenpläne deiner Freunde. Öffne die App in der Pause und erkenne auf einen Blick, wer am Campus ist und mit wem du dich treffen kannst.',
         'section-design-process': 'Designprozess',
         'colors-title': 'Die richtige Farbpalette wählen',
-        'colors-text': 'Wir haben uns für drei weiche, pastellige Farben entschieden: Pink und Beige als Grundfarben, mit einem dunklen Grau als Akzent. Ziel war ein Look, der jung, studentisch und fröhlich wirkt — deshalb fiel die Wahl auf ein kräftiges, ungewöhnliches Pink, das man in Apps selten sieht.',
+        'colors-text': 'Wir haben uns für drei weiche, pastellige Farben entschieden: Pink und Beige als Grundfarben, mit einem dunklen Grau als Akzent. Ziel war ein Look, der <b class="kw">jung, studentisch und fröhlich</b> wirkt — deshalb fiel die Wahl auf ein kräftiges, ungewöhnliches Pink, das man in Apps selten sieht.',
         'typography-title': 'Typografie',
-        'typography-text': 'Die Oberfläche ist in Nunito gesetzt. Ihre runden Enden und weichen, kantenlosen Buchstabenformen spiegeln das verspielte, jugendliche Gefühl der ganzen App wider.',
+        'typography-text': 'Die Oberfläche ist in <b class="kw">Nunito</b> gesetzt. Ihre runden Enden und weichen, kantenlosen Buchstabenformen spiegeln das verspielte, jugendliche Gefühl der ganzen App wider.',
         'typography-label-header': 'Überschrift', 'typography-spec-header': '72px  ·  fett', 'typography-preview-header': 'Fußballspiel',
         'typography-label-body': 'Fließtext', 'typography-spec-body': '48px  ·  fett', 'typography-preview-body': 'bring alle deine Freunde mit',
         'typography-label-info': 'Infotext', 'typography-spec-info': '48px  ·  leicht', 'typography-preview-info': 'von 15:00 – 17:00',
         'characters-title': 'Charakterbasiertes Design',
-        'characters-text-1': 'Charaktere sind der Kern von Unifys visueller Identität — die App ist um sie herum gebaut und wirkt dadurch von Bildschirm zu Bildschirm durchgängig und freundlich.',
-        'characters-text-2': 'Ihre Hauptrolle ist Personalisierung: Du wählst einen Charakter als Profilsymbol, damit dich deine Freunde in der ganzen App auf einen Blick erkennen.',
-        'characters-text-3': 'Die Charaktere leben auch direkt in der Oberfläche selbst — sie tauchen in Details wie der Leiste in der Kartenansicht oder dem Umschalter zwischen Stundenplan und Socials auf.',
+        'characters-text-1': 'Charaktere sind der Kern von Unifys <b class="kw">visueller Identität</b> — die App ist um sie herum gebaut und wirkt dadurch von Bildschirm zu Bildschirm durchgängig und freundlich.',
+        'characters-text-2': 'Ihre Hauptrolle ist <b class="kw">Personalisierung</b>: Du wählst einen Charakter als <b class="kw">Profilsymbol</b>, damit dich deine Freunde in der ganzen App auf einen Blick erkennen.',
+        'characters-text-3': 'Die Charaktere leben auch <b class="kw">direkt in der Oberfläche selbst</b> — sie tauchen in Details wie der Leiste in der Kartenansicht oder dem Umschalter zwischen Stundenplan und Socials auf.',
         'section-final-product': 'Endprodukt',
         'glance-what-label': 'Was', 'glance-what-value': 'Eine Campus-App, die Studierenden hilft, sich und ihre gemeinsame freie Zeit zu finden.',
         'glance-core-label': 'Kernidee', 'glance-core-value': 'Der automatische Stundenplan-Abgleich zeigt die Überschneidungen, die das Treffen leicht machen.',
         'glance-nav-label': 'Navigation', 'glance-nav-value': 'Live-Standorte von Freunden plus interaktive Campus- und Gebäudenavigation.',
         'glance-status-label': 'Status', 'glance-status-value': '[ Platzhalter — Details folgen ]',
         'feat-home-title': 'Dein Tag auf einen Blick',
-        'feat-home-text': 'Der Startbildschirm ist deine schnelle Tagesübersicht. Auf einen Blick zeigt er, mit wem du dich jetzt gerade oder in deiner nächsten Pause treffen kannst — welche Freunde frei sind und von wann bis wann. Darunter siehst du die sozialen Aktivitäten des Tages und auf der Karte, wie viele Freunde gerade in deiner Nähe sind. Alles Wichtige liegt auf einer scrollbaren Seite; wenn dich etwas interessiert, kannst du auf den anderen Seiten tiefer ins Detail gehen.',
+        'feat-home-text': 'Der Startbildschirm ist deine <b class="kw">schnelle Tagesübersicht</b>. Auf einen Blick zeigt er, mit wem du dich jetzt gerade oder in deiner nächsten Pause treffen kannst — welche Freunde frei sind und von wann bis wann. Darunter siehst du die sozialen Aktivitäten des Tages und auf der Karte, wie viele Freunde gerade in deiner Nähe sind. Alles Wichtige liegt auf <b class="kw">einer scrollbaren Seite</b>; wenn dich etwas interessiert, kannst du auf den anderen Seiten tiefer ins Detail gehen.',
         'feat-timetable-title': 'Dein Stundenplan, und alle anderen',
-        'feat-timetable-text': 'Du siehst deinen Stundenplan neben dem deiner Freunde — und wer welchen Kurs mit dir teilt. Dein Plan ist zweigeteilt: Pink für reguläre Kurse, Beige für Aktivitäten von der Socials-Seite. Darunter stehen die Stundenpläne deiner Freunde — dank Standort-Tracking leuchtet dein aktueller Raum grün und rückt in der Liste nach oben, ein grauer Raum heisst, du bist weg.',
+        'feat-timetable-text': 'Du siehst deinen Stundenplan neben dem deiner Freunde — und wer welchen Kurs mit dir teilt. Dein Plan ist zweigeteilt: <b class="kw">Pink für reguläre Kurse</b>, Beige für Aktivitäten von der Socials-Seite. Darunter stehen die Stundenpläne deiner Freunde — dank Standort-Tracking <b class="kw">leuchtet dein aktueller Raum grün</b> und rückt in der Liste nach oben, ein grauer Raum heisst, du bist weg.',
         'feat-courses-title': 'Den richtigen Raum finden',
-        'feat-courses-text': 'Dasselbe Prinzip, jetzt für deine Kurse. Universitäten sind riesig — hunderte Räume in weitläufigen Gebäuden — und herauszufinden, wo jeder Kurs stattfindet, kann schnell überwältigend sein, gerade am Anfang. Unify synchronisiert sich mit deinem Stundenplan und zeigt jeden Kursraum auf der Karte; tippst du einen an, siehst du alle Details zum Kurs.',
+        'feat-courses-text': 'Dasselbe Prinzip, jetzt für deine Kurse. Universitäten sind riesig — hunderte Räume in weitläufigen Gebäuden — und herauszufinden, wo jeder Kurs stattfindet, kann schnell überwältigend sein, gerade am Anfang. Unify synchronisiert sich mit deinem Stundenplan und zeigt <b class="kw">jeden Kursraum auf der Karte</b>; tippst du einen an, siehst du alle Details zum Kurs.',
         'feat-friends-title': 'Freunde drinnen finden',
-        'feat-friends-text': 'Viele nutzen Apps wie „Wo ist“, um Freunde zu orten — nur drinnen, im selben Gebäude, wird die Karte nutzlos. Unify synchronisiert die Rauminformationen mit den Gebäudeplänen der Uni und zeigt sie auf der Karte. So siehst du genau, wer gerade um dich herum ist, oder suchst im Menü gezielt nach bestimmten Leuten.',
+        'feat-friends-text': 'Viele nutzen Apps wie „Wo ist“, um Freunde zu orten — nur drinnen, im selben Gebäude, wird die Karte nutzlos. Unify synchronisiert die <b class="kw">Rauminformationen</b> mit den <b class="kw">Gebäudeplänen der Uni</b> und zeigt sie auf der Karte. So siehst du genau, wer gerade um dich herum ist, oder suchst im Menü gezielt nach bestimmten Leuten.',
         'feat-socials-title': 'Mehr als der Gruppenchat',
-        'feat-socials-text': 'Jede Uni hat den einen Gruppenchat, in dem Events zwischen hunderten Nachrichten untergehen. Socials ersetzt ihn — Aktivitäten landen stattdessen hier. Scroll durch die Woche und füge Gefallendes per Tipp direkt zu deinem Stundenplan hinzu.',
+        'feat-socials-text': 'Jede Uni hat den einen Gruppenchat, in dem Events zwischen hunderten Nachrichten untergehen. <b class="kw">Socials ersetzt ihn</b> — Aktivitäten landen stattdessen hier. Scroll durch die Woche und füge Gefallendes per Tipp <b class="kw">direkt zu deinem Stundenplan</b> hinzu.',
         'feat-settings-title': 'Profil & Freunde',
-        'feat-settings-text': 'Im Menü richtest du dich ein. Passe dein Profil an und verbinde deine Kurse in einem Schritt — alles synchronisiert sich automatisch über deine Matrikelnummer. Hier liegt auch deine Freundesliste, in der du jederzeit Leute hinzufügen oder entfernen kannst.',
+        'feat-settings-text': 'Im Menü richtest du dich ein. Passe dein Profil an und verbinde deine Kurse in einem Schritt — alles <b class="kw">synchronisiert sich automatisch</b> über deine Matrikelnummer. Hier liegt auch deine <b class="kw">Freundesliste</b>, in der du jederzeit Leute hinzufügen oder entfernen kannst.',
         'nav-next': 'WEITER >>',
         'nav-virtual-cooking': 'Virtual Cooking',
       }
@@ -1920,11 +1966,42 @@
         pt.x = cx; pt.y = cy;
         return pt.matrixTransform(ctm.inverse());
       }
+      // Which kind of pointer was last seen. Only used by the two guards below;
+      // the tracking maths is identical for mouse and touch.
+      let lastPointerType = 'mouse';
+
       window.addEventListener('pointermove', function (e) {
+        lastPointerType = e.pointerType;
         const p = clientToSvg(e.clientX, e.clientY);
         if (p) { targetX = p.x; targetY = p.y; }
       }, { passive: true });
-      document.addEventListener('mouseleave', function () { targetX = targetY = null; });
+
+      // TOUCH: a screen has no hover, so a tap fires pointerdown/pointerup with no
+      // pointermove in between and the pupils would never react. This makes a tap
+      // anywhere aim the eyes at that point, where they then stay — the touch
+      // equivalent of a desktop cursor coming to rest somewhere on the page.
+      // Dragging a finger already worked, since that does emit pointermove.
+      //
+      // Gated on `pointerType`, NOT a media query or width breakpoint: a desktop
+      // mouse click reports 'mouse' and returns immediately (its pointermove has
+      // already set the target), while touch and pen report 'touch'/'pen'. So
+      // desktop is unaffected by construction and there is no breakpoint to keep
+      // in sync with the CSS.
+      window.addEventListener('pointerdown', function (e) {
+        lastPointerType = e.pointerType;
+        if (e.pointerType === 'mouse') return;
+        const p = clientToSvg(e.clientX, e.clientY);
+        if (p) { targetX = p.x; targetY = p.y; }
+      }, { passive: true });
+
+      // Ease back to rest when the cursor leaves the window — MOUSE ONLY.
+      // Touch devices fire compatibility mouse events (mouseleave among them) once
+      // a tap ends, so without this guard the pupils would snap straight back to
+      // centre the instant the finger lifted, undoing the tap they just followed.
+      document.addEventListener('mouseleave', function () {
+        if (lastPointerType !== 'mouse') return;
+        targetX = targetY = null;
+      });
 
       function frame() {
         for (let i = 0; i < EYES.length; i++) {

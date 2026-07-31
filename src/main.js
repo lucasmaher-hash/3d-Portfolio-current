@@ -455,21 +455,29 @@ const MATERIAL_FIXUPS = {
     emissive: 0xc65808,
   },
 
-  // The lamp's white parts (keyboard surround, deck, trackpad frames) -> light METALLIC
-  // grey. Same authored construction as Lamp_Orange: black base at metalness 1, all the
-  // visible "white" is emissive (0.58, 0.58, 0.58). Two changes work together:
-  //   emissive 0x9a9ea2 — the main visible shift, white -> light grey. Deliberately NOT
-  //                       set via emissiveIntensity, so the clamp path is untouched.
-  //   color 0x8e9296 + roughness 0.4 — a metal tints its reflections by its BASE colour,
-  //                       and the authored base is pure black, so this metal has never
-  //                       reflected anything. A grey base at lower roughness lets the env
-  //                       and the room's fills put a soft sheen on top of the flat
-  //                       emissive — that sheen is what reads as "metallic" rather than
-  //                       just "grey". Shared with the staging-row copy; harmless.
+  // The lamp's white parts (keyboard surround, deck, trackpad frames) -> darker, shinier
+  // METALLIC grey. Same authored construction as Lamp_Orange: black base at metalness 1,
+  // all the visible "white" is emissive (0.58, 0.58, 0.58). Three values work together:
+  //   emissive 0x6f7275 — the main visible shift, and the ONLY real lever on how dark the
+  //                       part reads. At metalness 1 there is no diffuse term at all, so
+  //                       the emissive IS the surface tone; darkening the base colour alone
+  //                       would barely register. Deliberately not set via emissiveIntensity,
+  //                       so the EMISSIVE_CLAMP exemption path stays untouched.
+  //   color 0x777b7e —    a metal tints its REFLECTIONS by its base colour, and the authored
+  //                       base is pure black, so this metal reflected nothing at all until
+  //                       this entry existed. Darkened in step with the emissive so the
+  //                       sheen stays consistent with the body tone.
+  //   roughness 0.24 —    what actually reads as "shinier". Note it is NOT the environment
+  //                       doing this: scene.environment is deliberately UNIFORM (see "3D
+  //                       Mode: Lighting"), and a uniform env reflects identically at any
+  //                       roughness. The gain comes from the YellowRoom spots' specular
+  //                       highlights, which tighten and brighten as roughness drops.
+  // Shared with the staging-row copy and with both lamp instances (room + coffee table),
+  // which is intended — they should match.
   'Lamp_Grey': {
-    color: 0x8e9296,
-    roughness: 0.4,
-    emissive: 0x9a9ea2,
+    color: 0x777b7e,
+    roughness: 0.24,
+    emissive: 0x6f7275,
   },
 }
 

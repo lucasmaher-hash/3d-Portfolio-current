@@ -360,7 +360,22 @@
     @media (max-width: 860px) {
       html, body { padding: 0; }
       .page-wrapper {
-        margin: 0;
+        /* 3px BOTTOM margin, and it is load-bearing — not spacing.
+           With a flat `margin: 0` this element's border-bottom is the final
+           painted row of the entire document, with nothing below it. Page
+           heights are fractional, so the last sub-pixel of that 1px border
+           falls outside the scrollable area and the line renders clipped —
+           visibly thinner than the matching border-top, or missing. Chrome
+           happens to snap it to a clean device-pixel band so it never shows
+           there; WebKit is under no obligation to, and on iOS Safari it reads
+           as cut off. (There is also a JS pixel-snapper near the end of this
+           file that grew padding-bottom to chase the same problem; it was not
+           enough on a real device, because the border was still the last row.)
+           Three real pixels underneath means no rounding can push any part of
+           the border out. Invisible: the page background and the card interior
+           are both --bg-surface, so the spacer just reads as the page edge.
+           Left/right stay flush so the card is still edge-to-edge. */
+        margin: 0 0 3px;
         border-left: none;
         border-right: none;
       }
@@ -635,6 +650,11 @@
        property), hence the literal fallback. */
     .mobile-mode-btn[data-mode].is-active {
       background: var(--accent-orange, #FF5C00);
+      /* Black, overriding the base rule's #555. That grey is tuned for an UNSELECTED
+         segment on the grey surface; over #FF5C00 it measures 2.4:1 and the label reads
+         as disabled rather than selected. Black on this orange is 6.8:1. Scoped to
+         [data-mode], so the language segments keep #555 on their grey well. */
+      color: #000;
       /* Same well as the language toggle above — same offsets, same blur, same
          alphas — recoloured so it reads on orange instead of on the grey
          surface. The grey/white pair was built to sit on #DCDCE3; over #FF5C00
@@ -686,14 +706,27 @@
     }
 
     /* Footer */
+    /* ── Footer ────────────────────────────────────────────────────────
+       The "top" button beside the copyright line, centred. Padding is roughly
+       half what it was — the band used to reserve ~200px for two small items,
+       which read as an unfinished gap rather than deliberate space. */
     .footer-section {
-      padding: clamp(40px, 8vw, 80px);
+      padding: clamp(24px, 3.5vw, 40px) clamp(24px, 8vw, 80px);
       display: flex;
       flex-direction: row;
       gap: 20px;
       align-items: center;
       justify-content: center;
     }
+
+    /* The logo carried translate(-30px,-18px) and the copyright a
+       translateY(-18px) built up over three nudges — both were compensating for
+       the old taller band. With the padding halved they would pull the pair off
+       centre, so the offsets are zeroed and flexbox does the centring. The hover
+       lift is restated because it used to repeat the base transform. */
+    .footer-section .footer-logo { transform: none; }
+    .footer-section .footer-logo:hover { transform: translateY(-2px) scale(1.03); }
+    .footer-section .copyright { transform: none; }
 
     .footer-logo {
       width: 44px;
@@ -968,7 +1001,7 @@
           <h2 class="project-title">Mac-Lamp</h2>
         </div>
         <div class="project-tags">
-          <div class="tag">2024</div>
+          <div class="tag">2026</div>
           <div class="tag" data-i18n="tag-industrial">Industrial</div>
           <div class="tag" data-i18n="tag-fabrication">Fabrication</div>
           <div class="tag">Studio</div>
@@ -1006,7 +1039,7 @@
     <div class="footer-section">
       <div class="footer-logo" id="scroll-top-btn" style="cursor: pointer;" data-i18n="footer-top">top</div>
 
-<div class="footer-meta">
+      <div class="footer-meta">
         <p class="copyright" data-i18n="footer-copyright">© 2026 Lucas Maher. All Rights Reserved.</p>
       </div>
     </div>
@@ -1233,7 +1266,7 @@
         'label-project-05': 'Projekt 05',
         'tag-industrial': 'Industrie', 'tag-fabrication': 'Fertigung',
         'tag-lighting': 'Beleuchtung', 'tag-texturing': 'Texturierung',
-        'footer-top': 'oben',
+        'footer-top': 'hoch',
         'tagline1': 'Von Material zu Pixel.',
         'tagline2': 'Mehr über mich →',
         'craft-title': 'Projekte',
