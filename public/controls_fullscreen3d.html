@@ -555,27 +555,38 @@
         panel.classList.remove('intro-hold');
         return;
       }
-      // Two different reveals, because the two panels are shaped differently.
-      // Phone: .panel is height:auto, so it can genuinely GROW — start it at
-      // header height and expand. Desktop: .panel is a fixed 66.66vh box with
-      // nothing to expand into, so the header slides up through it instead.
-      var isPhone = window.matchMedia('(max-width: 700px)').matches;
+      // ONE reveal for both form factors: the card starts at header height and
+      // grows to whatever the stylesheet says it should be — height:auto on a
+      // phone, a fixed 66.66vh on desktop. Nothing here is width-conditional,
+      // because the expand is driven by clearing the inline height and reading
+      // what the stylesheet resolves to.
       var fullH = 0;
+      var started = false;
 
-      if (isPhone) {
+      function collapsedHeight() {
         var cs = getComputedStyle(panel);
-        var collapsedH = header.getBoundingClientRect().height
+        return header.getBoundingClientRect().height
           + parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
-        panel.classList.add('intro-collapse');
-        panel.style.height = collapsedH + 'px';
-      } else {
-        // Distance from the header's resting spot to the panel's vertical
-        // centre, measured off real geometry rather than assumed from the
-        // 66.66vh maths.
-        var pr = panel.getBoundingClientRect();
-        var hr = header.getBoundingClientRect();
-        var dy = (pr.top + pr.height / 2) - (hr.top + hr.height / 2);
-        header.style.transform = 'translateY(' + dy.toFixed(1) + 'px)';
+      }
+      // Applied without the transition, so neither the initial collapse nor the
+      // font re-measure below animates — only the expand should.
+      function applyCollapsed() {
+        panel.style.transition = 'none';
+        panel.style.height = collapsedHeight() + 'px';
+        void panel.offsetHeight;
+        panel.style.transition = '';
+      }
+
+      panel.classList.add('intro-collapse');
+      applyCollapsed();
+
+      // Re-measure once the webfonts land: OCR-A-BT changes the title's height,
+      // and the collapse is pinned to an explicit px value that would otherwise
+      // keep the fallback font's measurement and mis-pad the small card.
+      if (document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(function () {
+          if (!started) applyCollapsed();
+        });
       }
 
       // The timeline must not start at OUR load: this page preloads inside a
@@ -583,7 +594,6 @@
       // seconds before anyone sees the card. The parent posts
       // intro-controls-show when it actually reveals the frame. Standalone
       // (no parent), there is no reveal moment, so start immediately.
-      var started = false;
       function start() {
         if (started) return;
         started = true;
@@ -595,25 +605,33 @@
           divider.style.transition = 'clip-path 1600ms steps(' + dots + ', end)';
           divider.style.clipPath = 'inset(0 0 0 0)';
           setTimeout(function () {
-            if (isPhone) {
-              // Measure the target HERE, not at load. At load the webfonts
-              // (OCR-A-BT, VT323) may not have arrived yet, so the natural
-              // height was still the fallback-font one — measured 675px
-              // against a real 720px, i.e. a visible 45px jump the moment the
-              // inline height was cleared at the end. Reading it now, with a
-              // synchronous auto -> read -> restore -> reflow, means the
-              // transition lands exactly where `height: auto` would sit and
-              // the cleanup is a no-op.
-              var prevH = panel.style.height;
-              panel.style.height = 'auto';
-              fullH = panel.getBoundingClientRect().height;
-              panel.style.height = prevH;
-              void panel.offsetHeight;   // flush, so the transition starts from collapsed
-              panel.style.height = fullH + 'px';
-            } else {
-              header.style.transition = 'transform 900ms cubic-bezier(.45, 0, .25, 1)';
-              header.style.transform = '';
-            }
+            // Measure the target HERE, not at load. At load the webfonts may
+            // not have arrived, so the natural height was still the fallback
+            // font's — measured 675px against a real 720px on a phone, i.e. a
+            // visible 45px jump the moment the inline height was cleared at
+            // the end. Clearing the inline height (rather than setting 'auto')
+            // is what makes this work for BOTH: the stylesheet resolves it to
+            // auto on a phone and to 66.66vh on desktop, so one read covers
+            // both and the cleanup is a no-op either way.
+            // transition:none around the probe is load-bearing on DESKTOP.
+            // Clearing the inline height there reveals a real length (66.66vh),
+            // so with the transition live the panel merely STARTS animating and
+            // getBoundingClientRect returns the current value — 145px, the
+            // collapsed height — which was then set as the target, i.e. no
+            // animation at all and a snap to 600px at cleanup. On a phone the
+            // same code happened to work only because the target is `auto`,
+            // which is not interpolatable, so the height jumped there instantly
+            // and measured correctly. Suppressing the transition makes the
+            // probe a plain layout read on both.
+            var prevH = panel.style.height;
+            panel.style.transition = 'none';
+            panel.style.height = '';
+            fullH = panel.getBoundingClientRect().height;
+            panel.style.height = prevH;
+            void panel.offsetHeight;   // record the collapsed state as the start
+            panel.style.transition = '';
+            void panel.offsetHeight;   // ...with the transition live again
+            panel.style.height = fullH + 'px';
             panel.classList.add('intro-reveal');
             setTimeout(function () {
               panel.classList.remove('intro-hold', 'intro-reveal', 'intro-collapse');
