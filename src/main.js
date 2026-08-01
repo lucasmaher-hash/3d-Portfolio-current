@@ -1365,7 +1365,7 @@ window.addEventListener('keydown', e => {
 }, { passive: false })   // explicit: a passive listener silently ignores preventDefault
 window.addEventListener('keyup',   e => { keys[e.code] = false })
 
-const SPEED          = 3.0
+const SPEED          = 3.45   // 3.0 + 15%
 const COLLISION_DIST = 0.4
 
 // NOTE: -1.3601 is the ORIGINAL pre-session constant, hand-tuned for the OLD
