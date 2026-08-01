@@ -394,6 +394,21 @@
        it running the fade-in would never apply. Both classes are removed once
        the sequence ends and the stylesheet's normal state (pulse included)
        takes back over. */
+    /* Phone only: the CARD itself starts at header height and grows. Desktop
+       keeps the fixed 66.66vh panel, where there is nothing to expand into —
+       there the header slides up through the card instead.
+       justify-content is flipped to flex-start for the duration: the panel
+       normally centres its column, so a short card would centre the (still
+       full-height) content and clip the header off the top. flex-start pins
+       the header to the top and lets the rest overflow below, hidden. There is
+       no jump when it ends, because at full height the content exactly fills
+       the panel — flex-start and center resolve identically. */
+    .panel.intro-collapse {
+      overflow: hidden;
+      justify-content: flex-start;
+      transition: height 700ms cubic-bezier(.45, 0, .25, 1);
+    }
+
     .panel.intro-hold .grid,
     .panel.intro-hold .start-hint { opacity: 0; }
     .panel.intro-hold .start-hint,
@@ -540,13 +555,28 @@
         panel.classList.remove('intro-hold');
         return;
       }
-      // Distance from the header's resting spot to the panel's vertical
-      // centre, measured off real geometry — the mobile panel is height:auto,
-      // so no hardcoded 66.66vh maths would survive.
-      var pr = panel.getBoundingClientRect();
-      var hr = header.getBoundingClientRect();
-      var dy = (pr.top + pr.height / 2) - (hr.top + hr.height / 2);
-      header.style.transform = 'translateY(' + dy.toFixed(1) + 'px)';
+      // Two different reveals, because the two panels are shaped differently.
+      // Phone: .panel is height:auto, so it can genuinely GROW — start it at
+      // header height and expand. Desktop: .panel is a fixed 66.66vh box with
+      // nothing to expand into, so the header slides up through it instead.
+      var isPhone = window.matchMedia('(max-width: 700px)').matches;
+      var fullH = 0;
+
+      if (isPhone) {
+        var cs = getComputedStyle(panel);
+        var collapsedH = header.getBoundingClientRect().height
+          + parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+        panel.classList.add('intro-collapse');
+        panel.style.height = collapsedH + 'px';
+      } else {
+        // Distance from the header's resting spot to the panel's vertical
+        // centre, measured off real geometry rather than assumed from the
+        // 66.66vh maths.
+        var pr = panel.getBoundingClientRect();
+        var hr = header.getBoundingClientRect();
+        var dy = (pr.top + pr.height / 2) - (hr.top + hr.height / 2);
+        header.style.transform = 'translateY(' + dy.toFixed(1) + 'px)';
+      }
 
       // The timeline must not start at OUR load: this page preloads inside a
       // hidden iframe behind the site's loading screen, so "load" here can be
@@ -565,11 +595,29 @@
           divider.style.transition = 'clip-path 1600ms steps(' + dots + ', end)';
           divider.style.clipPath = 'inset(0 0 0 0)';
           setTimeout(function () {
-            header.style.transition = 'transform 900ms cubic-bezier(.45, 0, .25, 1)';
-            header.style.transform = '';
+            if (isPhone) {
+              // Measure the target HERE, not at load. At load the webfonts
+              // (OCR-A-BT, VT323) may not have arrived yet, so the natural
+              // height was still the fallback-font one — measured 675px
+              // against a real 720px, i.e. a visible 45px jump the moment the
+              // inline height was cleared at the end. Reading it now, with a
+              // synchronous auto -> read -> restore -> reflow, means the
+              // transition lands exactly where `height: auto` would sit and
+              // the cleanup is a no-op.
+              var prevH = panel.style.height;
+              panel.style.height = 'auto';
+              fullH = panel.getBoundingClientRect().height;
+              panel.style.height = prevH;
+              void panel.offsetHeight;   // flush, so the transition starts from collapsed
+              panel.style.height = fullH + 'px';
+            } else {
+              header.style.transition = 'transform 900ms cubic-bezier(.45, 0, .25, 1)';
+              header.style.transform = '';
+            }
             panel.classList.add('intro-reveal');
             setTimeout(function () {
-              panel.classList.remove('intro-hold', 'intro-reveal');
+              panel.classList.remove('intro-hold', 'intro-reveal', 'intro-collapse');
+              panel.style.height = '';
               header.style.transition = '';
               divider.style.transition = '';
               divider.style.clipPath = '';
