@@ -231,13 +231,50 @@
       width: 200%;
       aspect-ratio: 1 / 1;
       background: #FF5C00;
-      border-radius: 42%;
-      animation: loadWave 5s linear infinite;
+      /* Asymmetric radii: the four corners sweep past at different heights as
+         the disc turns, so successive crests differ instead of repeating one
+         identical bump every revolution. */
+      border-radius: 43% 41% 44% 40%;
+      z-index: 1;
+      /* Two animations, two clocks: the rotation makes the travelling wave,
+         the bob (animating `top`) makes the whole surface rise and sink a few
+         px. Their periods share no common multiple with each other or with
+         the back wave below, so the surface pattern never visibly loops. */
+      animation: loadWave 4.4s linear infinite, loadBobA 3.2s ease-in-out infinite alternate;
+    }
+
+    /* Second swell BEHIND the surface: translucent, counter-rotating, slower,
+       riding ~8px higher. Where its crest clears the opaque front wave it
+       shows as a paler band of orange through/above the surface — the
+       parallax between the two layers is what reads as sloshing liquid
+       rather than a rotating shape. z-index 0 keeps it behind the front
+       wave; the count sits at z-index 2 above both. */
+    #load-liquid::after {
+      content: '';
+      position: absolute;
+      top: -22px;
+      left: -50%;
+      width: 200%;
+      aspect-ratio: 1 / 1;
+      background: rgba(255, 92, 0, 0.42);
+      border-radius: 40% 44% 41% 43%;
+      z-index: 0;
+      animation: loadWave 7.2s linear infinite reverse, loadBobB 4.1s ease-in-out infinite alternate;
     }
     @keyframes loadWave {
       from { transform: rotate(0deg); }
       to   { transform: rotate(360deg); }
     }
+
+    @keyframes loadBobA {
+      from { top: -11px; }
+      to   { top: -19px; }
+    }
+    @keyframes loadBobB {
+      from { top: -18px; }
+      to   { top: -26px; }
+    }
+
     #load-count {
       position: absolute;
       inset: 0;

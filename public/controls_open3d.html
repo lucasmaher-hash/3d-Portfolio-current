@@ -32,6 +32,16 @@
     html, body { width: 100%; height: 100%; overflow: hidden; }
     body { background: var(--bg-base); font-family: 'VT323', monospace; padding: 32px; display: flex; justify-content: center; }
 
+    /* Body copy is Roboto Flex at EVERY width, not just on phones. The mobile
+       block below already made this switch and explains why (real body copy
+       shouldn't be set in the display face); it was scoped to <=700px, so on
+       desktop the descriptions were still inheriting body's VT323. Same
+       reasoning applies at any size, so the family lives here as the base and
+       the mobile block only overrides the SIZE.
+       Headings (.card-title) deliberately stay VT323 — the pixel face still
+       carries the page's character. */
+    .card-description { font-family: 'Roboto Flex', sans-serif; }
+
     .container {
       width: min(100%, 804px);
       max-width: 100%;
