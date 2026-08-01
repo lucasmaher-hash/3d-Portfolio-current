@@ -301,7 +301,10 @@
         // Set immediately, not when the loader finishes, so a reload part-way through the
         // load still counts as "seen" and does not restart the whole intro.
         if (!seen) { try { sessionStorage.setItem(KEY, '1'); } catch (e) {} }
-        window._introGate = { show: !seen };
+        // ── TEMP (review): force the intro on EVERY load so the WELCOME animation
+        // can be checked by plain refresh. REVERT to `{ show: !seen }` when done.
+        window._introGate = { show: true };
+        // window._introGate = { show: !seen };
       })();
     </script>
 
@@ -391,6 +394,13 @@
         intro.src = '/controls_fullscreen3d.html';
         window._showIntroControls = function () {
           intro.classList.add('is-visible');
+          // Start the WELCOME sequence inside the iframe NOW, not at its own
+          // load: the frame preloads behind the loading screen, so a
+          // load-driven timeline would play out entirely while invisible —
+          // which is exactly what happened on the first attempt.
+          try {
+            intro.contentWindow.postMessage({ type: 'intro-controls-show' }, '*');
+          } catch (e) {}
         };
         window.addEventListener('message', function (e) {
           if (e.data && e.data.type === 'intro-controls-dismiss') {
@@ -522,6 +532,21 @@
             else if (btn.dataset.page === 'contact' && window.openContactOverlay) window.openContactOverlay();
           });
         });
+
+        // Lets an overlay iframe hand an external-scheme URL (mailto:) to the
+        // TOP-LEVEL document so this page performs the navigation itself.
+        // Why it exists: contact3d.html lives in #contact-frame, and mobile Safari
+        // drops a mailto: navigation that originates inside a nested frame — even
+        // with target="_top" on the link — so the tap did nothing at all. Desktop
+        // hands it off either way, which is why it only failed on a phone.
+        // Called SYNCHRONOUSLY from the frame's click handler (a plain same-origin
+        // function call, not postMessage) so the navigation stays inside the user
+        // gesture; an async round-trip would lose it and be blocked for a different
+        // reason. Deliberately assignment, not location.assign(), so no history
+        // entry is added — mailto: never unloads the page anyway.
+        window.openExternalScheme = function (href) {
+          if (typeof href === 'string' && /^(mailto|tel):/i.test(href)) window.location.href = href;
+        };
 
         // Language toggle. It does NOT translate this page directly — it writes
         // the preference and hands the change to the nav iframe, which is already

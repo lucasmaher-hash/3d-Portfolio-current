@@ -175,7 +175,18 @@
 
     <div class="contact-list">
 
-      <a href="mailto:lucas.maher@outlook.com" class="contact-item">
+      <!-- target="_top" is REQUIRED here, unlike on contact2d.html which carries the
+           identical markup and works. This page is only ever loaded inside the
+           #contact-frame iframe in index.html, and without a target the mailto:
+           navigation is aimed at the IFRAME. Desktop browsers still hand that off to
+           the mail client, so it looks fine there — mobile Safari silently ignores an
+           external-scheme navigation targeting a nested frame, and the tap does
+           nothing at all. _top aims it at the top-level context instead, which every
+           browser hands to the OS mail app.
+           _top rather than _blank (which the two links below use): mailto: never
+           actually unloads the page, so _blank would just strand an empty tab on iOS,
+           whereas LinkedIn/Instagram are real pages that should open in one. -->
+      <a href="mailto:lucas.maher@outlook.com" target="_top" class="contact-item">
         <div class="contact-header">
           <span class="contact-label" data-i18n="label-email">Email</span>
           <div class="btn">↗</div>
@@ -212,6 +223,40 @@
       }
       apply(localStorage.getItem('lang') || 'de');
       window.addEventListener('storage', function (e) { if (e.key === 'lang') apply(e.newValue || 'de'); });
+    })();
+  </script>
+
+  <script>
+    /* ── mailto: has to be launched by the TOP document on mobile ───────────
+       This page is only ever loaded inside #contact-frame in index.html. Mobile
+       Safari drops an external-scheme navigation that originates in a nested
+       frame — including one with target="_top" on the link — so tapping Email
+       did nothing whatsoever. Desktop browsers hand it off either way, which is
+       why the bug was mobile-only and invisible in testing.
+
+       So: hand the URL up and let the parent navigate ITSELF. The call is a
+       plain same-origin function call made synchronously inside the click
+       handler, NOT postMessage — an async hop would land outside the user
+       gesture and get blocked for a different reason.
+
+       Everything here is defensive: if window.top is unreachable (a future
+       cross-origin embed) or the helper is missing (this page opened directly,
+       where window.top === window), we do nothing and the anchor's own
+       target="_top" href runs as normal. preventDefault is called ONLY once the
+       parent hand-off has actually happened, so there is no path where the tap
+       is cancelled without something replacing it. */
+    (function () {
+      var link = document.querySelector('a[href^="mailto:"]');
+      if (!link) return;
+      link.addEventListener('click', function (e) {
+        if (window.top === window) return;              // opened directly — default is fine
+        var fn;
+        try { fn = window.top.openExternalScheme; }     // throws if cross-origin
+        catch (err) { return; }
+        if (typeof fn !== 'function') return;
+        e.preventDefault();
+        fn(link.getAttribute('href'));
+      });
     })();
   </script>
 

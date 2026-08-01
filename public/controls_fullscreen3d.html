@@ -126,18 +126,42 @@
     }
 
     /* Buttons / keys / icons — fully opaque, sitting on the translucent veil */
+    /* WASD keys at 70% of their original size (38px -> 26.6px), with radius, font,
+       gaps and shadow scaled by the same 0.7 so the cluster shrinks uniformly rather
+       than just the boxes. This is DESKTOP-ONLY without needing a media query: every
+       .key lives inside .visual-pointer, and `.is-touch .visual-pointer` is
+       display:none, so a touch device renders .visual-touch instead and never sees
+       these at all.
+       The cluster stays docked to the card's right edge for free — .card is
+       justify-content: space-between, so .card-visual is pinned to the content-box
+       edge and a narrower cluster simply pulls its left side rightwards. Measured
+       before and after: the gap from the D key to the card's inner edge is 0. */
     .key {
-      width: 38px;
-      height: 38px;
+      width: 26.6px;
+      height: 26.6px;
       background: var(--bg-base);
-      border-radius: 9px;
+      border-radius: 6.3px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 15px;
+      font-size: 10.5px;
       font-weight: 600;
       color: var(--text-primary);
-      box-shadow: 5px 5px 12px rgba(174,174,192,0.65), -5px -5px 12px rgba(255,255,255,1);
+      box-shadow: 3.5px 3.5px 8.4px rgba(174,174,192,0.65), -3.5px -3.5px 8.4px rgba(255,255,255,1);
+    }
+
+    /* Promoted from inline styles on the WASD wrappers so the gaps scale with the
+       keys; values mirror controls_open3d.html. */
+    .key-stack {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4.2px;
+    }
+
+    .key-row {
+      display: flex;
+      gap: 4.2px;
     }
 
     .mouse-icon {
@@ -338,6 +362,39 @@
       border-radius: 50%;
       background: #4a4a4a;
     }
+  
+    /* ── Intro sequence ──────────────────────────────────────────────────
+       WELCOME appears alone, vertically centred in the card, holds ~1s, then
+       slides up to its resting header position while everything else fades in.
+       .intro-hold ships ON the panel in the markup so the first paint is
+       already the held state — adding it from JS would flash the full card
+       for a frame. The title's centring offset is measured in JS (the panel
+       is 66.66vh, so the distance is viewport-dependent) and applied as a
+       transform, which never disturbs layout: the divider, grid and hint
+       keep their real geometry throughout and only change opacity.
+       The hint's own hintPulse loop must be suspended while hidden and while
+       fading — an animation beats a transition on the same property, so with
+       it running the fade-in would never apply. Both classes are removed once
+       the sequence ends and the stylesheet's normal state (pulse included)
+       takes back over. */
+    .panel.intro-hold .grid,
+    .panel.intro-hold .start-hint { opacity: 0; }
+    .panel.intro-hold .start-hint,
+    .panel.intro-reveal .start-hint { animation: none; }
+    /* The divider types in dot-by-dot beneath the centred WELCOME: it starts
+       fully clipped from the right, and the JS releases the clip with a
+       steps() transition sized to the REAL dot count (read off the tiling
+       script's backgroundSize), so every step exposes exactly one dot. */
+    .panel.intro-hold .header-divider { clip-path: inset(0 100% 0 0); }
+    .panel.intro-reveal .grid,
+    .panel.intro-reveal .start-hint {
+      opacity: 1;
+      /* 720ms delay: the header spends the first ~half of its 900ms slide
+         still passing through the grid's rows, and content fading in under it
+         there reads as an overlap. By 720ms it has cleared ~90% of its travel,
+         so the fade starts into space the header has already left. */
+      transition: opacity 550ms ease 720ms;
+    }
   </style>
   <script>
     /* Runs before first paint so the correct guide is what renders — no flash of
@@ -349,7 +406,7 @@
   </script>
 </head>
 <body>
-  <div class="panel">
+  <div class="panel intro-hold">
     <div class="header">
       <h1 class="header-title" data-i18n="controls-title">WELCOME</h1>
       <hr class="header-divider" />
@@ -370,9 +427,9 @@
         </div>
         <div class="card-visual">
           <div class="visual-pointer">
-            <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;">
+            <div class="key-stack">
               <div class="key">W</div>
-              <div style="display: flex; gap: 6px;">
+              <div class="key-row">
                 <div class="key">A</div>
                 <div class="key">S</div>
                 <div class="key">D</div>
@@ -448,7 +505,73 @@
     </div>
   </div>
 
-  <script>
+    <script>
+    // Intro sequence (see the .intro-hold CSS above). Order of events:
+    //   reveal -> WELCOME alone, centred        (~250ms)
+    //          -> divider types out dot-by-dot  (~1.6s, steps() = dot count)
+    //          -> short beat                    (~350ms)
+    //          -> header (title+divider) slides home, grid+hint fade in
+    // The whole HEADER is transformed rather than the title alone, so the
+    // typed divider hangs beneath the centred WELCOME and the two travel up
+    // as one piece.
+    (function () {
+      var panel   = document.querySelector('.panel');
+      var header  = document.querySelector('.header');
+      var divider = document.querySelector('.header-divider');
+      if (!panel || !header || !divider) return;
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        panel.classList.remove('intro-hold');
+        return;
+      }
+      // Distance from the header's resting spot to the panel's vertical
+      // centre, measured off real geometry — the mobile panel is height:auto,
+      // so no hardcoded 66.66vh maths would survive.
+      var pr = panel.getBoundingClientRect();
+      var hr = header.getBoundingClientRect();
+      var dy = (pr.top + pr.height / 2) - (hr.top + hr.height / 2);
+      header.style.transform = 'translateY(' + dy.toFixed(1) + 'px)';
+
+      // The timeline must not start at OUR load: this page preloads inside a
+      // hidden iframe behind the site's loading screen, so "load" here can be
+      // seconds before anyone sees the card. The parent posts
+      // intro-controls-show when it actually reveals the frame. Standalone
+      // (no parent), there is no reveal moment, so start immediately.
+      var started = false;
+      function start() {
+        if (started) return;
+        started = true;
+        setTimeout(function () {
+          // One transition step per dot = typed, not wiped. The tiling script
+          // above has already set backgroundSize to the exact divisor.
+          var tile = parseFloat(divider.style.backgroundSize) || 10;
+          var dots = Math.max(8, Math.round(divider.offsetWidth / tile));
+          divider.style.transition = 'clip-path 1600ms steps(' + dots + ', end)';
+          divider.style.clipPath = 'inset(0 0 0 0)';
+          setTimeout(function () {
+            header.style.transition = 'transform 900ms cubic-bezier(.45, 0, .25, 1)';
+            header.style.transform = '';
+            panel.classList.add('intro-reveal');
+            setTimeout(function () {
+              panel.classList.remove('intro-hold', 'intro-reveal');
+              header.style.transition = '';
+              divider.style.transition = '';
+              divider.style.clipPath = '';
+            }, 1450);
+          }, 1950);
+        }, 250);
+      }
+
+      if (window.parent === window) {
+        start();
+      } else {
+        window.addEventListener('message', function (e) {
+          if (e.data && e.data.type === 'intro-controls-show') start();
+        });
+      }
+    })();
+  </script>
+
+<script>
     // ── i18n (EN + DE) ───────────────────────────────────────────
     (function () {
       var T = {

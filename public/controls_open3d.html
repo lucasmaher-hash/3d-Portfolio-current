@@ -131,26 +131,36 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 6px;
+      gap: 4.2px;
     }
 
     .key-row {
       display: flex;
-      gap: 6px;
+      gap: 4.2px;
     }
 
+    /* WASD keys at 70% of their original size (38px -> 26.6px), with radius, font,
+       gaps and shadow scaled by the same 0.7 so the cluster shrinks uniformly rather
+       than just the boxes. This is DESKTOP-ONLY without needing a media query: every
+       .key lives inside .visual-pointer, and `.is-touch .visual-pointer` is
+       display:none, so a touch device renders .visual-touch instead and never sees
+       these at all.
+       The cluster stays docked to the card's right edge for free — .card is
+       justify-content: space-between, so .card-visual is pinned to the content-box
+       edge and a narrower cluster simply pulls its left side rightwards. Measured
+       before and after: the gap from the D key to the card's inner edge is 0. */
     .key {
-      width: 38px;
-      height: 38px;
+      width: 26.6px;
+      height: 26.6px;
       background: var(--bg-base);
-      border-radius: 9px;
+      border-radius: 6.3px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 15px;
+      font-size: 10.5px;
       font-weight: 600;
       color: var(--text-primary);
-      box-shadow: 5px 5px 12px rgba(174,174,192,0.65), -5px -5px 12px rgba(255,255,255,1);
+      box-shadow: 3.5px 3.5px 8.4px rgba(174,174,192,0.65), -3.5px -3.5px 8.4px rgba(255,255,255,1);
     }
 
     .icon-dot {
