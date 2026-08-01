@@ -301,10 +301,7 @@
         // Set immediately, not when the loader finishes, so a reload part-way through the
         // load still counts as "seen" and does not restart the whole intro.
         if (!seen) { try { sessionStorage.setItem(KEY, '1'); } catch (e) {} }
-        // ── TEMP (review): force the intro on EVERY load so the WELCOME animation
-        // can be checked by plain refresh. REVERT to `{ show: !seen }` when done.
-        window._introGate = { show: true };
-        // window._introGate = { show: !seen };
+        window._introGate = { show: !seen };
       })();
     </script>
 
