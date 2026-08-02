@@ -186,7 +186,7 @@
            _top rather than _blank (which the two links below use): mailto: never
            actually unloads the page, so _blank would just strand an empty tab on iOS,
            whereas LinkedIn/Instagram are real pages that should open in one. -->
-      <a href="mailto:lucas.maher@outlook.com" target="_top" class="contact-item">
+      <a href="#" id="email-link" target="_top" class="contact-item">
         <div class="contact-header">
           <span class="contact-label" data-i18n="label-email">Email</span>
           <div class="btn">↗</div>
@@ -209,6 +209,28 @@
 
     </div>
   </div>
+
+  <script>
+    /* ── Email address built at runtime, not written as a literal mailto: in the
+       page source ──────────────────────────────────────────────────────────
+       The anchor ships with a placeholder href="#"; this is the FIRST script
+       block in the file, running before the mailto _top handler below it,
+       which needs a real mailto: href in place before it can do anything.
+       This stops the overwhelming majority of spam-list bots, which harvest
+       addresses by regexing raw HTML for an "@" or a "mailto:" prefix — with
+       the address split into two variables, the raw source never contains
+       either. It does nothing against a scraper that runs full JS, which is a
+       much smaller and more targeted category; for that, only not publishing
+       the address at all would help. No effect on real visitors, on either
+       platform — the real href is in place well before the page is
+       interactive, and the _top mailto handler below reads it fresh on click
+       regardless of when it was set. */
+    (function () {
+      var user = 'lucas.maher.design', domain = 'gmail.com';
+      var link = document.getElementById('email-link');
+      if (link) link.href = 'mailto:' + user + '@' + domain;
+    })();
+  </script>
 
   <script>
     // ── i18n (EN + DE) ───────────────────────────────────────────
@@ -246,7 +268,11 @@
        parent hand-off has actually happened, so there is no path where the tap
        is cancelled without something replacing it. */
     (function () {
-      var link = document.querySelector('a[href^="mailto:"]');
+      // Looked up by id, not by href^="mailto:" — the href is now built at
+      // runtime by the script above rather than written in the HTML source
+      // (see its comment), so matching on href content would depend on that
+      // script having already run rather than on the plain element existing.
+      var link = document.getElementById('email-link');
       if (!link) return;
       link.addEventListener('click', function (e) {
         if (window.top === window) return;              // opened directly — default is fine

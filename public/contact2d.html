@@ -438,7 +438,7 @@
                the animation and the hover on two different elements makes the
                conflict structurally impossible. Do not merge them back. -->
           <div class="anim anim-2">
-            <a href="mailto:lucas.maher@outlook.com" class="contact-item">
+            <a href="#" id="email-link" class="contact-item">
               <div class="contact-header">
                 <span class="contact-label" data-i18n="label-email">Email</span>
                 <div class="btn">↗</div>
@@ -468,6 +468,27 @@
       </div>
     </div>
   </div>
+
+  <script>
+    /* ── Email address built at runtime, not written as a literal mailto: in the
+       page source ──────────────────────────────────────────────────────────
+       The anchor ships with a placeholder href="#"; this is the FIRST script
+       block in the file (script execution order matters here, not just
+       DOMContentLoaded timing) so it runs before anything else touches the
+       link, including the click handlers further down.
+       This stops the overwhelming majority of spam-list bots, which harvest
+       addresses by regexing raw HTML for an "@" or a "mailto:" prefix — with
+       the address split into two variables, the raw source never contains
+       either. It does nothing against a scraper that runs full JS, which is a
+       much smaller and more targeted category; for that, only not publishing
+       the address at all would help. No effect on real visitors — the real
+       href is in place well before the page is interactive. */
+    (function () {
+      var user = 'lucas.maher.design', domain = 'gmail.com';
+      var link = document.getElementById('email-link');
+      if (link) link.href = 'mailto:' + user + '@' + domain;
+    })();
+  </script>
 
   <script>
     // ── Page transitions ──────────────────────────────────────────
