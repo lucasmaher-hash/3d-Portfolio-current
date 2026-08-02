@@ -950,9 +950,18 @@
 
   <div class="page-wrapper">
 
-    <!-- Hero -->
+    <!-- Hero. The <picture> swaps in a different photo on phones only (kitchen shot
+         with the AR panels, hero_mobile_V1.jpg — resized to 1920w from the original
+         export so a phone doesn't pull a 3213px file): the <source> matches ≤640px,
+         the site's mobile tier, and every wider viewport falls through to the <img>,
+         which is byte-identical to what desktop always loaded. Styling (.hero /
+         .hero img incl. the 1px overscan) applies to the rendered <img> either way,
+         so no CSS had to change. -->
     <div class="hero">
-      <img src="/images/vr-cookbook/side_v1_final_V1.png" alt="Virtual Cooking hero" />
+      <picture>
+        <source media="(max-width: 640px)" srcset="/images/vr-cookbook/hero_mobile_V1.jpg" />
+        <img src="/images/vr-cookbook/side_v1_final_V1.png" alt="Virtual Cooking hero" />
+      </picture>
     </div>
 
     <!-- Header -->

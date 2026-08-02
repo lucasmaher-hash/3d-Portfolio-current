@@ -267,10 +267,23 @@
          mobile body floor. .card-title steps up to 24px to stay clearly above it. */
       .card-description { font-size: 16px; line-height: 1.45; }
       .card-title { font-size: 24px; }
+      /* Tighter vertical padding on the phone tiles (20px all round in the base
+         rule): the text block plus icon defines the height, and 20px of air above
+         and below it read as dead space in a stacked single-column list. 12px cuts
+         each tile by ~16px (~13%); horizontal stays 20px so text keeps its inset.
+         The panel is height:auto here, so it shrinks by the same total on its own.
+         16px is the settled value — 12px was tried first and judged too tight
+         against the original 20px, so this is the midpoint of the two.
+         Scoped to .is-touch (real touch devices, same switch as the card content)
+         rather than width alone — a desktop window narrowed under 700px also lands
+         in this media block and must keep its original spacing. Same reason the
+         gap tightening below sits behind .is-touch. */
+      .is-touch .card { padding: 16px 20px; }
+      .is-touch .grid { gap: 15px; }
       .grid {
         grid-template-columns: 1fr;
         grid-template-rows: auto;
-        gap: 16px;
+        gap: 16px;  /* touch devices get 14px via the .is-touch rule above */
       }
       /* Match the .lm-button so the icon column stays even. */
       .touch-joystick,
