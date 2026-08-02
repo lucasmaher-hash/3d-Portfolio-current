@@ -35,7 +35,7 @@
     .mobile-menu.open { opacity: 1; pointer-events: auto; }
 
     .mobile-menu-panel {
-      width: 75%;
+      width: 64%;
       background: var(--bg-surface);
       border-radius: 28px;
       /* No outer shadow/highlight — a neumorphic glow would read as a halo
@@ -289,6 +289,43 @@
       position: absolute;
       will-change: transform;
     }
+
+    /* The "?" from the nav bar, relocated on touch devices (the bar hides its
+       copy under pointer:coarse — see top_row_permanent_V3.html). Same look as
+       the bar's version: 44px neumorphic circle, VT323 mark. Sits low in the corner (bottom 58px), mirroring the joystick's 36px
+       edge inset, so the two anchor the screen's bottom
+       corners as one row of controls. display:none here, flex under the same
+       pointer:coarse query that shows the joystick. */
+    #help-fab {
+      display: none;
+      position: fixed;
+      bottom: 58px;
+      right: 36px;
+      z-index: 8;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--bg-surface);
+      /* flat — no neumorphic highlight/shade floating over the 3D scene */
+      box-shadow: none;
+      border: none;
+      align-items: center;
+      justify-content: center;
+      font-family: 'VT323', monospace;
+      font-size: 20px;
+      color: var(--text-primary);
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    #help-fab:active { transform: scale(0.94); }
+
+    /* Must come AFTER the base #help-fab rule: both selectors are the same
+       specificity, so putting this inside the earlier pointer:coarse block up
+       top let the base display:none win on source order and the button never
+       appeared. */
+    @media (pointer: coarse) {
+      #help-fab { display: flex; }
+    }
   </style>
   </head>
   <body>
@@ -453,13 +490,20 @@
       </div>
     </div>
 
+    <!-- "?" — opens the controls overlay; the nav bar's copy is hidden on touch -->
+    <button id="help-fab" aria-label="Help">?</button>
+    <script>
+      // Same-window postMessage: src/main.js owns openControls() inside its
+      // module scope and already listens for this exact message from the nav
+      // iframe, so the page's own button goes through the same door.
+      document.getElementById('help-fab').addEventListener('click', function () {
+        window.postMessage({ type: 'openControls' }, '*');
+      });
+    </script>
+
     <!-- Mobile menu overlay -->
     <div id="mobile-menu" class="mobile-menu">
       <div class="mobile-menu-panel">
-        <div class="mobile-view-toggle">
-          <button class="mobile-mode-btn" data-mode="2d">2D</button>
-          <button class="mobile-mode-btn is-active" data-mode="3d">3D</button>
-        </div>
         <a class="mobile-nav-btn" data-page="craft" data-i18n="menu-craft">Craft</a>
         <a class="mobile-nav-btn" data-page="about" data-i18n="menu-about">About</a>
         <a class="mobile-nav-btn" data-page="contact" data-i18n="menu-contact">Contact</a>

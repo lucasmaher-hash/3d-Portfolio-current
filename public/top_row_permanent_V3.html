@@ -407,10 +407,6 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    @media (pointer: coarse) and (orientation: landscape) {
-      .help-btn { display: inline-flex; }
-    }
-
     /* ── Responsive ───────────────────────────────────────────── */
     @media (max-width: 640px) {
       /* 19, not the original 14: .top-row's padding is
@@ -466,6 +462,28 @@
     @media (max-width: 640px) {
       .lang-toggle { display: none; }
     }
+  
+    /* ── Mobile: the 2D/3D toggle returns to the bar, scaled down ──────────
+       Same component desktop uses — same .pill track, same inset-well active
+       segment — only the metrics shrink. The bar's mobile grid grows a centre
+       column for it (1fr auto 1fr keeps it dead-centred between logo and
+       hamburger regardless of their widths). .nav-pill (Craft/About/Contact)
+       stays hidden; those live in the mobile menu. */
+    @media (max-width: 640px) {
+      .nav-island { grid-template-columns: 1fr auto 1fr; }
+      /* Sized to land at the logo/hamburger's 44px: 5px track padding x2 +
+         segment (16px text x 1.2 line-height + 7.4px padding x2) = 44. Same
+         font size as desktop — only the widths shrink. */
+      .view-toggle { display: inline-flex; padding: 5px; gap: 4px; }
+      .view-toggle .pill__seg { min-width: 70px; padding: 7.4px 16px; font-size: 16px; }
+    }
+
+    /* The bar's "?" is retired everywhere. It was only ever SHOWN by a
+       pointer:coarse rule (desktop never had it — the base rule below this
+       comment's old position is display:none), and on touch it now lives on
+       the 3D page itself as #help-fab, bottom-right beside the joystick. The
+       button markup and its openControls wiring stay, in case it ever returns
+       to the bar. */
   </style>
 </head>
 

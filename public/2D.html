@@ -580,7 +580,7 @@
     }
 
     .mobile-menu-panel {
-      width: 75%;
+      width: 64%;
       background: var(--bg-surface);
       border-radius: 28px;
       /* No outer shadow/highlight — a neumorphic glow would read as a halo
@@ -887,10 +887,6 @@
   <!-- Mobile menu overlay (lives here so it covers the full viewport) -->
   <div id="mobile-menu" class="mobile-menu">
     <div class="mobile-menu-panel">
-      <div class="mobile-view-toggle">
-        <button class="mobile-mode-btn is-active" data-mode="2d">2D</button>
-        <button class="mobile-mode-btn" data-mode="3d">3D</button>
-      </div>
       <!-- No `is-active` here. On about2d/contact2d that class is a correct
            "you are here" marker, but this is the landing page, not the Craft
            page — Craft only scrolls to a section further down it — so opening
@@ -960,7 +956,14 @@
     <div class="project-section reverse" style="align-items: stretch;">
       <a href="/virtual_cooking2d.html" style="display:block;">
         <div class="project-tile tile-crop-sides" style="box-shadow: none; overflow: hidden; cursor: pointer;">
-          <img src="/images/vr-cookbook/side_v1_final_V1.png" alt="Virtual Cooking" style="width: 100%; height: 100%; object-fit: cover; display: block;" />
+          <!-- Same phone-only swap as the hero on virtual_cooking2d.html: ≤640px gets
+               the kitchen photo, everything wider falls through to the original render.
+               <picture> is layout-transparent, so the img's inline 100%/100% still
+               resolves against the tile. -->
+          <picture>
+            <source media="(max-width: 640px)" srcset="/images/vr-cookbook/vr_hero_mobile.jpg" />
+            <img src="/images/vr-cookbook/side_v1_final_V1.png" alt="Virtual Cooking" style="width: 100%; height: 100%; object-fit: cover; display: block;" />
+          </picture>
         </div>
       </a>
       <div class="project-content">
