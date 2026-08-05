@@ -7,6 +7,7 @@
     <link rel="apple-touch-icon" href="/images/site/favicon-180.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>lucasmaher.com</title>
+    <script src="/analytics.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet" />
@@ -560,7 +561,13 @@
            surface colour and shadow tokens, so it no longer adapts its shading
            to the page behind it (that was needed only for the old glass look). */
 
-        function openMenu()  { menu.classList.add('open'); }
+        function openMenu()  {
+          menu.classList.add('open');
+          // Reported from here rather than from the hamburger itself — the button
+          // lives in the nav iframe and only posts a *toggle*, so this is the one
+          // place that knows the menu actually opened.
+          if (window.track) window.track('mobile_menu_open');
+        }
         function closeMenu() { menu.classList.remove('open'); }
 
         window.addEventListener('message', e => {

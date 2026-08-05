@@ -23,7 +23,17 @@ camera.rotation.order = 'YXZ'
 
 // Renderer
 const isMobile = navigator.maxTouchPoints > 0
-const renderer = new THREE.WebGLRenderer({ antialias: !isMobile, powerPreference: 'high-performance' })
+// The try/catch exists ONLY to report the failure — it rethrows, so behaviour is
+// unchanged. A device with no working WebGL gets a blank page and leaves, which
+// is indistinguishable from a bounce in the pageview numbers; this is the one
+// event that separates "didn't care" from "couldn't run it".
+let renderer
+try {
+  renderer = new THREE.WebGLRenderer({ antialias: !isMobile, powerPreference: 'high-performance' })
+} catch (err) {
+  if (window.track) window.track('webgl_failed', { mobile: isMobile, error: String(err && err.message || err).slice(0, 120) })
+  throw err
+}
 renderer.setSize(window.innerWidth, window.innerHeight)
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 renderer.shadowMap.enabled = !isMobile
@@ -1550,6 +1560,7 @@ function probeMove(origin, direction) {
 
 // ── Load model ───────────────────────────────────────────────────
 const loader = new GLTFLoader()
+const glbT0 = performance.now()
 loader.load(
   '/current🟢.glb',
   (gltf) => {
@@ -1732,6 +1743,17 @@ loader.load(
     console.log(`floorY=${floorY.toFixed(3)} | playerHeight=${playerHeight.toFixed(4)} | spawnFound=${spawnFound}`)
     console.log(`Kamerastart: x=${camera.position.x.toFixed(2)} y=${camera.position.y.toFixed(2)} z=${camera.position.z.toFixed(2)}`)
 
+    // The single most useful number on this site: the GLB is the whole
+    // experience, and anyone who leaves before it lands never saw anything.
+    // Bucketed rather than raw so the dashboard groups it (Umami treats event
+    // props as strings/categories, not a numeric series to average).
+    const ms = Math.round(performance.now() - glbT0)
+    if (window.track) window.track('scene_loaded', {
+      mobile: isMobile,
+      seconds: ms < 2000 ? '0-2' : ms < 5000 ? '2-5' : ms < 10000 ? '5-10' : '10+',
+      ms
+    })
+
     if (window._loader) window._loader.done()
   },
   e => {
@@ -1741,6 +1763,7 @@ loader.load(
   },
   err => {
     console.error('GLB load error:', err)
+    if (window.track) window.track('scene_load_failed', { mobile: isMobile })
     if (window._loader) window._loader.done()
   }
 )
@@ -1914,6 +1937,7 @@ window.addEventListener('resize', () => {
 const controlsOverlay = document.getElementById('controls-overlay')
 
 function openControls() {
+  if (window.track) window.track('nav_open', { panel: 'controls' })
   ensureOverlayFrameLoaded('controls-frame')
   controlsOverlay.classList.add('open')
   isOverlayOpen = true
@@ -1940,6 +1964,7 @@ window.addEventListener('message', e => {
 const craftOverlay = document.getElementById('craft-overlay')
 
 function openCraft() {
+  if (window.track) window.track('nav_open', { panel: 'craft' })
   ensureOverlayFrameLoaded('craft-frame')
   craftOverlay.classList.add('open')
   isOverlayOpen = true
@@ -1965,6 +1990,7 @@ craftOverlay.addEventListener('click', e => { if (e.target === craftOverlay) clo
 const contactOverlay = document.getElementById('contact-overlay')
 
 function openContact() {
+  if (window.track) window.track('nav_open', { panel: 'contact' })
   ensureOverlayFrameLoaded('contact-frame')
   contactOverlay.classList.add('open')
   isOverlayOpen = true
@@ -1990,6 +2016,7 @@ contactOverlay.addEventListener('click', e => { if (e.target === contactOverlay)
 const aboutOverlay = document.getElementById('about-overlay')
 
 function openAbout() {
+  if (window.track) window.track('nav_open', { panel: 'about' })
   ensureOverlayFrameLoaded('about-frame')
   aboutOverlay.classList.add('open')
   isOverlayOpen = true
@@ -2036,6 +2063,9 @@ const infoClose   = document.getElementById('info-close')
 function openOverlay(name) {
   const data = CONTENT[name]
   if (!data) return
+  // `data.title`, not the raw mesh name — several meshes map to one project
+  // (Mac-Lamp alone has six), and the dashboard should show one row per project.
+  if (window.track) window.track('project_open', { project: data.title, via: 'info-overlay' })
   infoTitle.textContent = data.title
   infoText.textContent  = data.text
   if (data.image) {
@@ -2098,6 +2128,7 @@ renderer.domElement.addEventListener('click', e => {
   if (name) {
     const data = CONTENT[name]
     if (data.url) {
+      if (window.track) window.track('project_open', { project: data.title, via: '3d-click' })
       // Save the exact spot we're leaving from so the Exit button on the
       // destination page can bring us right back to it (read back by the
       // restore logic right after the GLTFLoader spawn block above).
@@ -2119,6 +2150,7 @@ renderer.domElement.addEventListener('click', e => {
 const kaffeemaschineOverlay = document.getElementById('kaffeemaschine-overlay')
 
 function openKaffeemaschine() {
+  if (window.track) window.track('project_open', { project: 'Cybercoffee', via: 'overlay' })
   ensureOverlayFrameLoaded('kaffeemaschine-frame')
   kaffeemaschineOverlay.classList.add('open')
   isOverlayOpen = true

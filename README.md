@@ -112,6 +112,34 @@ Press `R` / `F` at runtime to raise/lower `playerHeight`. The current value logs
 let playerHeight = -1.3601  // update this value
 ```
 
+## Analytics
+
+Umami Cloud (cookieless, no consent banner required). Loaded by `public/analytics.js`, which is
+linked from `index.html` and every top-level `*2d.html` / `2D.html` page — **not** from the
+`*3d.html` overlay documents or `top_row_permanent_V3.html`, which are iframes and would each
+register their own pageview and session.
+
+**Setup:** create the site in Umami, then replace `WEBSITE_ID` at the top of `public/analytics.js`
+with the ID from Settings → Websites → Edit. Until that's done the script loads and no-ops.
+
+Only `lucasmaher.com` reports. On localhost, `vite --host` and `*.github.io`, `window.track()`
+logs to `console.debug` and no script is fetched — dev sessions never reach the dashboard.
+
+Pageviews barely mean anything here: the 3D scene is one document, so walking around, opening
+Craft and reading About counts as a single view. The custom events are the signal:
+
+| Event | Props | Fired from |
+|---|---|---|
+| `scene_loaded` | `mobile`, `seconds` (bucket), `ms` | GLTF load callback, `src/main.js` |
+| `scene_load_failed` | `mobile` | GLTF error callback |
+| `webgl_failed` | `mobile`, `error` | Renderer construction — separates "couldn't run it" from a bounce |
+| `project_open` | `project`, `via` (`3d-click` / `info-overlay` / `overlay`) | Canvas raycast click, `openOverlay`, `openKaffeemaschine` |
+| `nav_open` | `panel` (`about` / `craft` / `contact` / `controls`) | The four overlay open functions |
+| `mobile_menu_open` | — | `openMenu()` in `index.html` |
+
+`project` is `CONTENT[name].title`, not the mesh name — Mac-Lamp alone spans six meshes, and the
+dashboard should show one row per project.
+
 ## Collision tuning
 
 Two thresholds control which meshes block movement (computed from the model's bounding box after load):
